@@ -1546,26 +1546,46 @@ class Velo:
 
             def inp_spend_before_bh_first_or_coinbase(
                 inp,
-                bh_first,
+                bh_heights,
+                switch_circ_effective,
             ):
                 """
                 This function represents the condition for the handle_tx_mc
                 functions to decide, whether to sum an input or not.
                 """
 
-                # if bh_first <= 0, we want to regard this input in any case----
-                if bh_first <= 0:
-                    return True
+                time_windows     = Velo.time_windows
+                time_windows_len = len(time_windows)
+                inp_spend_index  = None
 
-                # check if the tx that spent this input is older than bh_first--
-                if inp.spent_tx.block_height < bh_first:
-                    return True
+                # if we do not count money in effective circulation, we count---
+                # every input
+                if switch_circ_effective == False:
+                    inp_spend_index = [True for i in range(time_windows_len)]
+                    return inp_spend_index
 
                 # check if the tx that spent this input is a coinbase tx--------
                 if inp.spent_tx.is_coinbase:
-                    return True
+                    inp_spend_index = [True for i in range(time_windows_len)]
+                    return inp_spend_index
 
-                return False
+                # if bh_first <= 0, we discard this input since it cannot be----
+                # spent before this block height
+                if bh_heights[0] <= 0:
+                    inp_spend_index = [False for i in range(time_windows_len)]
+                    return inp_spend_index
+
+                # check if the tx that spent this input is older than bh_first--
+                inp_spent_tx_block_height = inp.spent_tx.block_height
+                inp_spend_index = [False for i in range(time_windows_len)]
+                for bh_i in range(time_windows_len):
+                    if inp_spent_tx_block_height < bh_heights[bh_i]:
+                        inp_spend_index[bh_i] = True
+
+                    return inp_spend_index
+
+                inp_spend_index = [False for i in range(time_windows_len)]
+                return inp_spend_index
 
             def get_timed_input(input):
                 """
@@ -1595,7 +1615,7 @@ class Velo:
 
             def handle_tx_m_circ(
                 tx,
-                day_index,
+                bh_heights,
                 switch_circ_effective=True,
                 switch_wb_bill=True,
                 switch_sort=False,
@@ -1625,14 +1645,14 @@ class Velo:
                     up.
                 """
                 #---------------------------------------------------------------
-                m_circ_mc       = [0 for i in range(time_windows_len)]
-                m_circ_mc_timed = [0 for i in range(time_windows_len)]
-                inps            = tx.inputs
-                val_outs_break  = 0
-                val_outs        = tx.output_value
-                bh_first        = [
-                    Velo.f_block_height_min_of_index_day[d] for d in day_index
-                ]
+                time_windows     = Velo.time_windows
+                time_windows_len = len(time_windows)
+                m_circ_mc        = [0 for i in range(time_windows_len)]
+                m_circ_mc_timed  = [0 for i in range(time_windows_len)]
+                inps             = tx.inputs
+                val_outs_break   = 0
+                val_outs         = tx.output_value
+                bh_heights_loc   = bh_heights
 
                 if tx.input_value == 0 or val_outs == 0 or tx.is_coinbase:
                     return m_circ_mc
@@ -1665,23 +1685,29 @@ class Velo:
                         )[1]
 
                     # 4)
-                    if switch_circ_effective == False:
-                        bh_first[0] = 0
-
                     for inp_i in inps:
                         val_inp_i = inp_i.value
                         val_outs_break += val_inp_i
 
-                        if inp_spend_before_bh_first_or_coinbase(
+                        inp_spend_index = inp_spend_before_bh_first_or_coinbase(
                             inp_i,
-                            bh_first[0],
-                        ) == True:
-                            for t_w in range(time_windows_len):
-                                m_circ_mc[t_w] += val_inp_i
+                            bh_heights_loc,
+                            switch_circ_effective,
+                        )
+
+                        if inp_spend_index[0] == True:
+                            m_circ_mc[0] += val_inp_i
+                            for t_w in range(1, time_windows_len):
+                                if inp_spend_index[t_w] == True:
+                                    m_circ_mc[t_w] += val_inp_i
 
                             if switch_time == True:
-                                for t_w in range(time_windows_len):
-                                    m_circ_mc_timed[t_w] += get_timed_input(inp_i)
+                                val_inp_i_timed = get_timed_input(inp_i)
+
+                                m_circ_mc_timed[0] += val_inp_i_timed
+                                for t_w in range(1, time_windows_len):
+                                    if inp_spend_index[t_w] == True:
+                                        m_circ_mc_timed[t_w] += val_inp_i_timed
 
                             # **)
                             if val_outs_break >= val_outs_sent_to_others:
@@ -1759,7 +1785,6 @@ class Velo:
             m_circ_mc_lifo   = [[] for i in range(time_windows_len)]
             m_circ_mc_fifo   = [[] for i in range(time_windows_len)]
             m_circ_wh_bill   = [[] for i in range(time_windows_len)]
-            day_index        = [-1 for i in range(time_windows_len)]
 
             # get day_index of first block in self.__txes_daily-----------------
             first_block_height = self.__txes_daily[0][0].block_height
@@ -1769,8 +1794,7 @@ class Velo:
 
             # retrieve data for each daychunk of txes---------------------------
             for daychunk in self.__txes_daily:
-                # initialize daily values---------------------------------------
-
+                # initialize daily values --------------------------------------
                 for t_w in range(time_windows_len):
                     satoshi_dd_raw[t_w].append(0)
                     dormancy_raw[t_w]  .append(0)
@@ -1783,22 +1807,30 @@ class Velo:
                     continue
 
                 # initialize first block heights/day index of txes--------------
-                first_block_height = daychunk[0].block_height
-                day_index[0] = Velo.f_index_day_of_block_height[
-                    first_block_height
+                bl_heights    = [-1 for i in range(time_windows_len)]
+                bl_heights[0] = daychunk[0].block_height
+                day_first        = Velo.f_index_day_of_block_height[
+                    bl_heights[0]
                 ]
-                for t_w in range(1, time_windows_len):
-                    day_t_w = day_index[0] - Velo.time_windows[t_w] + 1
-                    if day_t_w >= 0:
-                        day_index[t_w] = day_t_w
 
                 # print some liveliness message---------------------------------
-                day_diff_to_start = day_index[0] - day_index_first
+                day_diff_to_start = day_first - day_index_first
 
                 print_liveliness_message(
                     day_diff_to_start,
                     "get_measurements()"
                 )
+
+                # prepare windows values----------------------------------------
+                for t_w in range(1, time_windows_len):
+                    day_t_w = day_first - Velo.time_windows[t_w] + 1
+                    if day_t_w >= 0:
+                        bl_heights[t_w] = Velo.f_block_height_min_of_index_day[
+                            day_t_w
+                        ]
+                    elif day_t_w < 0:
+                        bl_heights[t_w] = day_t_w
+
                 # retrieve tx-wise values for money in effective cirulation-----
                 for tx in daychunk:
                     # Here, dust transaction shouldn't be included, see *)------
@@ -1807,7 +1839,7 @@ class Velo:
 
                     satoshi_dd_per_tx     = handle_tx_m_circ(
                         tx,
-                        day_index,
+                        bl_heights,
                         switch_circ_effective=False,
                         switch_wb_bill=True,
                         switch_sort=False,
@@ -1815,7 +1847,7 @@ class Velo:
                     )
                     m_circ_mc_lifo_per_tx = handle_tx_m_circ(
                         tx,
-                        day_index,
+                        bl_heights,
                         switch_circ_effective=True,
                         switch_wb_bill=False,
                         switch_sort=False,
@@ -1823,7 +1855,7 @@ class Velo:
                     )
                     m_circ_mc_fifo_per_tx = handle_tx_m_circ(
                         tx,
-                        day_index,
+                        bl_heights,
                         switch_circ_effective=True,
                         switch_wb_bill=False,
                         switch_sort=True,
@@ -1831,7 +1863,7 @@ class Velo:
                     )
                     m_circ_wh_bill_per_tx = handle_tx_m_circ(
                         tx,
-                        day_index,
+                        bl_heights,
                         switch_circ_effective=True,
                         switch_wb_bill=True,
                         switch_sort=False,
