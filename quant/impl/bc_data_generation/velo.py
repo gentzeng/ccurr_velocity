@@ -920,12 +920,12 @@ class Velo:
 
                     #-add the current daily calculations------------------------
                     m_supply_agg_tw = m_supply_agg_last
-                    #if day < wndw:
-                    if day >= wndw:
+                    if day < wndw:
+                    #if day >= wndw:
                         # no "spent last" transactions, only coinbase contribute
                         # to m_supply in circulation in first tw days
-                        # m_supply_agg_tw += Velo.m_supply_cbs[day]
-                    #else:
+                        m_supply_agg_tw += Velo.m_supply_cbs[day]
+                    else:
                         m_supply_agg_tw += Velo.m_supply_add_a[t_w][day]
 
                     #-substract the calculations right before the new window----
@@ -1137,8 +1137,8 @@ class Velo:
 
                 # check if the tx that spent this input is a coinbase tx----
                 if inp.spent_tx.is_coinbase:
-                    #return True
-                    return False
+                    return True
+                    #return False
 
                 # if bl_height <= 0, we discard this input since it-----
                 # cannot be spent before this block height
@@ -1274,7 +1274,7 @@ class Velo:
             df_final["{}_o".format(m_circ_type)] = results_raw_old[m_circ_type]
 
         #--handle m_circ_tests--------------------------------------------------
-        daychunks = collect_daychunks(10)
+        daychunks = collect_daychunks(2)
         m_circ_wh_bill_raw_test = m_circ_wh_bill_test(daychunks)
 
         df_final["m_circ_cbs"] = results_raw["m_circ_cbs"]
@@ -1840,11 +1840,12 @@ class Velo:
 
                 # check if the tx that spent this input is a coinbase tx--------
                 if inp.spent_tx.is_coinbase:
-                    #inp_spent_index = [True for t in range(time_windows_cnt)]
+                    inp_spent_index = [True for t in range(time_windows_cnt)]
                     return inp_spent_index
 
                 # if bl_heights[0] <= 0, we discard this input since it cannot--
                 # be spent before this block height
+                # (bl 0 is start of blockchain)
                 if bl_heights[0] <= 0:
                     return inp_spent_index
 
