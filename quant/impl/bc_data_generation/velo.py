@@ -1105,6 +1105,13 @@ class Velo:
             daychunks = [[] for t in range(Velo.cnt_days)]
 
             for day in range(Velo.cnt_days):
+                if day % 10 == 0:
+                    Velo.logger.debug(
+                        "aggr collect day {:4}/{:4}".format(
+                            day,
+                            Velo.cnt_days,
+                        )
+                    )
                 if day < wndw:
                     bh_min = Velo.f_bl_height_min_of_index_day[0]
                 else:
@@ -1133,24 +1140,29 @@ class Velo:
                 functions to decide, whether to sum an input or not.
                 """
 
-                inp_spent_index = False
+                inp_spent_index = 0
+                is_coinbase     = False
+
+                inp_spent_tx_bl_height = inp.spent_tx.block_height
 
                 # check if the tx that spent this input is a coinbase tx----
                 if inp.spent_tx.is_coinbase:
-                    return True
-                    #return False
+                    if inp_spent_tx_bl_height < bl_height or ( 0 == inp_spent_tx_bl_height and 0 == bl_height ):
+                        inp_spent_index = 2
+                    else:
+                        inp_spent_index = 3
+                    return inp_spent_index
 
                 # if bl_height <= 0, we discard this input since it-----
                 # cannot be spent before this block height
                 if bl_height <= 0:
-                    return False
+                    return 0
 
                 # check if the tx that spent this input is older than given-
                 # block height
-                inp_spent_tx_bl_height = inp.spent_tx.block_height
 
                 if inp_spent_tx_bl_height < bl_height:
-                    inp_spent_index = True
+                    inp_spent_index = 1
 
                 return inp_spent_index
 
@@ -1185,8 +1197,15 @@ class Velo:
                         bl_height_loc,
                     )
 
-                    if inp_spent_index == True:
-                        m_circ_mc += val_inp_i
+                    if ( inp_spent_index ):
+                        # if coinbase is within window, do not count fee
+                        if ( 3 == inp_spent_index):
+                            m_circ_mc += (
+                                inp_i.spent_tx.block.revenue
+                                - inp_i.spent_tx.block.fee
+                            )
+                        else:
+                            m_circ_mc += val_inp_i
 
                         # **)
                         if val_outs_break >= val_outs_sent_to_others:
@@ -1207,7 +1226,7 @@ class Velo:
             m_circ_wh_bill_test = []
 
             for daychunk_i in range(len(daychunks)):
-                if daychunk_i % 20 == 0:
+                if daychunk_i % 10 == 0:
                     Velo.logger.debug(
                         "aggr test day {:4}/{:4}".format(
                             daychunk_i,
@@ -1274,7 +1293,7 @@ class Velo:
             df_final["{}_o".format(m_circ_type)] = results_raw_old[m_circ_type]
 
         #--handle m_circ_tests--------------------------------------------------
-        daychunks = collect_daychunks(2)
+        daychunks = collect_daychunks(1)
         m_circ_wh_bill_raw_test = m_circ_wh_bill_test(daychunks)
 
         df_final["m_circ_cbs"] = results_raw["m_circ_cbs"]
@@ -1804,7 +1823,7 @@ class Velo:
                fee = output => input = 0
                fee > output => input < 0
             """
-            def get_timed_input(input):
+            def get_timed_input(input, input_value):
                 """
                 Returns product of input value and time since last spend,
                 see definition of coin days destroyed.
@@ -1814,7 +1833,7 @@ class Velo:
                 secs_sls_input = time_sls_input.total_seconds()
                 days_sls_input = secs_sls_input / Velo.secs_per_day
 
-                input_time = days_sls_input * input.value
+                input_time = days_sls_input * input_value
 
                 return input_time
 
@@ -1830,17 +1849,24 @@ class Velo:
 
                 time_windows     = Velo.time_windows
                 time_windows_cnt = len(time_windows)
-                inp_spent_index  = [False for t in range(time_windows_cnt)]
+                inp_spent_index  = [0 for t in range(time_windows_cnt)]
+                is_coinbase      = False
+
+                inp_spent_tx_bl_height = inp.spent_tx.block_height
 
                 # if we do not count money in effective circulation, we count---
                 # every input
                 if switch_circ_effective == False:
-                    inp_spent_index = [True for t in range(time_windows_cnt)]
+                    inp_spent_index = [1 for t in range(time_windows_cnt)]
                     return inp_spent_index
 
                 # check if the tx that spent this input is a coinbase tx--------
                 if inp.spent_tx.is_coinbase:
-                    inp_spent_index = [True for t in range(time_windows_cnt)]
+                    for bh_i in range(time_windows_cnt):
+                        if inp_spent_tx_bl_height < bl_heights[bh_i] or ( 0 == inp_spent_tx_bl_height and 0 == bl_heights[bh_i] ):
+                            inp_spent_index[bh_i] = 2
+                        else:
+                            inp_spent_index[bh_i] = 3
                     return inp_spent_index
 
                 # if bl_heights[0] <= 0, we discard this input since it cannot--
@@ -1854,7 +1880,7 @@ class Velo:
                 inp_spent_tx_bl_height = inp.spent_tx.block_height
                 for bh_i in range(time_windows_cnt):
                     if inp_spent_tx_bl_height < bl_heights[bh_i]:
-                        inp_spent_index[bh_i] = True
+                        inp_spent_index[bh_i] = 1
 
                 return inp_spent_index
 
@@ -1867,6 +1893,7 @@ class Velo:
                 time_windows     = Velo.time_windows
                 time_windows_cnt = len(time_windows)
                 inps             = tx.inputs
+                inp_without_fee  = 0
                 m_circ_cbs       = 0
 
                 if tx.is_coinbase or tx.input_value == 0:
@@ -1875,10 +1902,18 @@ class Velo:
                 else:
                     for inp_i in inps:
                         if inp_i.spent_tx.is_coinbase:
+                            inp_without_fee = (
+                                inp_i.spent_tx.block.revenue
+                                - inp_i.spent_tx.block.fee
+                            )
+
                             if switch_time == True:
-                                m_circ_cbs += get_timed_input(inp_i)
+                                m_circ_cbs += get_timed_input(
+                                    inp_i,
+                                    inp_without_fee
+                                )
                             else:
-                                m_circ_cbs += inp_i.value
+                                m_circ_cbs += inp_without_fee
 
                 return m_circ_cbs
 
@@ -2035,18 +2070,40 @@ class Velo:
                             switch_circ_effective,
                         )
 
-                        if inp_spent_index[0] == True:
-                            m_circ_mc[0] += val_inp_i
+                        if ( inp_spent_index[0] ):
+                            if ( 3 == inp_spent_index[0] ):
+                                m_circ_mc[0] += (
+                                    inp_i.spent_tx.block.revenue
+                                    - inp_i.spent_tx.block.fee
+                                )
+                            else:
+                                m_circ_mc[0] += val_inp_i
+
                             for t_w in range(1, time_windows_cnt):
-                                if inp_spent_index[t_w] == True:
-                                    m_circ_mc[t_w] += val_inp_i
+                                if ( inp_spent_index[t_w] ):
+                                    if ( 3 == inp_spent_index[t_w] ):
+                                        m_circ_mc[t_w] += (
+                                            inp_i.spent_tx.block.revenue
+                                            - inp_i.spent_tx.block.fee
+                                        )
+                                    else:
+                                        m_circ_mc[t_w] += val_inp_i
 
                             if switch_time == True:
-                                val_inp_i_timed = get_timed_input(inp_i)
+                                if ( 3 == inp_spent_index[0] ):
+                                    val_inp_i_timed = get_timed_input(
+                                        inp_i,
+                                        inp_i.spent_tx.block.revenue - inp_i.spent_tx.block.fee
+                                    )
+                                else:
+                                    val_inp_i_timed = get_timed_input(
+                                        inp_i,
+                                        val_inp_i,
+                                    )
 
                                 m_circ_mc_timed[0] += val_inp_i_timed
                                 for t_w in range(1, time_windows_cnt):
-                                    if inp_spent_index[t_w] == True:
+                                    if ( inp_spent_index[t_w] ):
                                         m_circ_mc_timed[t_w] += val_inp_i_timed
 
                             # **)
