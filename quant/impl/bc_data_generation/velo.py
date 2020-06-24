@@ -1293,7 +1293,7 @@ class Velo:
             df_final["{}_o".format(m_circ_type)] = results_raw_old[m_circ_type]
 
         #--handle m_circ_tests--------------------------------------------------
-        daychunks = collect_daychunks(1)
+        daychunks = collect_daychunks(2)
         m_circ_wh_bill_raw_test = m_circ_wh_bill_test(daychunks)
 
         df_final["m_circ_cbs"] = results_raw["m_circ_cbs"]
@@ -1932,6 +1932,25 @@ class Velo:
                 # drop coinbase txes since they are addresses by----------------
                 # inp_spent_coinbase and inp_spent_before_bh_or_coinbase
                 if tx.is_coinbase:
+                    out_spending_tx = outs[0].spending_tx
+                    if out_spending_tx is None:
+                        return outs_spent
+                    else:
+                        bh_out = out_spending_tx.block_height
+                        for t_w in range(1, time_windows_cnt):
+                            bh_tw_post = bl_heights_post[t_w]
+                            bh_tw      = bl_heights[t_w]
+
+                            # check if bh_tw_post is in analyzed blockk range---
+                            if bh_tw_post >= Velo.bl_height_max:
+                                continue
+
+                            # check if bh_out is within window minus one day----
+                            if bl_heights_post[0] > bh_out or bh_out >= bh_tw:
+                                continue
+
+                            outs_spent[t_w] += tx.block.fee
+
                     return outs_spent
                 
                 # if there are no further days/blocks, we can only subtract 0---
