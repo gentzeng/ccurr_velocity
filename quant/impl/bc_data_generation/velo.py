@@ -124,7 +124,9 @@ class Velo:
     f_bl_height_min_of_index_day = []         # f_bl_height_min(index_day)------
     f_bl_height_max_of_index_day = []         # f_bl_height_max(index_day)------
     f_dates_of_id_sub_proc       = []         # f_dates(subprocess-id)----------
+    f_m_mined_of_bl_height       = []         # f_m-mined(block height)---------
     f_m_total_of_bl_height       = None       # f_m-total(block height)---------
+    f_cbs_outs_of_bl_height      = []         # f_coinbase-outputs(block height)
 
     #--remaining class attributes-----------------------------------------------
     args              = None                  # commandline arguments-----------
@@ -391,13 +393,13 @@ class Velo:
             bl_height_range_max += 1
 
             for bl_height in range(0, bl_height_range_max):
-                coin_supply_per_bl_height.append(
+                Velo.f_m_mined_of_bl_height.append(
                     coin_supply_renumeration(bl_height)
                 )
 
             # compute cumulated/aggregated coin supply per block height---------
             Velo.f_m_total_of_bl_height = cumsum(
-                coin_supply_per_bl_height
+                Velo.f_m_mined_of_bl_height
             )
 
             return
@@ -670,7 +672,7 @@ class Velo:
                 )
             )
 
-            #--get minimum/maximum bl_height according to start/end_date-----
+            #--get minimum/maximum bl_height according to start/end_date--------
             bl_height_min = Velo.block_times[
                 Velo.block_times.index >= to_datetime(Velo.start_date_gen)
             ].iloc[0][0]
@@ -681,10 +683,118 @@ class Velo:
 
             Velo.bl_height_max = bl_height_max
 
-            #--get transcation counts between start/end_date blocks-------------
+            #--get transcation counts between start/end_date blocks and prepare-
+            #--coinbase transaction infos
             cnt_txes = 0
             for i_bh in range(bl_height_min, bl_height_max):
-                cnt_txes += Velo.chain[i_bh].tx_count
+                Velo.f_cbs_outs_of_bl_height.append({})
+                block     = Velo.chain[i_bh]
+                cnt_txes += block.tx_count
+                tx        = block.coinbase_tx
+                bl_fee    = block.fee
+                bl_height = block.height
+
+                tx_outs_spending_tx_index = []
+                outs = []
+                for i in range(len(tx.outs.spending_tx_index)):
+                    ind_i = tx.outs.spending_tx_index[i]
+                    # assign 0 to unspent txo
+                    if ind_i is None:
+                        continue
+                    else:
+                        bl_height_spending = (
+                            Velo.chain.tx_with_index(ind_i).block_height
+                        )
+                        if bl_height_spending >= bl_height_max:
+                            continue
+                        else:
+                            tx_outs_spending_tx_index.append(ind_i)
+                            outs.append(tx.outs[i])
+
+                outs = sort_together(
+                    [
+                        tx_outs_spending_tx_index,
+                        outs,
+                    ],
+                    reverse = False
+                )
+
+                if not outs:
+                    continue
+
+                outs       = outs[1]
+                outs_sum   = 0
+                ind_i      = 0
+                i          = 0
+                bl_gen_rem = 0
+
+                for i in range(len(outs)):
+                    # search first spend txo
+                    ind_i = outs[i].spending_tx_index
+
+                    if 0 == ind_i or ind_i is None:
+                        continue
+
+                    else:
+                        bl_height_spending = (
+                            Velo.chain.tx_with_index(ind_i).block_height
+                        )
+
+                        # regard txes being spend after the maximum regarded
+                        # block_height as unspent. We can break here since
+                        # outs are sorted by spending tx index and thus the
+                        # blockheight of the spending tx
+                        if bl_height_max <= bl_height_spending:
+                            i -= 1
+                            ind_i = outs[i].spending_tx_index
+                            bl_gen_rem = 0
+                            break
+
+
+                        key = "{}".format(outs[i].address)
+                        Velo.f_cbs_outs_of_bl_height[-1][key] = i
+
+                        out_val = outs[i].value
+
+                        outs_sum += out_val
+                        if outs_sum > bl_fee:
+                            bl_gen_rem = outs_sum - bl_fee
+                            break
+
+                key = "gen_rem_index"
+                Velo.f_cbs_outs_of_bl_height[-1][key] = i
+
+                key = "gen_rem"
+                Velo.f_cbs_outs_of_bl_height[-1][key] = bl_gen_rem
+
+               #if ( 283680 == bl_height ):
+               #    print("\n---block 283442 outs---")
+               #    print(outs)
+               #    print("\n---block 283442 outs dictionary---")
+               #    print(Velo.f_cbs_outs_of_bl_height[-1])
+
+               #print(
+               #    "bh = {: 7}   "
+               #    "bh_i = {: 7}   "
+               #    "ind_i = {: 12}   "
+               #    "out cnt = {: 4}   "
+               #    "i = {: 4}   "
+               #    "tx_outs_val = {: 15}   "
+               #    "outs_sum = {: 15}   "
+               #    "fee = {: 15}   "
+               #    "gen_rem = {: 15}   "
+               #    "".format(
+               #        bl_height,
+               #        bl_height_spending,
+               #        ind_i,
+               #        len(outs),
+               #        i,
+               #        tx.output_value,
+               #        outs_sum,
+               #        bl_fee,
+               #        bl_gen_rem,
+               #    )
+               #)
 
             # print number of txes
             Velo.logger.debug(
@@ -1171,6 +1281,7 @@ class Velo:
             val_outs_break = 0
             val_outs       = tx.output_value
             bl_height_loc  = bl_height
+            cbs_outs       = Velo.f_cbs_outs_of_bl_height
 
             if tx.input_value == 0 or val_outs == 0 or tx.is_coinbase:
                 return m_circ_mc
@@ -1198,12 +1309,31 @@ class Velo:
                     )
 
                     if ( inp_spent_index ):
-                        # if coinbase is within window, do not count fee
+                        # if coming from a coinbase transaction
+                        cbs_out_index = 0
+                        gen_rem_index = 0
+                        gen_rem       = 0
+
+                        if ( 2 <= inp_spent_index ):
+                            inp_spt_tx_bh = inp_i.spent_tx.block_height
+                            cbs_out_bh    = cbs_outs[inp_spt_tx_bh]
+                            gen_rem       = cbs_out_bh["gen_rem"]
+                            gen_rem_index = cbs_out_bh["gen_rem_index"]
+                            address       = "{}".format(inp_i.address)
+
                         if ( 3 == inp_spent_index):
-                            m_circ_mc += (
-                                inp_i.spent_tx.block.revenue
-                                - inp_i.spent_tx.block.fee
-                            )
+                            if address in cbs_out_bh:
+                                cbs_out_index = cbs_out_bh[address]
+
+                                if cbs_out_index > gen_rem_index:
+                                    m_circ_mc += val_inp_i
+
+                                elif cbs_out_index == gen_rem_index:
+                                    m_circ_mc += gen_rem
+
+                            else:
+                                m_circ_mc += val_inp_i
+
                         else:
                             m_circ_mc += val_inp_i
 
@@ -1417,7 +1547,7 @@ class Velo:
         """
         Run the thread.
         """
-        def print_liveliness_message(
+        def print_liveliness_message_old(
             i_day,
             function_str,
         ):
@@ -1556,6 +1686,48 @@ class Velo:
                             cs.WHI,
                             i_day,
                             date_period,
+                        ),
+                        function_str,
+                    ),
+                )
+
+            return
+
+        def print_liveliness_message(
+            i_day,
+            function_str,
+        ):
+            """
+            This function checks whether a liveliness message regaring
+            the number of txes and the respective day id should be
+            printed.
+            Note that this function is not very dynamic and totally
+            uggly!
+            """
+            print_still_alive = False
+            txes_num = self.__txes_count
+            date_period = self.__date_period
+
+            date_perc = i_day/date_period * 100
+
+            if date_perc % 10 == 0:
+                print_still_alive = True
+
+            if i_day != 0 and print_still_alive == True:
+                colorChoice = cs.WHI
+                if date_period >= 100:
+                    colorChoice = cs.CYB
+
+                Velo.logger.info(
+                    "{}[{}{}/{:03}{}]   {}   {}".format(
+                        cs.RES,
+                        colorChoice,
+                        self.process_name,
+                        Velo.process_cnt-1,
+                        cs.RES,
+                        "{}[          {:03}%]".format(
+                            cs.WHI,
+                            date_perc,
                         ),
                         function_str,
                     ),
@@ -1903,7 +2075,7 @@ class Velo:
                     for inp_i in inps:
                         if inp_i.spent_tx.is_coinbase:
                             inp_without_fee = (
-                                inp_i.spent_tx.block.revenue
+                                inp_i.spent_tx.block.output_value
                                 - inp_i.spent_tx.block.fee
                             )
 
@@ -1928,30 +2100,51 @@ class Velo:
                 time_windows_cnt = len(time_windows)
                 outs             = tx.outputs
                 outs_spent       = [0 for t in range(time_windows_cnt)]
+                cbs_outs         = Velo.f_cbs_outs_of_bl_height
 
                 # drop coinbase txes since they are addresses by----------------
                 # inp_spent_coinbase and inp_spent_before_bh_or_coinbase
                 if tx.is_coinbase:
-                    out_spending_tx = outs[0].spending_tx
-                    if out_spending_tx is None:
+                    for out_i in outs:
+                        out_i_spending_tx = out_i.spending_tx
+                        if out_i_spending_tx is None:
+                            return outs_spent
+
+                        else:
+                            bh_out = out_i_spending_tx.block_height
+
+                            # output is spent, but not within the analyzed range
+                            if bh_out >= Velo.bl_height_max:
+                                return outs_spent
+
+                            for t_w in range(1, time_windows_cnt):
+                                bh_tw_post = bl_heights_post[t_w]
+                                bh_tw      = bl_heights[t_w]
+
+                                # check if bh_tw_post is in analyzed block range
+                                if bh_tw_post >= Velo.bl_height_max:
+                                    continue
+
+                                # check if bh_out is within window minus one day
+                                if bl_heights_post[0] > bh_out or bh_out >= bh_tw:
+                                    continue
+
+                                # check if output comes represents fee----------
+                                cbs_out_bh    = cbs_outs[tx.block_height]
+                                address       = "{}".format(out_i.address)
+                                if address in cbs_out_bh:
+                                    cbs_out_index = cbs_out_bh[address]
+                                    gen_rem       = cbs_out_bh["gen_rem"]
+                                    gen_rem_index = cbs_out_bh["gen_rem_index"]
+                                    if cbs_out_index < gen_rem_index:
+                                        outs_spent[t_w] += out_i.value
+
+                                    elif cbs_out_index == gen_rem_index:
+                                        outs_spent[t_w] += (
+                                            out_i.value - gen_rem
+                                        )
+
                         return outs_spent
-                    else:
-                        bh_out = out_spending_tx.block_height
-                        for t_w in range(1, time_windows_cnt):
-                            bh_tw_post = bl_heights_post[t_w]
-                            bh_tw      = bl_heights[t_w]
-
-                            # check if bh_tw_post is in analyzed blockk range---
-                            if bh_tw_post >= Velo.bl_height_max:
-                                continue
-
-                            # check if bh_out is within window minus one day----
-                            if bl_heights_post[0] > bh_out or bh_out >= bh_tw:
-                                continue
-
-                            outs_spent[t_w] += tx.block.fee
-
-                    return outs_spent
                 
                 # if there are no further days/blocks, we can only subtract 0---
                 if bl_heights_post[0] >= Velo.bl_height_max:
@@ -2047,6 +2240,7 @@ class Velo:
                 val_outs_break   = 0
                 val_outs         = tx.output_value
                 bl_heights_loc   = bl_heights
+                cbs_outs         = Velo.f_cbs_outs_of_bl_height
 
                 if tx.input_value == 0 or val_outs == 0 or tx.is_coinbase:
                     return m_circ_mc
@@ -2090,21 +2284,48 @@ class Velo:
                         )
 
                         if ( inp_spent_index[0] ):
+                            # if coming from a coinbase transaction
+                            cbs_out_index = 0
+                            gen_rem_index = 0
+                            gen_rem       = 0
+                            if ( 2 <= inp_spent_index[0] ):
+                                inp_spt_tx_bh = inp_i.spent_tx.block_height
+                                cbs_out_bh    = cbs_outs[inp_spt_tx_bh]
+                                gen_rem       = cbs_out_bh["gen_rem"]
+                                gen_rem_index = cbs_out_bh["gen_rem_index"]
+                                address       = "{}".format(inp_i.address)
+
                             if ( 3 == inp_spent_index[0] ):
-                                m_circ_mc[0] += (
-                                    inp_i.spent_tx.block.revenue
-                                    - inp_i.spent_tx.block.fee
-                                )
+                                if address in cbs_out_bh:
+                                    cbs_out_index = cbs_out_bh[address]
+
+                                    if cbs_out_index > gen_rem_index:
+                                        m_circ_mc[0] += val_inp_i
+
+                                    elif cbs_out_index == gen_rem_index:
+                                        m_circ_mc[0] += gen_rem
+
+                                else:
+                                    m_circ_mc[0] += val_inp_i
+
                             else:
                                 m_circ_mc[0] += val_inp_i
 
                             for t_w in range(1, time_windows_cnt):
                                 if ( inp_spent_index[t_w] ):
                                     if ( 3 == inp_spent_index[t_w] ):
-                                        m_circ_mc[t_w] += (
-                                            inp_i.spent_tx.block.revenue
-                                            - inp_i.spent_tx.block.fee
-                                        )
+                                        if address in cbs_out_bh:
+                                            cbs_out_index = cbs_out_bh[address]
+
+                                            if cbs_out_index > gen_rem_index:
+                                                m_circ_mc[t_w] += val_inp_i
+
+                                            elif cbs_out_index == gen_rem_index:
+                                                m_circ_mc[t_w] += gen_rem
+
+                                        else:
+                                            m_circ_mc[t_w] += val_inp_i
+
                                     else:
                                         m_circ_mc[t_w] += val_inp_i
 
