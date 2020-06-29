@@ -97,7 +97,7 @@ class Multiprocess:
 
             return
 
-        for process_id in range(0,len(Multiprocess.processes)):
+        for process_id, _ in enumerate(Multiprocess.processes):
             processes_kill(process_id)
 
         return
