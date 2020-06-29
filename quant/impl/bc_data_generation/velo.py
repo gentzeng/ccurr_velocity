@@ -726,6 +726,7 @@ class Velo:
                 outs_sum   = 0
                 out_i      = 0
                 bl_gen_rem = 0
+                bl_fee_rem = 0
 
                 for out_i, out in enumerate(outs):
                     ind = out.spending_tx_index
@@ -736,7 +737,24 @@ class Velo:
 
                     outs_sum += out.value
                     if outs_sum >= bl_fee:
-                        bl_gen_rem = outs_sum - bl_fee
+                        bl_gen_rem = outs_sum  - bl_fee
+                        bl_fee_rem = out.value - bl_gen_rem
+                        if bl_gen_rem < 0:
+                            raise ValueError(
+                                "remaining amount of new coins of block {: 7} must not be"
+                                "less than 0 but is {: 12}!".format(
+                                    bl_height,
+                                    bl_gen_rem,
+                                )
+                            )
+                        if bl_fee_rem < 0:
+                            raise ValueError(
+                                "remaining fee of block {: 7} must not be"
+                                "less than 0 but is {: 12}!".format(
+                                    bl_height,
+                                    bl_fee_rem,
+                                )
+                            )
                         break
 
                 key = "gen_rem_index"
@@ -745,34 +763,39 @@ class Velo:
                 key = "gen_rem"
                 Velo.f_cbs_outs_of_bh[-1][key] = bl_gen_rem
 
-               #if ( 283680 == bl_height ):
-               #    print("\n---block 283442 outs---")
-               #    print(outs)
-               #    print("\n---block 283442 outs dictionary---")
-               #    print(Velo.f_cbs_outs_of_bh[-1])
+                key = "fee_rem"
+                Velo.f_cbs_outs_of_bh[-1][key] = bl_fee_rem
 
-               #print(
-               #    "bh = {: 7}   "
-               #    "bh_i = {: 7}   "
-               #    "ind = {: 12}   "
-               #    "out_cnt = {: 4}   "
-               #    "out_i = {: 4}   "
-               #    "tx_outs_val = {: 15}   "
-               #    "outs_sum = {: 15}   "
-               #    "fee = {: 15}   "
-               #    "gen_rem = {: 15}   "
-               #    "".format(
-               #        bl_height,
-               #        bl_height_spending,
-               #        ind,
-               #        len(outs),
-               #        out_iout_i,
-               #        tx.output_value,
-               #        outs_sum,
-               #        bl_fee,
-               #        bl_gen_rem,
-               #    )
-               #)
+                ####if ( 172091 == bl_height ):
+                ####    print("\n---block 283442 outs---")
+                ####    print(outs)
+                ####    print("\n---block 283442 outs dictionary---")
+                ####    print(Velo.f_cbs_outs_of_bh[-1])
+
+                ####    print(
+                ####        "bh = {: 7}   "
+                ####        "bh_i = {: 7}   "
+                ####        "ind = {: 12}   "
+                ####        "out_cnt = {: 4}   "
+                ####        "out_i = {: 4}   "
+                ####        "tx_outs_val = {: 15}   "
+                ####        "outs_sum = {: 15}   "
+                ####        "fee = {: 15}   "
+                ####        "gen_rem = {: 15}   "
+                ####        "fee_rem = {: 15}   "
+                ####        "".format(
+                ####            bl_height,
+                ####            bh_spending,
+                ####            ind,
+                ####            len(outs),
+                ####            out_i,
+                ####            tx.output_value,
+                ####            outs_sum,
+                ####            bl_fee,
+                ####            bl_gen_rem,
+                ####            bl_fee_rem,
+                ####        )
+                ####    )
 
             # print number of txes
             Velo.logger.debug(
@@ -1200,33 +1223,41 @@ class Velo:
         def m_circ_wh_bill_per_tx_test(
             tx,
             bl_height,
-            switch_cbso=False,
+            switch_cbso=0,
         ):
             """
             """
             def inp_spent_before_bh_or_coinbase_test(
                 inp,
                 bl_heights,
-                switch_cbso=False,
+                switch_cbso=0,
             ):
                 """
                 This function represents the condition for the handle_tx_mc
                 functions to decide, whether to sum an input or not.
                 """
-
+                inp_spent_index        = 0
                 is_coinbase            = False
                 inp_spent_tx_bl_height = inp.spent_tx.block_height
 
                 # check if the tx that spent this input is a coinbase tx--------
                 if inp.spent_tx.is_coinbase:
+                    inp_spent_index = 2
                     is_coinbase = True
 
-                if switch_cbso == True and is_coinbase == False:
-                    return 0
+
+                if switch_cbso == 1 and is_coinbase == True:
+                    inp_spent_index = 0
+                    return inp_spent_index
+
+                if switch_cbso == 2 and is_coinbase == False:
+                    #inp_spent_index = 0
+                    return inp_spent_index
 
                 # if bl_height <= 0, we discard this input since it-------------
                 # cannot be spent before this block height
                 if bl_height <= 0 and is_coinbase == False:
+                    #inp_spent_index = 0
                     return 0
 
                 # check if the spent tx linked to this input is older than------
@@ -1234,16 +1265,15 @@ class Velo:
                 if bl_heights <= inp_spent_tx_bl_height and (
                     0 != bl_heights or 0 != inp_spent_tx_bl_height
                 ):
-                    if is_coinbase:
-                        return 2
-
-                    return 0
+                    return inp_spent_index
 
                 # spent tx is older than given blockheight----------------------
                 if is_coinbase:
-                    return 3
+                    inp_spent_index = 3
+                    return inp_spent_index
 
-                return 1
+                inp_spent_index = 1
+                return inp_spent_index
 
             m_circ_mc      = 0
             inps           = tx.inputs
@@ -1318,7 +1348,7 @@ class Velo:
 
         def m_circ_wh_bill_test(
             daychunks,
-            switch_cbso=False,
+            switch_cbso=0,
         ):
             """
             """
@@ -1396,7 +1426,7 @@ class Velo:
         daychunks = collect_daychunks(2)
         m_circ_wh_bill_raw_test = m_circ_wh_bill_test(
             daychunks,
-            switch_cbso=True,
+            switch_cbso=1,
         )
 
         df_final["m_circ_cbs"] = results_raw["m_circ_cbs"]
@@ -1549,7 +1579,7 @@ class Velo:
                     self.process_name,
                     Velo.process_cnt-1,
                     cs.RES,
-                    "{}[          {:03}%]".format(
+                    "{}[          {: 3}%]".format(
                         cs.WHI,
                         date_perc,
                     ),
@@ -1834,7 +1864,7 @@ class Velo:
                 inp,
                 bl_heights,
                 switch_circ_effective,
-                switch_cbso=False,
+                switch_cbso=0,
             ):
                 """
                 This function represents the condition for the handle_tx_mc
@@ -1855,6 +1885,7 @@ class Velo:
                     0 for t in range(Velo.time_windows_cnt)
                 ]
                 is_coinbase            = False
+                bh_first               = bl_heights[0]
                 inp_spent_tx_bl_height = inp.spent_tx.block_height
 
                 # if we do not count money in effective circulation, we count---
@@ -1865,9 +1896,16 @@ class Velo:
 
                 # check if the tx that spent this input is a coinbase tx--------
                 if inp.spent_tx.is_coinbase:
+                    inp_spent_index        = [
+                        2 for t in range(Velo.time_windows_cnt)
+                    ]
                     is_coinbase = True
 
-                if switch_cbso == True and is_coinbase == False:
+                if switch_cbso == 1 and is_coinbase == True:
+                    inp_spent_index = [0 for t in range(Velo.time_windows_cnt)]
+                    return inp_spent_index
+
+                if switch_cbso == 2 and is_coinbase == False:
                     #inp_spent_index = [0 for t in range(Velo.time_windows_cnt)]
                     return inp_spent_index
 
@@ -1875,22 +1913,23 @@ class Velo:
                 # be spent before this block height, except for the first trans-
                 # action ever, which is also the first coinbase transaction
                 # (bl 0 is start of blockchain)
-                if bl_heights[0] <= 0 and is_coinbase == False:
+                # Since block_heights are mapped to time windows being sorted
+                # ascending, block heights are sorted descending
+                # Thus, bh_first <= 0 means, that all other block heights are
+                # also less than 0.
+
+                if bh_first <= 0 and is_coinbase == False:
                     #inp_spent_index = [0 for t in range(Velo.time_windows_cnt)]
                     return inp_spent_index
 
+                # TODO: What if bh is <= than 0?
                 for bh_i, bh in enumerate(bl_heights):
                     # check if the spent tx linked to this input is older than--
                     # given block height, here: not older
                     if bh <= inp_spent_tx_bl_height and (
                         0 != bh or 0 != inp_spent_tx_bl_height
                     ):
-                        if is_coinbase:
-                            inp_spent_index[bh_i] = 2
-                            continue
-
-                        inp_spent_index[bh_i] = 0
-                        continue
+                        break
 
                     # spent tx is older than given blockheight------------------
                     if is_coinbase:
@@ -1908,46 +1947,77 @@ class Velo:
                 """
                 """
                 inps             = tx.inputs
-                inp_without_fee  = 0
                 m_circ_cbs       = 0
+                cbs_outs         = Velo.f_cbs_outs_of_bh
 
                 if tx.is_coinbase or tx.input_value == 0:
                     return m_circ_cbs
 
                 for inp in inps:
-                    if inp.spent_tx.is_coinbase:
-                        inp_without_fee = (
-                            inp.spent_tx.block.output_value
-                            - inp.spent_tx.block.fee
-                        )
+                    cbs_out_index = 0
+                    gen_rem_index = 0
+                    gen_rem       = 0
+                    val_inp       = inp.value
 
-                        if switch_time == True:
-                            m_circ_cbs += get_timed_input(
-                                inp,
-                                inp_without_fee
-                            )
-                        else:
-                            m_circ_cbs += inp_without_fee
+                    if not inp.spent_tx.is_coinbase:
+                        continue
+
+                    inp_spt_tx_bh = inp.spent_tx.block_height
+                    cbs_out_bh    = cbs_outs[inp_spt_tx_bh]
+                    gen_rem       = cbs_out_bh["gen_rem"]
+                    gen_rem_index = cbs_out_bh["gen_rem_index"]
+                    address       = "{}".format(inp.address)
+
+                    if address in cbs_out_bh:
+                        cbs_out_index = cbs_out_bh[address]
+
+                        if cbs_out_index < gen_rem_index:
+                            continue
+
+                        if cbs_out_index == gen_rem_index:
+                            if switch_time == True:
+                                m_circ_cbs += get_timed_input(
+                                    inp,
+                                    gen_rem
+                                )
+                                continue
+
+                            m_circ_cbs += gen_rem
+                            continue
+
+                    if switch_time == True:
+                        m_circ_cbs += get_timed_input(
+                            inp,
+                            val_inp
+                        )
+                        continue
+
+                    m_circ_cbs += val_inp
 
                 return m_circ_cbs
 
             def outs_spent_bl_heights(
                 tx,
-                bl_heights_post,
-                bl_heights,
-                switch_cbso=False,
+                bh_look_ahead,
+                switch_cbso=0,
             ):
                 """
                 """
                 outs             = tx.outputs
                 outs_spent       = [0 for t in range(Velo.time_windows_cnt)]
                 cbs_outs         = Velo.f_cbs_outs_of_bh
-                bl_height_begin  = bl_heights_post[0]
+                bh_day_next      = bh_look_ahead[0]
                 tx_is_coinbase   = tx.is_coinbase
+
+                if switch_cbso == 1 and tx_is_coinbase:
+                    return outs_spent
+
+                if switch_cbso == 2 and not tx_is_coinbase:
+                    return outs_spent
 
                 # if tx is coinbase and there are no further days/blocks,-------
                 # we can only subtract 0---
-                if tx_is_coinbase and bl_height_begin >= Velo.bl_height_max:
+                if tx_is_coinbase and bh_day_next >= Velo.bl_height_max:
                     return outs_spent
 
                 # otherwise, add all outputs that have a spending_tx within the-
@@ -1967,47 +2037,50 @@ class Velo:
 
                     # check block heights for each time window------------------
                     for tw_i, _ in enumerate(Velo.time_windows[1:], start=1):
-                        bh_tw = bl_heights[tw_i]
+                        bh_la = bh_look_ahead[tw_i]
 
                         # check if bh_tw is in analyzed block range-------------
-                        if bh_tw >= Velo.bl_height_max:
-                            continue
+                        # we can break here since all following bh_la's will
+                        # be even greater!
+                        if bh_la >= Velo.bl_height_max:
+                            break
 
-                        # check if bh_out is within window minus one day
-                        if bl_height_begin > bh_out or bh_out >= bh_tw:
+                        # check if bh_out is within window----------------------
+                        # we can break here sinde bh_day_next and bh_out are
+                        # independent from bh_la
+                        if bh_day_next > bh_out:
+                            break
+
+                        # since bh_la is growing with each time window,  we check
+                        # the next one by continuing
+                        if bh_out >= bh_la:
                             continue
 
                         # handle coinbase and normal transactions---------------
-                        if not tx_is_coinbase and switch_cbso == True:
-                            continue
-
                         if tx_is_coinbase:
                             cbs_out_bh = cbs_outs[tx.block_height]
                             address    = "{}".format(out.address)
 
                             if address not in cbs_out_bh:
-                                continue
+                                break
 
                             cbs_out_index = cbs_out_bh[address]
                             gen_rem       = cbs_out_bh["gen_rem"]
                             gen_rem_index = cbs_out_bh["gen_rem_index"]
+                            fee_rem       = cbs_out_bh["fee_rem"]
 
                             # check if output represents newly generated coins--
                             if cbs_out_index > gen_rem_index:
-                                continue
+                                break
 
                             # output represents fees collected in coinbase tx---
                             if cbs_out_index == gen_rem_index:
-                                fee_rem = out.value - gen_rem
-                                if fee_rem < 0:
-                                    raise ValueError(
-                                        "remaining fee must not be less than 0!"
-                                    )
+
 
                                 outs_spent[tw_i] += fee_rem
                                 continue
 
-                            outs_spent[tw_i] += out.value
+                        outs_spent[tw_i] += out.value
 
                 return outs_spent
 
@@ -2030,7 +2103,7 @@ class Velo:
                 switch_wb_bill=True,
                 switch_sort=False,
                 switch_time=False,
-                switch_cbso=False,
+                switch_cbso=0,
             ):
                 """
                 Compute and return satoshi days desdroyed (sdd) per tx.
@@ -2058,6 +2131,7 @@ class Velo:
                 #---------------------------------------------------------------
                 m_circ_mc        = [0 for t in range(Velo.time_windows_cnt)]
                 m_circ_mc_timed  = [0 for t in range(Velo.time_windows_cnt)]
+                m_circ_mc_break  = 0
                 inps             = tx.inputs
                 val_outs_break   = 0
                 val_outs         = tx.output_value
@@ -2100,6 +2174,7 @@ class Velo:
                     gen_rem         = 0
                     val_inp         = inp.value
                     val_outs_break += val_inp
+                    address         = None
 
                     inp_spent_index = inp_spent_before_bh_or_coinbase(
                         inp,
@@ -2107,66 +2182,46 @@ class Velo:
                         switch_circ_effective,
                         switch_cbso,
                     )
-
-                    if 0 == inp_spent_index[0]:
-                        continue
-
                     # if coming from a coinbase transaction
                     if 2 <= inp_spent_index[0]:
                         inp_spt_tx_bh = inp.spent_tx.block_height
                         cbs_out_bh    = cbs_outs[inp_spt_tx_bh]
-                        gen_rem       = cbs_out_bh["gen_rem"]
                         gen_rem_index = cbs_out_bh["gen_rem_index"]
+                        gen_rem       = cbs_out_bh["gen_rem"]
                         address       = "{}".format(inp.address)
 
-                    if 2 == inp_spent_index[0] and address in cbs_out_bh:
-                        cbs_out_index = cbs_out_bh[address]
-
-                        if cbs_out_index < gen_rem_index:
-                            continue
-
-                        if cbs_out_index == gen_rem_index:
-                            m_circ_mc[0] += gen_rem
-                            continue
-
-                    m_circ_mc[0] += val_inp
-
-                    for tw_i, _ in enumerate(Velo.time_windows[1:], start=1):
+                    for tw_i, _ in enumerate(Velo.time_windows):
                         if 0 == inp_spent_index[tw_i]:
-                            continue
+                            break
 
                         if 2 == inp_spent_index[tw_i] and address in cbs_out_bh:
                             cbs_out_index = cbs_out_bh[address]
 
                             if cbs_out_index < gen_rem_index:
-                                continue
+                                break
 
                             if cbs_out_index == gen_rem_index:
-                                m_circ_mc[tw_i] += gen_rem
+                                if tw_i == 0:
+                                    m_circ_mc_break += gen_rem
+                                m_circ_mc[tw_i]       += gen_rem
+                                m_circ_mc_timed[tw_i] += get_timed_input(
+                                    inp,
+                                    gen_rem
+                                )
                                 continue
 
-                        m_circ_mc[tw_i] += val_inp
-
-                    if switch_time == True:
-                        if ( 3 == inp_spent_index[0] ):
-                            val_inp_timed = get_timed_input(
-                                inp,
-                                inp.spent_tx.block.revenue - inp.spent_tx.block.fee
-                            )
-                        else:
-                            val_inp_timed = get_timed_input(
-                                inp,
-                                val_inp,
-                            )
-
-                        m_circ_mc_timed[0] += val_inp_timed
-                        for tw_i, _ in enumerate(Velo.time_windows[1:], start=1):
-                            if ( inp_spent_index[tw_i] ):
-                                m_circ_mc_timed[tw_i] += val_inp_timed
+                        # inp_spent_index[tw_i] is 1 or 3
+                        if tw_i == 0:
+                            m_circ_mc_break += val_inp
+                        m_circ_mc[tw_i]       += val_inp
+                        m_circ_mc_timed[tw_i] += get_timed_input(
+                            inp,
+                            val_inp
+                        )
 
                     # **)
                     if val_outs_break >= val_outs_sent_to_others:
-                        if m_circ_mc[0] >= val_outs_sent_to_others:
+                        if m_circ_mc_break >= val_outs_sent_to_others:
                             m_circ_mc[0] = val_outs_sent_to_others
                         break
 
@@ -2244,14 +2299,13 @@ class Velo:
 
             # retrieve data for each daychunk of txes---------------------------
             for dc_i, daychunk in enumerate(self.__txes_daily):
-
                 # print some liveliness message---------------------------------
                 print_liveliness_message(
                     dc_i,
                     "get_measurements()"
                 )
 
-                # initialize daily values --------------------------------------
+                # initialize daily values---------------------------------------
                 m_circ_cbs      .append(0)
                 m_circ_cbs_timed.append(0)
 
@@ -2268,44 +2322,39 @@ class Velo:
                     continue
 
                 # initialize day_index/first block heights of txes--------------
-                day_index       = dc_i + self.__day_index_first
-                bh_look_back    = [-1 for t in range(Velo.time_windows_cnt)]
-                bh              = [-1 for t in range(Velo.time_windows_cnt)]
-                bh_post         = [-1 for t in range(Velo.time_windows_cnt)]
+                day_index     = dc_i + self.__day_index_first
+                bh_look_back  = [-1 for t in range(Velo.time_windows_cnt)]
+                bh_look_ahead = [-1 for t in range(Velo.time_windows_cnt)]
 
-                # prepare windows values/days and block heights-----------------
-                bh_look_back[0] = daychunk[ 0].block_height
-                if day_index >= Velo.cnt_days:
-                    bh[0]      = Velo.bl_height_max + day_index
-                    bh_post[0] = Velo.bl_height_max + day_index + 1
-                else:
-                    bh[0]      = Velo.f_bh_min_of_day_id[day_index]
-                    bh_post[0] = (
-                        Velo.f_bh_max_of_day_id[day_index] + 1
-                    )
+                # prepare look back block heights for money in circulation------
+                # since the first time window is always 1, bh_look_back[0]
+                # always yields the first block height of this day/daychunk
 
-                for tw_i, t_w in enumerate(Velo.time_windows[1:], start=1):
-                    day_tw_look_back  = day_index - t_w + 1
-                    day_tw            = day_index + t_w
+                for tw_i, t_w in enumerate(Velo.time_windows):
+                    day_look_back = day_index - t_w + 1
 
-                    if day_tw_look_back >= 0:
-                        bh_look_back[tw_i] = Velo.f_bh_min_of_day_id[
-                            day_tw_look_back
-                        ]
-                    elif day_tw_look_back < 0:
-                        bh_look_back[tw_i] = day_tw_look_back
+                    if day_look_back < 0:
+                        bh_look_back[tw_i] = -t_w
+                        continue
 
-                    if day_tw < Velo.cnt_days-1:
-                        bh[tw_i]      = (
-                            Velo.f_bh_min_of_day_id[day_tw]
+                    bh_look_back[tw_i] = Velo.f_bh_min_of_day_id[day_look_back]
+
+                # prepare look ahead block heights for output_spent_bl_heights()
+                # since the first time window is always 1, bh_look_ahead[0]
+                # alsways yields this first block height of the following day
+
+                for tw_i, t_w in enumerate(Velo.time_windows):
+                    day_look_ahead = day_index + t_w
+
+                    if day_look_ahead >= Velo.cnt_days:
+                        bh_look_ahead[tw_i] = (
+                            Velo.bl_height_max + t_w
                         )
-                        bh_post[tw_i] = (
-                            Velo.f_bh_max_of_day_id[day_tw] + 1
-                        )
+                        continue
 
-                    elif day_tw >= Velo.cnt_days:
-                        bh_post[tw_i] = Velo.bl_height_max + day_tw + 1
-                        bh[tw_i]      = Velo.bl_height_max + day_tw
+                    bh_look_ahead[tw_i] = Velo.f_bh_min_of_day_id[
+                        day_look_ahead
+                    ]
 
                 # retrieve tx-wise values for money in effective cirulation-----
                 for tx in daychunk:
@@ -2320,7 +2369,7 @@ class Velo:
                         switch_wb_bill=True,
                         switch_sort=False,
                         switch_time=True,
-                        switch_cbso=False,
+                        switch_cbso=0,
                     )
                     m_circ_wh_bill_per_tx   = handle_tx_m_circ(
                         tx,
@@ -2329,7 +2378,7 @@ class Velo:
                         switch_wb_bill=True,
                         switch_sort=False,
                         switch_time=False,
-                        switch_cbso=True,
+                        switch_cbso=1,
                     )
                     m_circ_mc_lifo_per_tx   = handle_tx_m_circ(
                         tx,
@@ -2338,7 +2387,7 @@ class Velo:
                         switch_wb_bill=False,
                         switch_sort=False,
                         switch_time=False,
-                        switch_cbso=False,
+                        switch_cbso=0,
                     )
                     m_circ_mc_fifo_per_tx   = handle_tx_m_circ(
                         tx,
@@ -2347,7 +2396,7 @@ class Velo:
                         switch_wb_bill=False,
                         switch_sort=True,
                         switch_time=False,
-                        switch_cbso=False,
+                        switch_cbso=0,
                     )
                     m_circ_cbs_per_tx       = inp_spent_coinbase(
                         tx,
@@ -2369,9 +2418,8 @@ class Velo:
                     if Velo.time_windows_cnt > 1:
                         outs_spent_btw_per_tx = outs_spent_bl_heights(
                             tx,
-                            bh_post,
-                            bh,
-                            switch_cbso=True,
+                            bh_look_ahead,
+                            switch_cbso=1,
                         )
 
                     # prepare data structures for windowed values---------------
