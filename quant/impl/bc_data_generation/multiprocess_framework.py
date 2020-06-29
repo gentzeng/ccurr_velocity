@@ -823,7 +823,7 @@ class Multiprocess:
             "%m/%d/%Y"
         ).date()
 
-        s_p_d = Velo.f_dates_of_id_sub_proc
+        s_p_d = Velo.f_dates_of_sub_proc_id
         Multiprocess.process_cnt = len(s_p_d)
         Velo.process_cnt         = Multiprocess.process_cnt
 
@@ -999,7 +999,7 @@ class MultiprocessTest:
 
         # next day to include date_period_end. Otherwise, it won't be regarded
         # due to the blocksci chainrange being computed as the daily difference.
-        s_p_d = Velo.f_dates_of_id_sub_proc
+        s_p_d = Velo.f_dates_of_sub_proc_id
 
         date_period_start        = s_p_d[date_id][0]
         date_period_end          = s_p_d[date_id][1] - timedelta(days=1)

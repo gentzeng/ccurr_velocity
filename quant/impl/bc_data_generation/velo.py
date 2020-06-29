@@ -120,13 +120,12 @@ class Velo:
     results_raw_types_comp_meas_tw = []
 
     #--lookup functions/mappings-(as lists)-------------------------------------
-    f_index_day_of_bl_height     = []         # f_index-day(block height)-------
-    f_bl_height_min_of_index_day = []         # f_bl_height_min(index_day)------
-    f_bl_height_max_of_index_day = []         # f_bl_height_max(index_day)------
-    f_dates_of_id_sub_proc       = []         # f_dates(subprocess-id)----------
-    f_m_mined_of_bl_height       = []         # f_m-mined(block height)---------
-    f_m_total_of_bl_height       = None       # f_m-total(block height)---------
-    f_cbs_outs_of_bl_height      = []         # f_coinbase-outputs(block height)
+    f_bh_min_of_day_id     = []               # f_bl-height-min(index_day)------
+    f_bh_max_of_day_id     = []               # f_bl-height-max(index_day)------
+    f_dates_of_sub_proc_id = []               # f_dates(subprocess-id)----------
+    f_m_mined_of_bh        = []               # f_m-mined(block height)---------
+    f_m_total_of_bh        = None             # f_m-total(block height)---------
+    f_cbs_outs_of_bh       = []               # f_coinbase-outputs(block height)
 
     #--remaining class attributes-----------------------------------------------
     args              = None                  # commandline arguments-----------
@@ -394,13 +393,13 @@ class Velo:
             bl_height_range_max += 1
 
             for bl_height in range(bl_height_range_max):
-                Velo.f_m_mined_of_bl_height.append(
+                Velo.f_m_mined_of_bh.append(
                     coin_supply_renumeration(bl_height)
                 )
 
             # compute cumulated/aggregated coin supply per block height---------
-            Velo.f_m_total_of_bl_height = cumsum(
-                Velo.f_m_mined_of_bl_height
+            Velo.f_m_total_of_bh = cumsum(
+                Velo.f_m_mined_of_bh
             )
 
             return
@@ -560,7 +559,7 @@ class Velo:
                         sub_proc_date_period,
                         sub_proc_txes_counter
                     ]
-                    Velo.f_dates_of_id_sub_proc.append(sub_proc_date)
+                    Velo.f_dates_of_sub_proc_id.append(sub_proc_date)
                     Velo.logger.info(
                         "{}[{}process_{:03}    {}]   {}   {}".format(
                             cs.RES,
@@ -600,7 +599,7 @@ class Velo:
                         sub_proc_date_period,
                         sub_proc_txes_counter
                     ]
-                    Velo.f_dates_of_id_sub_proc.append(sub_proc_date)
+                    Velo.f_dates_of_sub_proc_id.append(sub_proc_date)
                     Velo.logger.info(
                         "{}[{}process_{:03}    {}]   {}   {}".format(
                             cs.RES,
@@ -688,7 +687,7 @@ class Velo:
             #--coinbase transaction infos
             cnt_txes = 0
             for bh_i in range(bl_height_min, bl_height_max):
-                Velo.f_cbs_outs_of_bl_height.append({})
+                Velo.f_cbs_outs_of_bh.append({})
                 block           = Velo.chain[bh_i]
                 tx              = block.coinbase_tx
                 bl_fee          = block.fee
@@ -733,7 +732,7 @@ class Velo:
                     bh_spending = Velo.chain.tx_with_index(ind).block_height
 
                     key = "{}".format(out.address)
-                    Velo.f_cbs_outs_of_bl_height[-1][key] = out_i
+                    Velo.f_cbs_outs_of_bh[-1][key] = out_i
 
                     outs_sum += out.value
                     if outs_sum >= bl_fee:
@@ -741,16 +740,16 @@ class Velo:
                         break
 
                 key = "gen_rem_index"
-                Velo.f_cbs_outs_of_bl_height[-1][key] = out_i
+                Velo.f_cbs_outs_of_bh[-1][key] = out_i
 
                 key = "gen_rem"
-                Velo.f_cbs_outs_of_bl_height[-1][key] = bl_gen_rem
+                Velo.f_cbs_outs_of_bh[-1][key] = bl_gen_rem
 
                #if ( 283680 == bl_height ):
                #    print("\n---block 283442 outs---")
                #    print(outs)
                #    print("\n---block 283442 outs dictionary---")
-               #    print(Velo.f_cbs_outs_of_bl_height[-1])
+               #    print(Velo.f_cbs_outs_of_bh[-1])
 
                #print(
                #    "bh = {: 7}   "
@@ -840,14 +839,12 @@ class Velo:
                     Velo.block_times.index >= day_date_next
                 ].iloc[0][0]
 
-                Velo.f_bl_height_min_of_index_day.append(bl_height_min)
-                Velo.f_bl_height_max_of_index_day.append(bl_height_max-1)
+                Velo.f_bh_min_of_day_id.append(bl_height_min)
+                Velo.f_bh_max_of_day_id.append(bl_height_max-1)
 
                 # retrieve values per block in daily blockrange-----------------
                 for bh_i in range(bl_height_min, bl_height_max):
                     cnt_txes_per_day += Velo.chain[bh_i].tx_count
-
-                    Velo.f_index_day_of_bl_height.append(day_i)
 
                 # calculate data for sub processing periods---------------------
                 if day_i == 0:
@@ -1188,11 +1185,11 @@ class Velo:
                         )
                     )
                 if day < wndw:
-                    bh_min = Velo.f_bl_height_min_of_index_day[0]
+                    bh_min = Velo.f_bh_min_of_day_id[0]
                 else:
-                    bh_min = Velo.f_bl_height_min_of_index_day[day-wndw+1]
+                    bh_min = Velo.f_bh_min_of_day_id[day-wndw+1]
 
-                bh_max = Velo.f_bl_height_max_of_index_day[day]+1
+                bh_max = Velo.f_bh_max_of_day_id[day]+1
 
                 for i_bh in range(bh_min, bh_max):
                     for tx in Velo.chain[i_bh]:
@@ -1253,7 +1250,7 @@ class Velo:
             val_outs_break = 0
             val_outs       = tx.output_value
             bl_height_loc  = bl_height
-            cbs_outs       = Velo.f_cbs_outs_of_bl_height
+            cbs_outs       = Velo.f_cbs_outs_of_bh
 
             if tx.input_value == 0 or val_outs == 0 or tx.is_coinbase:
                 return m_circ_mc
@@ -1497,7 +1494,7 @@ class Velo:
 
         # next day to include date_period_end. Otherwise, it won't be regarded
         # due to the blocksci chainrange being computed as the daily difference.
-        s_p_d = Velo.f_dates_of_id_sub_proc
+        s_p_d = Velo.f_dates_of_sub_proc_id
 
         date_period_start        = s_p_d[date_id][0]
         date_period_end          = s_p_d[date_id][1] - timedelta(days=1)
@@ -1725,7 +1722,7 @@ class Velo:
                 ].iloc[0][0]
 
                 # get list of aggregated coin supply per given block height-----
-                m_total.append(Velo.f_m_total_of_bl_height[bl_height_min])
+                m_total.append(Velo.f_m_total_of_bh[bl_height_min])
 
                 # retrieve daily txes and values per block in daily blockrange--
                 for i_bh in range(bl_height_min, bl_height_max):
@@ -1944,7 +1941,7 @@ class Velo:
                 """
                 outs             = tx.outputs
                 outs_spent       = [0 for t in range(Velo.time_windows_cnt)]
-                cbs_outs         = Velo.f_cbs_outs_of_bl_height
+                cbs_outs         = Velo.f_cbs_outs_of_bh
                 bl_height_begin  = bl_heights_post[0]
                 tx_is_coinbase   = tx.is_coinbase
 
@@ -2064,8 +2061,7 @@ class Velo:
                 inps             = tx.inputs
                 val_outs_break   = 0
                 val_outs         = tx.output_value
-                bl_heights_loc   = bl_heights
-                cbs_outs         = Velo.f_cbs_outs_of_bl_height
+                cbs_outs         = Velo.f_cbs_outs_of_bh
 
                 if tx.input_value == 0 or val_outs == 0 or tx.is_coinbase:
                     return m_circ_mc
@@ -2107,7 +2103,7 @@ class Velo:
 
                     inp_spent_index = inp_spent_before_bh_or_coinbase(
                         inp,
-                        bl_heights_loc,
+                        bl_heights,
                         switch_circ_effective,
                         switch_cbso,
                     )
@@ -2248,9 +2244,17 @@ class Velo:
 
             # retrieve data for each daychunk of txes---------------------------
             for dc_i, daychunk in enumerate(self.__txes_daily):
+
+                # print some liveliness message---------------------------------
+                print_liveliness_message(
+                    dc_i,
+                    "get_measurements()"
+                )
+
                 # initialize daily values --------------------------------------
                 m_circ_cbs      .append(0)
                 m_circ_cbs_timed.append(0)
+
                 for tw_i, _ in enumerate(Velo.time_windows):
                     satoshi_dd_raw[tw_i].append(0)
                     dormancy_raw[tw_i]  .append(0)
@@ -2263,52 +2267,45 @@ class Velo:
                 if daychunk == []:
                     continue
 
-                # initialize first block heights/day index of txes--------------
-                bh_tx_pre    = [-1 for t in range(Velo.time_windows_cnt)]
-                bh_tx        = [-1 for t in range(Velo.time_windows_cnt)]
-                bh_tx_post   = [-1 for t in range(Velo.time_windows_cnt)]
-                bh_tx_pre[0] = daychunk[ 0].block_height
-                day_index    = dc_i + self.__day_index_first
-
-
-                # print some liveliness message---------------------------------
-                print_liveliness_message(
-                    dc_i,
-                    "get_measurements()"
-                )
+                # initialize day_index/first block heights of txes--------------
+                day_index       = dc_i + self.__day_index_first
+                bh_look_back    = [-1 for t in range(Velo.time_windows_cnt)]
+                bh              = [-1 for t in range(Velo.time_windows_cnt)]
+                bh_post         = [-1 for t in range(Velo.time_windows_cnt)]
 
                 # prepare windows values/days and block heights-----------------
+                bh_look_back[0] = daychunk[ 0].block_height
                 if day_index >= Velo.cnt_days:
-                    bh_tx[0]      = Velo.bl_height_max + day_index
-                    bh_tx_post[0] = Velo.bl_height_max + day_index + 1 
+                    bh[0]      = Velo.bl_height_max + day_index
+                    bh_post[0] = Velo.bl_height_max + day_index + 1
                 else:
-                    bh_tx[0]      = Velo.f_bl_height_min_of_index_day[day_index]
-                    bh_tx_post[0] = (
-                        Velo.f_bl_height_max_of_index_day[day_index] + 1
+                    bh[0]      = Velo.f_bh_min_of_day_id[day_index]
+                    bh_post[0] = (
+                        Velo.f_bh_max_of_day_id[day_index] + 1
                     )
 
                 for tw_i, t_w in enumerate(Velo.time_windows[1:], start=1):
-                    day_tw_pre  = day_index - t_w + 1
-                    day_tw      = day_index + t_w
+                    day_tw_look_back  = day_index - t_w + 1
+                    day_tw            = day_index + t_w
 
-                    if day_tw_pre >= 0:
-                        bh_tx_pre[tw_i] = Velo.f_bl_height_min_of_index_day[
-                            day_tw_pre
+                    if day_tw_look_back >= 0:
+                        bh_look_back[tw_i] = Velo.f_bh_min_of_day_id[
+                            day_tw_look_back
                         ]
-                    elif day_tw_pre < 0:
-                        bh_tx_pre[tw_i] = day_tw_pre
+                    elif day_tw_look_back < 0:
+                        bh_look_back[tw_i] = day_tw_look_back
 
                     if day_tw < Velo.cnt_days-1:
-                        bh_tx[tw_i]      = (
-                            Velo.f_bl_height_min_of_index_day[day_tw]
+                        bh[tw_i]      = (
+                            Velo.f_bh_min_of_day_id[day_tw]
                         )
-                        bh_tx_post[tw_i] = (
-                            Velo.f_bl_height_max_of_index_day[day_tw] + 1
+                        bh_post[tw_i] = (
+                            Velo.f_bh_max_of_day_id[day_tw] + 1
                         )
 
                     elif day_tw >= Velo.cnt_days:
-                        bh_tx_post[tw_i] = Velo.bl_height_max + day_tw + 1
-                        bh_tx[tw_i]      = Velo.bl_height_max + day_tw
+                        bh_post[tw_i] = Velo.bl_height_max + day_tw + 1
+                        bh[tw_i]      = Velo.bl_height_max + day_tw
 
                 # retrieve tx-wise values for money in effective cirulation-----
                 for tx in daychunk:
@@ -2318,7 +2315,7 @@ class Velo:
 
                     satoshi_dd_per_tx       = handle_tx_m_circ(
                         tx,
-                        bh_tx_pre,
+                        bh_look_back,
                         switch_circ_effective=False,
                         switch_wb_bill=True,
                         switch_sort=False,
@@ -2327,7 +2324,7 @@ class Velo:
                     )
                     m_circ_wh_bill_per_tx   = handle_tx_m_circ(
                         tx,
-                        bh_tx_pre,
+                        bh_look_back,
                         switch_circ_effective=True,
                         switch_wb_bill=True,
                         switch_sort=False,
@@ -2336,7 +2333,7 @@ class Velo:
                     )
                     m_circ_mc_lifo_per_tx   = handle_tx_m_circ(
                         tx,
-                        bh_tx_pre,
+                        bh_look_back,
                         switch_circ_effective=True,
                         switch_wb_bill=False,
                         switch_sort=False,
@@ -2345,7 +2342,7 @@ class Velo:
                     )
                     m_circ_mc_fifo_per_tx   = handle_tx_m_circ(
                         tx,
-                        bh_tx_pre,
+                        bh_look_back,
                         switch_circ_effective=True,
                         switch_wb_bill=False,
                         switch_sort=True,
@@ -2372,8 +2369,8 @@ class Velo:
                     if Velo.time_windows_cnt > 1:
                         outs_spent_btw_per_tx = outs_spent_bl_heights(
                             tx,
-                            bh_tx_post,
-                            bh_tx,
+                            bh_post,
+                            bh,
                             switch_cbso=True,
                         )
 
