@@ -1536,7 +1536,7 @@ class Velo:
             the progress percentage should be printed.
             """
             date_period = self.__date_period
-            date_perc   = (i_day - self.__day_index_first)/date_period * 100
+            date_perc   = i_day/date_period * 100
 
             if i_day == 0 or date_perc % 5 != 0:
                 return
@@ -2273,7 +2273,7 @@ class Velo:
 
                 # print some liveliness message---------------------------------
                 print_liveliness_message(
-                    day_index,
+                    dc_i,
                     "get_measurements()"
                 )
 
