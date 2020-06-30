@@ -1373,7 +1373,8 @@ class Velo:
 
                 for tx in daychunk:
                     if tx.output_value <= tx.fee:
-                        continue
+                        #continue
+                        pass
 
                     m_circ_wh_bill_test[-1] += m_circ_wh_bill_per_tx_test(
                         tx,
@@ -1426,7 +1427,7 @@ class Velo:
         daychunks = collect_daychunks(2)
         m_circ_wh_bill_raw_test = m_circ_wh_bill_test(
             daychunks,
-            switch_cbso=1,
+            switch_cbso=0,
         )
 
         df_final["m_circ_cbs"] = results_raw["m_circ_cbs"]
@@ -2360,7 +2361,8 @@ class Velo:
                 for tx in daychunk:
                     # Here, dust transaction shouldn't be included, see *)------
                     if tx.output_value <= tx.fee:
-                        continue
+                        pass
+                        #continue
 
                     satoshi_dd_per_tx       = handle_tx_m_circ(
                         tx,
@@ -2378,7 +2380,7 @@ class Velo:
                         switch_wb_bill=True,
                         switch_sort=False,
                         switch_time=False,
-                        switch_cbso=1,
+                        switch_cbso=0,
                     )
                     m_circ_mc_lifo_per_tx   = handle_tx_m_circ(
                         tx,
@@ -2419,7 +2421,7 @@ class Velo:
                         outs_spent_btw_per_tx = outs_spent_bl_heights(
                             tx,
                             bh_look_ahead,
-                            switch_cbso=1,
+                            switch_cbso=0,
                         )
 
                     # prepare data structures for windowed values---------------
