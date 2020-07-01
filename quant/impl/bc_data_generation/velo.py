@@ -1282,7 +1282,8 @@ class Velo:
             bl_height_loc  = bl_height
             cbs_outs       = Velo.f_cbs_outs_of_bh
 
-            if tx.input_value == 0 or val_outs == 0 or tx.is_coinbase:
+            if tx.is_coinbase or tx.input_value == 0:
+            #or val_outs == 0:
                 return m_circ_mc
 
             # 1)
@@ -2047,7 +2048,7 @@ class Velo:
                             break
 
                         # check if bh_out is within window----------------------
-                        # we can break here sinde bh_day_next and bh_out are
+                        # we can break here since bh_day_next and bh_out are
                         # independent from bh_la
                         if bh_day_next > bh_out:
                             break
@@ -2138,7 +2139,8 @@ class Velo:
                 val_outs         = tx.output_value
                 cbs_outs         = Velo.f_cbs_outs_of_bh
 
-                if tx.input_value == 0 or val_outs == 0 or tx.is_coinbase:
+                if tx.is_coinbase or tx.input_value == 0:
+                #or val_outs == 0:
                     return m_circ_mc
 
                 # 1)
@@ -2183,7 +2185,7 @@ class Velo:
                         switch_circ_effective,
                         switch_cbso,
                     )
-                    # if coming from a coinbase transaction
+                    # if coming from a coinbase transaction---------------------
                     if 2 <= inp_spent_index[0]:
                         inp_spt_tx_bh = inp.spent_tx.block_height
                         cbs_out_bh    = cbs_outs[inp_spt_tx_bh]
