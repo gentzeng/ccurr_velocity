@@ -113,50 +113,19 @@
 	\fi%
 }%
 
-
-\newcommand{\tableTwoColumn}[1]{%
+\newcommand{\tableTwoColumn}[2][ht]{%
 	\ifdefined\varInputTable
-	\begin{table*}[ht]%
+	\begin{table*}[#1]%
 		\footnotesize%commet out in ieee style mode
 		\begin{center}%
 			\caption{\captionGlo}%
 			\renewcommand{\arraystretch}{1.3}%
-			\input{ts_tables/#1}%
+			\input{ts_tables/#2}%
 			\labelGlo%
 		\end{center}%
 	\end{table*}%
 	\else\fi%
 }%
-
-
-\newcommand{\tableTwoColumnH}[1]{%
-	\ifdefined\varInputTable
-	\begin{table*}[h]%
-		\footnotesize%commet out in ieee style mode
-		\begin{center}%
-			\caption{\captionGlo}%
-			\renewcommand{\arraystretch}{1.3}%
-			\input{ts_tables/#1}%
-			\labelGlo%
-		\end{center}%
-	\end{table*}%
-	\else\fi%
-      }%
-      
-\newcommand{\tableTwoColumnF}[1]{%
-	\ifdefined\varInputTable
-	\begin{table*}[htbp]%
-		\footnotesize%commet out in ieee style mode
-		\begin{center}%
-			\caption{\captionGlo}%
-			\renewcommand{\arraystretch}{1.3}%
-			\input{ts_tables/#1}%
-			\labelGlo%
-		\end{center}%
-	\end{table*}%
-	\else\fi%
-}%
-
 
 \newcommand{\wndw}{{w}}
 \newcommand{\wndwT}{{\wndw_t}}

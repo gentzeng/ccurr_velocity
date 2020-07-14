@@ -2535,5 +2535,5 @@ class Velo:
         return
 
 if __name__ == "__main__":
-   print("{}Use this file with script.py!{}".format(cs.RED,cs.RES))
-   exit(0)
+    print("{}Use this file with script.py!{}".format(cs.RED,cs.RES))
+    exit(0)
