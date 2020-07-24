@@ -732,8 +732,35 @@ class Velo:
                     ind = out.spending_tx_index
                     bh_spending = Velo.chain.tx_with_index(ind).block_height
 
-                    key = "{}".format(out.address)
-                    Velo.f_cbs_outs_of_bh[-1][key] = out_i
+                    key = "{}_{}".format(out.address, out.value)
+                    if key in Velo.f_cbs_outs_of_bh[-1]:
+                        print(
+                            "shiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiit\n"
+                            "key = {}"
+                            "bh = {: 7}   "
+                            "bh_i = {: 7}   "
+                            "ind = {: 12}   "
+                            "out_cnt = {: 4}   "
+                            "out_i = {: 4}   "
+                            "tx_outs_val = {: 15}   "
+                            "outs_sum = {: 15}   "
+                            "fee = {: 15}   "
+                            "gen_rem = {: 15}   "
+                            "fee_rem = {: 15}   "
+                            "".format(
+                                key,
+                                bl_height,
+                                bh_spending,
+                                ind,
+                                len(outs),
+                                out_i,
+                                tx.output_value,
+                                outs_sum,
+                                bl_fee,
+                            )
+                        )
+
+                    Velo.f_cbs_outs_of_bh[-1][key] = [out_i, out.value]
 
                     outs_sum += out.value
                     if outs_sum >= bl_fee:
@@ -915,6 +942,7 @@ class Velo:
         #--setup data for subprocessing-----------------------------------------
         setup_subprocessing_chunks()
 
+        #exit()
         return
 
     #==[ CLASSLEVEL | finalize results and get final data frames and csv ]======
@@ -1320,10 +1348,10 @@ class Velo:
                     cbs_out_bh    = cbs_outs[inp_spt_tx_bh]
                     gen_rem       = cbs_out_bh["gen_rem"]
                     gen_rem_index = cbs_out_bh["gen_rem_index"]
-                    address       = "{}".format(inp.address)
+                    key           = "{}_{}".format(inp.address, val_inp)
 
-                if 2 == inp_spent_index and address in cbs_out_bh:
-                    cbs_out_index = cbs_out_bh[address]
+                if 2 == inp_spent_index and key in cbs_out_bh:
+                    cbs_out_index = cbs_out_bh[key][0]
 
                     if cbs_out_index < gen_rem_index:
                         continue
@@ -1968,10 +1996,10 @@ class Velo:
                     cbs_out_bh    = cbs_outs[inp_spt_tx_bh]
                     gen_rem       = cbs_out_bh["gen_rem"]
                     gen_rem_index = cbs_out_bh["gen_rem_index"]
-                    address       = "{}".format(inp.address)
+                    key           = "{}_{}".format(inp.address, val_inp)
 
-                    if address in cbs_out_bh:
-                        cbs_out_index = cbs_out_bh[address]
+                    if key in cbs_out_bh:
+                        cbs_out_index = cbs_out_bh[key][0]
 
                         if cbs_out_index < gen_rem_index:
                             continue
@@ -2061,12 +2089,12 @@ class Velo:
                         # handle coinbase and normal transactions---------------
                         if tx_is_coinbase:
                             cbs_out_bh = cbs_outs[tx.block_height]
-                            address    = "{}".format(out.address)
+                            key        = "{}_{}".format(out.address, out.value)
 
-                            if address not in cbs_out_bh:
+                            if key not in cbs_out_bh:
                                 break
 
-                            cbs_out_index = cbs_out_bh[address]
+                            cbs_out_index = cbs_out_bh[key][0]
                             gen_rem       = cbs_out_bh["gen_rem"]
                             gen_rem_index = cbs_out_bh["gen_rem_index"]
                             fee_rem       = cbs_out_bh["fee_rem"]
@@ -2077,7 +2105,6 @@ class Velo:
 
                             # output represents fees collected in coinbase tx---
                             if cbs_out_index == gen_rem_index:
-
 
                                 outs_spent[tw_i] += fee_rem
                                 continue
@@ -2177,7 +2204,7 @@ class Velo:
                     gen_rem         = 0
                     val_inp         = inp.value
                     val_outs_break += val_inp
-                    address         = None
+                    key             = None
 
                     inp_spent_index = inp_spent_before_bh_or_coinbase(
                         inp,
@@ -2191,14 +2218,14 @@ class Velo:
                         cbs_out_bh    = cbs_outs[inp_spt_tx_bh]
                         gen_rem_index = cbs_out_bh["gen_rem_index"]
                         gen_rem       = cbs_out_bh["gen_rem"]
-                        address       = "{}".format(inp.address)
+                        key           = "{}_{}".format(inp.address, val_inp)
 
                     for tw_i, _ in enumerate(Velo.time_windows):
                         if 0 == inp_spent_index[tw_i]:
                             break
 
-                        if 2 == inp_spent_index[tw_i] and address in cbs_out_bh:
-                            cbs_out_index = cbs_out_bh[address]
+                        if 2 == inp_spent_index[tw_i] and key in cbs_out_bh:
+                            cbs_out_index = cbs_out_bh[key][0]
 
                             if cbs_out_index < gen_rem_index:
                                 break
