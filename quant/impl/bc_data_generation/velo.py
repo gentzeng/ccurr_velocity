@@ -1248,25 +1248,73 @@ class Velo:
 
             return daychunks
 
-        def m_circ_wh_bill_per_tx_test(
+        def m_circ_per_tx_test(
             tx,
             bl_height,
+            switch_circ_effective=True,
+            switch_wb_bill=True,
+            switch_sort=False,
+            switch_time=False,
             switch_cbso=0,
         ):
             """
             """
+            def in_max_cluster_test(out):
+                """
+                This function checks whether a given output (out) belongs to the
+                biggest cluster of the applied change heuristic.
+                """
+
+                out_addr   = out.address
+                out_cls    = Velo.cluster_mgr.cluster_with_address(out_addr)
+                out_cls_id = out_cls.index
+
+                if Velo.cluster_max_id == out_cls_id:
+                    return True
+
+                return False
+
+            def get_selfchurn_test(tx):
+                """
+                This function gets selfchurn outputs of a given transaction.
+                """
+                val_chouts = 0
+
+                for out in Velo.heur_select.change(tx):
+                    if False == in_max_cluster_test(out):
+                        val_chouts += int(out.value)
+
+                return val_chouts
+
             def inp_spent_before_bh_or_coinbase_test(
                 inp,
-                bl_heights,
+                bl_height,
+                switch_circ_effective,
                 switch_cbso=0,
             ):
                 """
                 This function represents the condition for the handle_tx_mc
                 functions to decide, whether to sum an input or not.
+
+                        return    | not older than  |    older than   |
+                        values    | given bl_height | given bl_height |
+                    --------------|-----------------|-----------------|
+                       normal tx  |        0        |         1       |
+                    --------------|-----------------|-----------------|
+                      coinbase tx |        2        |         3       |
+                    --------------|-----------------|-----------------|
+
+                    (coinbase tx return is return of normal tx +2: 0=>2, 1=>3)
                 """
                 inp_spent_index        = 0
                 is_coinbase            = False
                 inp_spent_tx_bl_height = inp.spent_tx.block_height
+
+                # if we do not count money in effective circulation, we count---
+                # every input
+                if switch_circ_effective == False:
+                    inp_spent_index = 1
+                    return inp_spent_index
 
                 # check if the tx that spent this input is a coinbase tx--------
                 if inp.spent_tx.is_coinbase:
@@ -1290,8 +1338,8 @@ class Velo:
 
                 # check if the spent tx linked to this input is older than------
                 # given block height, here: not older
-                if bl_heights <= inp_spent_tx_bl_height and (
-                    0 != bl_heights or 0 != inp_spent_tx_bl_height
+                if bl_height <= inp_spent_tx_bl_height and (
+                    0 != bl_height or 0 != inp_spent_tx_bl_height
                 ):
                     return inp_spent_index
 
@@ -1303,19 +1351,25 @@ class Velo:
                 inp_spent_index = 1
                 return inp_spent_index
 
-            m_circ_mc      = 0
-            inps           = tx.inputs
-            val_outs_break = 0
-            val_outs       = tx.output_value
-            bl_height_loc  = bl_height
-            cbs_outs       = Velo.f_cbs_outs_of_bh
+            m_circ_mc       = 0
+            m_circ_mc_break = 0
+            inps            = tx.inputs
+            val_outs_break  = 0
+            val_outs        = tx.output_value
+            cbs_outs        = Velo.f_cbs_outs_of_bh
 
             if tx.is_coinbase or tx.input_value == 0:
             #or val_outs == 0:
                 return m_circ_mc
 
             # 1)
-            val_outs_sent_to_others = val_outs + tx.fee
+            val_outs_sent_to_others = val_outs
+
+            if switch_wb_bill == True:
+                val_outs_sent_to_others += tx.fee
+            else:
+                # TODO: why not +tx.fee?
+                val_outs_sent_to_others -= get_selfchurn_test(tx)
 
             # 2)
             if val_outs_sent_to_others < 0:
@@ -1325,46 +1379,65 @@ class Velo:
             elif val_outs_sent_to_others == 0:
                 return m_circ_mc
 
+            # 3)
+            if switch_wb_bill == False:
+                inps = sort_together(
+                    [
+                        inps.age,
+                        inps,
+                    ],
+                    reverse = switch_sort
+                )[1]
+
             # 4)
             for inp in inps:
                 cbs_out_index   = 0
                 gen_rem_index   = 0
                 gen_rem         = 0
+                val_inp_add     = 0
                 val_inp         = inp.value
                 val_outs_break += val_inp
+                key             = None
 
                 inp_spent_index = inp_spent_before_bh_or_coinbase_test(
                     inp,
-                    bl_height_loc,
+                    bl_height,
+                    switch_circ_effective,
                     switch_cbso,
                 )
 
-                if 0 == inp_spent_index:
-                    continue
-
-                # if coming from a coinbase transaction
+                # if coming from a coinbase transaction-------------------------
                 if 2 <= inp_spent_index:
                     inp_spt_tx_bh = inp.spent_tx.block_height
                     cbs_out_bh    = cbs_outs[inp_spt_tx_bh]
-                    gen_rem       = cbs_out_bh["gen_rem"]
                     gen_rem_index = cbs_out_bh["gen_rem_index"]
+                    gen_rem       = cbs_out_bh["gen_rem"]
                     key           = "{}_{}".format(inp.address, val_inp)
 
-                if 2 == inp_spent_index and key in cbs_out_bh:
-                    cbs_out_index = cbs_out_bh[key][0]
+                while True:
+                    if 0 == inp_spent_index:
+                        break
 
-                    if cbs_out_index < gen_rem_index:
-                        continue
+                    if 2 == inp_spent_index and key in cbs_out_bh:
+                        cbs_out_index = cbs_out_bh[key][0]
 
-                    elif cbs_out_index == gen_rem_index:
-                        m_circ_mc += gen_rem
-                        continue
+                        if cbs_out_index < gen_rem_index:
+                            break
 
-                m_circ_mc += val_inp
+                        if cbs_out_index == gen_rem_index:
+                            val_inp_add = gen_rem
+                            m_circ_mc_break += val_inp_add
+                            m_circ_mc += val_inp_add
+                            break
+
+                    # inp_spent_index[tw_i] is 1 or 3
+                    m_circ_mc_break += val_inp
+                    m_circ_mc += val_inp
+                    break
 
                 # **)
                 if val_outs_break >= val_outs_sent_to_others:
-                    if m_circ_mc >= val_outs_sent_to_others:
+                    if m_circ_mc_break >= val_outs_sent_to_others:
                         m_circ_mc = val_outs_sent_to_others
                     break
 
@@ -1375,16 +1448,20 @@ class Velo:
 
             return m_circ_mc
 
-        def m_circ_wh_bill_test(
+        def m_circ_test(
             daychunks,
             switch_cbso=0,
         ):
             """
             """
             m_circ_wh_bill_test = []
+            m_circ_mc_lifo_test = []
+            m_circ_mc_fifo_test = []
             cnt_daychunks       = len(daychunks)
 
+            # retrieve data for each daychunk of txes---------------------------
             for dc_i, daychunk in enumerate(daychunks):
+                # print some liveliness message---------------------------------
                 if dc_i % 10 == 0:
                     Velo.logger.debug(
                         "aggr test day {:4}/{:4}".format(
@@ -1393,25 +1470,55 @@ class Velo:
                         )
                     )
 
+                # initialize daily values---------------------------------------
                 m_circ_wh_bill_test.append(0)
+                m_circ_mc_lifo_test.append(0)
+                m_circ_mc_fifo_test.append(0)
 
+                # if no transactions happened, continue-------------------------
                 if daychunk == []:
                     continue
 
-                bh_pre = daychunk[0].block_height
+                # initialize day_index/first block heights of txes--------------
+                bh_look_back = daychunk[0].block_height
 
+                # retrieve tx-wise values for money in effective cirulation-----
                 for tx in daychunk:
+                    # Here, dust transaction have to be included, see *)--------
                     if tx.output_value <= tx.fee:
-                        #continue
                         pass
 
-                    m_circ_wh_bill_test[-1] += m_circ_wh_bill_per_tx_test(
+                    m_circ_wh_bill_test[-1] += m_circ_per_tx_test(
                         tx,
-                        bh_pre,
+                        bh_look_back,
+                        switch_circ_effective=True,
+                        switch_wb_bill=True,
+                        switch_sort=False,
+                        switch_time=False,
                         switch_cbso=switch_cbso,
                     )
 
-            return m_circ_wh_bill_test
+                    m_circ_mc_lifo_test[-1] += m_circ_per_tx_test(
+                        tx,
+                        bh_look_back,
+                        switch_circ_effective=True,
+                        switch_wb_bill=False,
+                        switch_sort=False,
+                        switch_time=False,
+                        switch_cbso=switch_cbso,
+                    )
+
+                    m_circ_mc_fifo_test[-1] += m_circ_per_tx_test(
+                        tx,
+                        bh_look_back,
+                        switch_circ_effective=True,
+                        switch_wb_bill=False,
+                        switch_sort=True,
+                        switch_time=False,
+                        switch_cbso=switch_cbso,
+                    )
+
+            return m_circ_wh_bill_test, m_circ_mc_lifo_test, m_circ_mc_fifo_test
 
         #--Start of get_results_finalized()-------------------------------------
         Velo.logger.debug(
@@ -1453,14 +1560,16 @@ class Velo:
             df_final["{}_o".format(m_circ_type)] = results_raw_old[m_circ_type]
 
         #--handle m_circ_tests--------------------------------------------------
-        daychunks = collect_daychunks(2)
-        m_circ_wh_bill_raw_test = m_circ_wh_bill_test(
+        daychunks = collect_daychunks(1)
+        m_circ_wh_bill_raw_test, m_circ_mc_lifo_raw_test, m_circ_mc_fifo_raw_test = m_circ_test(
             daychunks,
             switch_cbso=0,
         )
 
-        df_final["m_circ_cbs"] = results_raw["m_circ_cbs"]
-        df_final["m_circ_test"] = m_circ_wh_bill_raw_test
+        df_final["m_circ_cbs"]          = results_raw["m_circ_cbs"]
+        df_final["m_circ_wh_bill_test"] = m_circ_wh_bill_raw_test
+        df_final["m_circ_mc_lifo_test"] = m_circ_mc_lifo_raw_test
+        df_final["m_circ_mc_fifo_test"] = m_circ_mc_fifo_raw_test
 
         #--handle tv_vol df_types and merge to final data frame-----------------
         for tx_vol_type in Velo.results_raw_types_tx_vol_tw:
@@ -2202,6 +2311,7 @@ class Velo:
                     cbs_out_index   = 0
                     gen_rem_index   = 0
                     gen_rem         = 0
+                    val_inp_add     = 0
                     val_inp         = inp.value
                     val_outs_break += val_inp
                     key             = None
@@ -2212,6 +2322,7 @@ class Velo:
                         switch_circ_effective,
                         switch_cbso,
                     )
+
                     # if coming from a coinbase transaction---------------------
                     if 2 <= inp_spent_index[0]:
                         inp_spt_tx_bh = inp.spent_tx.block_height
@@ -2231,12 +2342,13 @@ class Velo:
                                 break
 
                             if cbs_out_index == gen_rem_index:
+                                val_inp_add = gen_rem
                                 if tw_i == 0:
-                                    m_circ_mc_break += gen_rem
-                                m_circ_mc[tw_i]       += gen_rem
+                                    m_circ_mc_break += val_inp_add
+                                m_circ_mc[tw_i]       += val_inp_add
                                 m_circ_mc_timed[tw_i] += get_timed_input(
                                     inp,
-                                    gen_rem
+                                    val_inp_add,
                                 )
                                 continue
 
@@ -2388,10 +2500,9 @@ class Velo:
 
                 # retrieve tx-wise values for money in effective cirulation-----
                 for tx in daychunk:
-                    # Here, dust transaction shouldn't be included, see *)------
+                    # Here, dust transaction have to be included, see *)--------
                     if tx.output_value <= tx.fee:
                         pass
-                        #continue
 
                     satoshi_dd_per_tx       = handle_tx_m_circ(
                         tx,
