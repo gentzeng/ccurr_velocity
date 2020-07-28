@@ -261,13 +261,19 @@ class Velo:
                 "m_circ_wh_bill",
                 "m_circ_mc_lifo",
                 "m_circ_mc_fifo",
-                "outs_spent_btw",
+                "o_loah_wh_bill",
+                "o_loah_mc_lifo",
+                "o_loah_mc_fifo",
             ]
 
             for type in Velo.results_raw_types_m_circ:
                 for t_w in Velo.time_windows:
                     # do not include outs_spend_btw for a window size of one day
-                    if t_w == 1 and type == "outs_spent_btw":
+                    if t_w == 1 and (
+                        type    == "o_loah_wh_bill"
+                        or type == "o_loah_mc_lifo"
+                        or type == "o_loah_mc_fifo"
+                    ):
                         continue
 
                     Velo.results_raw_types_m_circ_tw.append(
@@ -1045,32 +1051,50 @@ class Velo:
                 Velo.time_windows.
                 """
                 for tw_i, _ in enumerate(Velo.time_windows[1:], start=1):
-                    m_supply_agg_last = 0
+                    m_supply_wh_bill_agg_last = 0
+                    m_supply_mc_lifo_agg_last = 0
+                    m_supply_mc_fifo_agg_last = 0
                     
                     wndw = Velo.time_windows[tw_i]
 
                     # get the previously computed window------------------------
                     if day > 0:
-                        m_supply_agg_last = Velo.m_supply_agg[tw_i][day-1]
+                        m_supply_wh_bill_agg_last = Velo.m_supply_wh_bill_agg[tw_i][day-1]
+                        m_supply_mc_lifo_agg_last = Velo.m_supply_mc_lifo_agg[tw_i][day-1]
+                        m_supply_mc_fifo_agg_last = Velo.m_supply_mc_fifo_agg[tw_i][day-1]
 
                     #-add the current daily calculations------------------------
-                    m_supply_agg_tw = m_supply_agg_last
+                    m_supply_wh_bill_agg_tw = m_supply_wh_bill_agg_last
+                    m_supply_mc_lifo_agg_tw = m_supply_mc_lifo_agg_last
+                    m_supply_mc_fifo_agg_tw = m_supply_mc_fifo_agg_last
+
                     if day < wndw:
                     #if day >= wndw:
                         # no "spent last" transactions, only coinbase contribute
                         # to m_supply in circulation in first tw days
-                        m_supply_agg_tw += Velo.m_supply_cbs[day]
+                        m_supply_wh_bill_agg_tw += Velo.m_supply_cbs[day]
+                        m_supply_mc_lifo_agg_tw += Velo.m_supply_cbs[day]
+                        m_supply_mc_fifo_agg_tw += Velo.m_supply_cbs[day]
                     else:
-                        m_supply_agg_tw += Velo.m_supply_add_a[tw_i][day]
+                        m_supply_wh_bill_agg_tw += Velo.m_supply_wh_bill_add_a[tw_i][day]
+                        m_supply_mc_lifo_agg_tw += Velo.m_supply_mc_lifo_add_a[tw_i][day]
+                        m_supply_mc_fifo_agg_tw += Velo.m_supply_mc_fifo_add_a[tw_i][day]
 
                     #-substract the calculations right before the new window----
                     if day >= wndw:
                         day_sub = day - wndw
 
-                        m_supply_agg_tw -= Velo.m_supply_add_a[0][day_sub]
-                        m_supply_agg_tw += Velo.m_supply_add_b[tw_i][day_sub]
+                        m_supply_wh_bill_agg_tw -= Velo.m_supply_wh_bill_add_a[0][day_sub]
+                        m_supply_mc_lifo_agg_tw -= Velo.m_supply_mc_lifo_add_a[0][day_sub]
+                        m_supply_mc_fifo_agg_tw -= Velo.m_supply_mc_fifo_add_a[0][day_sub]
 
-                    Velo.m_supply_agg[tw_i].append(m_supply_agg_tw)
+                        m_supply_wh_bill_agg_tw += Velo.m_supply_wh_bill_add_b[tw_i][day_sub]
+                        m_supply_mc_lifo_agg_tw += Velo.m_supply_mc_lifo_add_b[tw_i][day_sub]
+                        m_supply_mc_fifo_agg_tw += Velo.m_supply_mc_fifo_add_b[tw_i][day_sub]
+
+                    Velo.m_supply_wh_bill_agg[tw_i].append(m_supply_wh_bill_agg_tw)
+                    Velo.m_supply_mc_lifo_agg[tw_i].append(m_supply_mc_lifo_agg_tw)
+                    Velo.m_supply_mc_fifo_agg[tw_i].append(m_supply_mc_fifo_agg_tw)
 
                 return
 
@@ -1086,31 +1110,87 @@ class Velo:
             )
             #-------------------------------------------------------------------
             m_supply_cbs_key   = "m_circ_cbs"
-            m_supply_add_a_key = "m_circ_wh_bill"
-            m_supply_add_b_key = "outs_spent_btw"
-            m_supply_agg_key   = "m_circ_wh_bill"
-            m_supply_add_a     = [[] for t in range(Velo.time_windows_cnt)]
-            m_supply_add_b     = [[] for t in range(Velo.time_windows_cnt)]
-            m_supply_agg       = [[] for t in range(Velo.time_windows_cnt)]
+
+            m_supply_wh_bill_add_a_key = "m_circ_wh_bill"
+            m_supply_mc_lifo_add_a_key = "m_circ_mc_lifo"
+            m_supply_mc_fifo_add_a_key = "m_circ_mc_fifo"
+
+            m_supply_wh_bill_add_b_key = "o_loah_wh_bill"
+            m_supply_mc_lifo_add_b_key = "o_loah_mc_lifo"
+            m_supply_mc_fifo_add_b_key = "o_loah_mc_fifo"
+
+            m_supply_wh_bill_agg_key   = "m_circ_wh_bill"
+            m_supply_mc_lifo_agg_key   = "m_circ_mc_lifo"
+            m_supply_mc_fifo_agg_key   = "m_circ_mc_fifo"
+
+            m_supply_wh_bill_add_a     = [[] for t in range(Velo.time_windows_cnt)]
+            m_supply_mc_lifo_add_a     = [[] for t in range(Velo.time_windows_cnt)]
+            m_supply_mc_fifo_add_a     = [[] for t in range(Velo.time_windows_cnt)]
+
+            m_supply_wh_bill_add_b     = [[] for t in range(Velo.time_windows_cnt)]
+            m_supply_mc_lifo_add_b     = [[] for t in range(Velo.time_windows_cnt)]
+            m_supply_mc_fifo_add_b     = [[] for t in range(Velo.time_windows_cnt)]
+
+            m_supply_wh_bill_agg       = [[] for t in range(Velo.time_windows_cnt)]
+            m_supply_mc_lifo_agg       = [[] for t in range(Velo.time_windows_cnt)]
+            m_supply_mc_fifo_agg       = [[] for t in range(Velo.time_windows_cnt)]
 
             # get sum and sub for aggregation-----------------------------------
             for tw_i, t_w in enumerate(Velo.time_windows):
-                m_supply_add_a_key_tw = "{}_{}".format(
-                    m_supply_add_a_key,
+                m_supply_wh_bill_add_a_key_tw = "{}_{}".format(
+                    m_supply_wh_bill_add_a_key,
                     t_w,
                 )
-                m_supply_add_b_key_tw = "{}_{}".format(
-                    m_supply_add_b_key,
+                m_supply_mc_lifo_add_a_key_tw = "{}_{}".format(
+                    m_supply_mc_lifo_add_a_key,
+                    t_w,
+                )
+                m_supply_mc_fifo_add_a_key_tw = "{}_{}".format(
+                    m_supply_mc_fifo_add_a_key,
+                    t_w,
+                )
+                m_supply_wh_bill_add_b_key_tw = "{}_{}".format(
+                    m_supply_wh_bill_add_b_key,
+                    t_w,
+                )
+                m_supply_mc_lifo_add_b_key_tw = "{}_{}".format(
+                    m_supply_mc_lifo_add_b_key,
+                    t_w,
+                )
+                m_supply_mc_fifo_add_b_key_tw = "{}_{}".format(
+                    m_supply_mc_fifo_add_b_key,
                     t_w,
                 )
 
-                m_supply_add_a[tw_i] = results_raw[m_supply_add_a_key_tw]
-                m_supply_add_b[tw_i] = results_raw[m_supply_add_b_key_tw]
+                m_supply_wh_bill_add_a[tw_i] = results_raw[
+                    m_supply_wh_bill_add_a_key_tw
+                ]
+                m_supply_mc_lifo_add_a[tw_i] = results_raw[
+                    m_supply_mc_lifo_add_a_key_tw
+                ]
+                m_supply_mc_fifo_add_a[tw_i] = results_raw[
+                    m_supply_mc_fifo_add_a_key_tw
+                ]
+                m_supply_wh_bill_add_b[tw_i] = results_raw[
+                    m_supply_wh_bill_add_b_key_tw
+                ]
+                m_supply_mc_lifo_add_b[tw_i] = results_raw[
+                    m_supply_mc_lifo_add_b_key_tw
+                ]
+                m_supply_mc_fifo_add_b[tw_i] = results_raw[
+                    m_supply_mc_fifo_add_b_key_tw
+                ]
 
             Velo.m_supply_cbs   = results_raw[m_supply_cbs_key]
-            Velo.m_supply_add_a = m_supply_add_a
-            Velo.m_supply_add_b = m_supply_add_b
-            Velo.m_supply_agg   = m_supply_agg
+            Velo.m_supply_wh_bill_add_a = m_supply_wh_bill_add_a
+            Velo.m_supply_mc_lifo_add_a = m_supply_mc_lifo_add_a
+            Velo.m_supply_mc_fifo_add_a = m_supply_mc_fifo_add_a
+            Velo.m_supply_wh_bill_add_b = m_supply_wh_bill_add_b
+            Velo.m_supply_mc_lifo_add_b = m_supply_mc_lifo_add_b
+            Velo.m_supply_mc_fifo_add_b = m_supply_mc_fifo_add_b
+            Velo.m_supply_wh_bill_agg   = m_supply_wh_bill_agg
+            Velo.m_supply_mc_lifo_agg   = m_supply_mc_lifo_agg
+            Velo.m_supply_mc_fifo_agg   = m_supply_mc_fifo_agg
 
             # aggreation steps per day------------------------------------------
             for day_i in range(Velo.cnt_days):
@@ -1118,11 +1198,30 @@ class Velo:
 
             # prepare return----------------------------------------------------
             for tw_i, t_w in enumerate(Velo.time_windows[1:], start=1):
-                m_supply_agg_key_tw = "{}_{}".format(
-                    m_supply_agg_key,
+                m_supply_wh_bill_agg_key_tw = "{}_{}".format(
+                    m_supply_wh_bill_agg_key,
                     t_w,
                 )
-                results_raw[m_supply_agg_key_tw] = Velo.m_supply_agg[tw_i]
+                m_supply_mc_lifo_agg_key_tw = "{}_{}".format(
+                    m_supply_mc_lifo_agg_key,
+                    t_w,
+                )
+                m_supply_mc_fifo_agg_key_tw = "{}_{}".format(
+                    m_supply_mc_fifo_agg_key,
+                    t_w,
+                )
+
+                results_raw[
+                    m_supply_wh_bill_agg_key_tw
+                ] = Velo.m_supply_wh_bill_agg[tw_i]
+
+                results_raw[
+                    m_supply_mc_lifo_agg_key_tw
+                ] = Velo.m_supply_mc_lifo_agg[tw_i]
+
+                results_raw[
+                    m_supply_mc_fifo_agg_key_tw
+                ] = Velo.m_supply_mc_fifo_agg[tw_i]
 
             return results_raw
 
@@ -1427,6 +1526,7 @@ class Velo:
                         if cbs_out_index == gen_rem_index:
                             val_inp_add = gen_rem
                             m_circ_mc_break += val_inp_add
+                            #m_circ_mc_break += val_inp
                             m_circ_mc += val_inp_add
                             break
 
@@ -2138,15 +2238,19 @@ class Velo:
             def outs_spent_bl_heights(
                 tx,
                 bh_look_ahead,
+                switch_wb_bill=True,
+                switch_sort=False,
                 switch_cbso=0,
             ):
                 """
                 """
-                outs             = tx.outputs
-                outs_spent       = [0 for t in range(Velo.time_windows_cnt)]
-                cbs_outs         = Velo.f_cbs_outs_of_bh
-                bh_day_next      = bh_look_ahead[0]
-                tx_is_coinbase   = tx.is_coinbase
+                outs           = tx.outputs
+                outs_spent     = [0 for t in range(Velo.time_windows_cnt)]
+                out_spent_add  = 0
+                cbs_outs       = Velo.f_cbs_outs_of_bh
+                bh_day_next    = bh_look_ahead[0]
+                tx_is_coinbase = tx.is_coinbase
+                add_allowed    = False
 
                 if switch_cbso == 1 and tx_is_coinbase:
                     return outs_spent
@@ -2190,16 +2294,17 @@ class Velo:
                         if bh_day_next > bh_out:
                             break
 
-                        # since bh_la is growing with each time window,  we check
+                        # since bh_la is growing with each time window, we check
                         # the next one by continuing
                         if bh_out >= bh_la:
                             continue
 
                         # handle coinbase and normal transactions---------------
+                        # for coinbase txes: get part of out.value to be added
+                        # according to coinbase fee/new generated coins
+                        cbs_out_bh = cbs_outs[tx.block_height]
+                        key        = "{}_{}".format(out.address, out.value)
                         if tx_is_coinbase:
-                            cbs_out_bh = cbs_outs[tx.block_height]
-                            key        = "{}_{}".format(out.address, out.value)
-
                             if key not in cbs_out_bh:
                                 break
 
@@ -2215,10 +2320,67 @@ class Velo:
                             # output represents fees collected in coinbase tx---
                             if cbs_out_index == gen_rem_index:
 
-                                outs_spent[tw_i] += fee_rem
-                                continue
+                                out_spent_add = fee_rem
+                                #outs_spent[tw_i] += fee_rem
+                                #continue
+                        else:
+                            out_spent_add = out.value
 
-                        outs_spent[tw_i] += out.value
+                        if True == switch_wb_bill:
+                            outs_spent[tw_i] += out_spent_add
+                            continue
+
+                        # don't compute whole bill, but lifo/fifo --> simulate
+                        # lifo/fifo mechanism in spending tx in order to analyze
+                        # whether out is allowed to be counted
+                        spending_tx    = out.spending_tx
+                        add_allowed    = False
+                        inps           = spending_tx.inputs
+                        val_outs_break = 0
+                        val_outs       = spending_tx.output_value
+
+                        # 1) of lifo/fifo
+                        val_outs_sent_to_others  = val_outs
+                        val_outs_sent_to_others -= get_selfchurn(spending_tx)
+
+                        # 2) of lifo/fifo
+                        if val_outs_sent_to_others < 0:
+                            raise ValueError(
+                                "val_outs_sent_to_others must not be less than 0!"
+                            )
+
+                        # 3) of lifo/fifo
+                        inps = sort_together(
+                            [
+                                inps.age,
+                                inps,
+                            ],
+                            # differentiate between lifo/fifo
+                            reverse = switch_sort
+                        )[1]
+
+                        for inp in inps:
+                            val_inp         = inp.value
+                            val_outs_break += val_inp
+                            key_inp         = "{}_{}".format(inp.address, val_inp)
+
+                            if val_outs_break == val_outs_sent_to_others:
+                                if key == key_inp:
+                                    #add_allowed = True
+                                break
+
+                            if val_outs_break > val_outs_sent_to_others:
+                                if m_circ_mc_break >= val_outs_sent_to_others:
+                                    m_circ_mc[0] = val_outs_sent_to_others
+                                break
+
+                            if key == key_inp:
+                                #add_allowed = True
+                                break
+
+                        # TODO: remove "or True" condition toggle
+                        if True == add_allowed or True:
+                            outs_spent[tw_i] += out_spent_add
 
                 return outs_spent
 
@@ -2303,6 +2465,7 @@ class Velo:
                             inps.age,
                             inps,
                         ],
+                        # differentiate between lifo/fifo
                         reverse = switch_sort
                     )[1]
 
@@ -2345,6 +2508,7 @@ class Velo:
                                 val_inp_add = gen_rem
                                 if tw_i == 0:
                                     m_circ_mc_break += val_inp_add
+                                    #m_circ_mc_break += val_inp
                                 m_circ_mc[tw_i]       += val_inp_add
                                 m_circ_mc_timed[tw_i] += get_timed_input(
                                     inp,
@@ -2437,7 +2601,9 @@ class Velo:
             m_circ_mc_fifo   = [[] for t in range(Velo.time_windows_cnt)]
             m_circ_cbs       = []
             m_circ_cbs_timed = []
-            outs_spent_btw   = [[] for t in range(Velo.time_windows_cnt)]
+            o_loah_wh_bill   = [[] for t in range(Velo.time_windows_cnt)]
+            o_loah_mc_lifo   = [[] for t in range(Velo.time_windows_cnt)]
+            o_loah_mc_fifo   = [[] for t in range(Velo.time_windows_cnt)]
 
             # retrieve data for each daychunk of txes---------------------------
             for dc_i, daychunk in enumerate(self.__txes_daily):
@@ -2457,7 +2623,9 @@ class Velo:
                     m_circ_wh_bill[tw_i].append(0)
                     m_circ_mc_lifo[tw_i].append(0)
                     m_circ_mc_fifo[tw_i].append(0)
-                    outs_spent_btw[tw_i].append(0)
+                    o_loah_wh_bill[tw_i].append(0)
+                    o_loah_mc_lifo[tw_i].append(0)
+                    o_loah_mc_fifo[tw_i].append(0)
 
                 # if no transactions happened, continue-------------------------
                 if daychunk == []:
@@ -2554,24 +2722,42 @@ class Velo:
 
                     # outputs spent within time window are only needed for------
                     # aggregation for window sizes > 1
-                    outs_spent_btw_per_tx = [
-                        -1 for t in range(Velo.time_windows_cnt)
-                    ]
+                    o_loah_wh_bill_per_tx = [-1 for t in range(Velo.time_windows_cnt)]
+                    o_loah_mc_lifo_per_tx = [-1 for t in range(Velo.time_windows_cnt)]
+                    o_loah_mc_fifo_per_tx = [-1 for t in range(Velo.time_windows_cnt)]
                     if Velo.time_windows_cnt > 1:
-                        outs_spent_btw_per_tx = outs_spent_bl_heights(
+                        o_loah_wh_bill_per_tx = outs_spent_bl_heights(
                             tx,
                             bh_look_ahead,
+                            switch_wb_bill=True,
+                            switch_sort=False,
+                            switch_cbso=0,
+                        )
+                        o_loah_mc_lifo_per_tx = outs_spent_bl_heights(
+                            tx,
+                            bh_look_ahead,
+                            switch_wb_bill=False,
+                            switch_sort=False,
+                            switch_cbso=0,
+                        )
+                        o_loah_mc_fifo_per_tx = outs_spent_bl_heights(
+                            tx,
+                            bh_look_ahead,
+                            switch_wb_bill=False,
+                            switch_sort=True,
                             switch_cbso=0,
                         )
 
                     # prepare data structures for windowed values---------------
                     for tw_i, _ in enumerate(Velo.time_windows):
-                        satoshi_dd_raw[tw_i][-1]  += satoshi_dd_per_tx[tw_i]
-                        dormancy_raw[tw_i][-1]    += satoshi_dd_per_tx[tw_i]
-                        m_circ_wh_bill[tw_i][-1]  += m_circ_wh_bill_per_tx[tw_i]
-                        m_circ_mc_lifo[tw_i][-1]  += m_circ_mc_lifo_per_tx[tw_i]
-                        m_circ_mc_fifo[tw_i][-1]  += m_circ_mc_fifo_per_tx[tw_i]
-                        outs_spent_btw[tw_i][-1]  += outs_spent_btw_per_tx[tw_i]
+                        satoshi_dd_raw[tw_i][-1] += satoshi_dd_per_tx[tw_i]
+                        dormancy_raw[tw_i][-1]   += satoshi_dd_per_tx[tw_i]
+                        m_circ_wh_bill[tw_i][-1] += m_circ_wh_bill_per_tx[tw_i]
+                        m_circ_mc_lifo[tw_i][-1] += m_circ_mc_lifo_per_tx[tw_i]
+                        m_circ_mc_fifo[tw_i][-1] += m_circ_mc_fifo_per_tx[tw_i]
+                        o_loah_wh_bill[tw_i][-1] += o_loah_wh_bill_per_tx[tw_i]
+                        o_loah_mc_lifo[tw_i][-1] += o_loah_mc_lifo_per_tx[tw_i]
+                        o_loah_mc_fifo[tw_i][-1] += o_loah_mc_fifo_per_tx[tw_i]
 
             # put results into __queue_dict-------------------------------------
             m_circ_cbs_key       = "m_circ_cbs"
@@ -2580,19 +2766,23 @@ class Velo:
             self.__queue_dict[m_circ_cbs_timed_key] = m_circ_cbs_timed
 
             for tw_i, t_w in enumerate(Velo.time_windows):
-                satoshi_dd_raw_key  = "sdd_raw_{}"       .format(t_w)
-                dormancy_raw_key    = "dormancy_raw_{}"  .format(t_w)
-                m_circ_wh_bill_key  = "m_circ_wh_bill_{}".format(t_w)
-                m_circ_mc_lifo_key  = "m_circ_mc_lifo_{}".format(t_w)
-                m_circ_mc_fifo_key  = "m_circ_mc_fifo_{}".format(t_w)
-                outs_spent_btw_key  = "outs_spent_btw_{}".format(t_w)
+                satoshi_dd_raw_key = "sdd_raw_{}"       .format(t_w)
+                dormancy_raw_key   = "dormancy_raw_{}"  .format(t_w)
+                m_circ_wh_bill_key = "m_circ_wh_bill_{}".format(t_w)
+                m_circ_mc_lifo_key = "m_circ_mc_lifo_{}".format(t_w)
+                m_circ_mc_fifo_key = "m_circ_mc_fifo_{}".format(t_w)
+                o_loah_wh_bill_key = "o_loah_wh_bill_{}".format(t_w)
+                o_loah_mc_lifo_key = "o_loah_mc_lifo_{}".format(t_w)
+                o_loah_mc_fifo_key = "o_loah_mc_fifo_{}".format(t_w)
 
                 self.__queue_dict[satoshi_dd_raw_key] = satoshi_dd_raw[tw_i]
                 self.__queue_dict[dormancy_raw_key]   = dormancy_raw[tw_i]
                 self.__queue_dict[m_circ_wh_bill_key] = m_circ_wh_bill[tw_i]
                 self.__queue_dict[m_circ_mc_lifo_key] = m_circ_mc_lifo[tw_i]
                 self.__queue_dict[m_circ_mc_fifo_key] = m_circ_mc_fifo[tw_i]
-                self.__queue_dict[outs_spent_btw_key] = outs_spent_btw[tw_i]
+                self.__queue_dict[o_loah_wh_bill_key] = o_loah_wh_bill[tw_i]
+                self.__queue_dict[o_loah_mc_lifo_key] = o_loah_mc_lifo[tw_i]
+                self.__queue_dict[o_loah_mc_fifo_key] = o_loah_mc_fifo[tw_i]
 
             # hande test_level cases--------------------------------------------
             if Velo.test_level == 2:
