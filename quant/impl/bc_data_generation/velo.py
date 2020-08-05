@@ -1051,50 +1051,50 @@ class Velo:
                 Velo.time_windows.
                 """
                 for tw_i, _ in enumerate(Velo.time_windows[1:], start=1):
-                    m_supply_wh_bill_agg_last = 0
-                    m_supply_mc_lifo_agg_last = 0
-                    m_supply_mc_fifo_agg_last = 0
+                    m_supply_agg_last_wh_bill = 0
+                    m_supply_agg_last_mc_lifo = 0
+                    m_supply_agg_last_mc_fifo = 0
                     
                     wndw = Velo.time_windows[tw_i]
 
                     # get the previously computed window------------------------
                     if day > 0:
-                        m_supply_wh_bill_agg_last = Velo.m_supply_wh_bill_agg[tw_i][day-1]
-                        m_supply_mc_lifo_agg_last = Velo.m_supply_mc_lifo_agg[tw_i][day-1]
-                        m_supply_mc_fifo_agg_last = Velo.m_supply_mc_fifo_agg[tw_i][day-1]
+                        m_supply_agg_last_wh_bill = Velo.m_supply_agg_wh_bill[tw_i][day-1]
+                        m_supply_agg_last_mc_lifo = Velo.m_supply_agg_mc_lifo[tw_i][day-1]
+                        m_supply_agg_last_mc_fifo = Velo.m_supply_agg_mc_fifo[tw_i][day-1]
 
                     #-add the current daily calculations------------------------
-                    m_supply_wh_bill_agg_tw = m_supply_wh_bill_agg_last
-                    m_supply_mc_lifo_agg_tw = m_supply_mc_lifo_agg_last
-                    m_supply_mc_fifo_agg_tw = m_supply_mc_fifo_agg_last
+                    m_supply_agg_tw_wh_bill = m_supply_agg_last_wh_bill
+                    m_supply_agg_tw_mc_lifo = m_supply_agg_last_mc_lifo
+                    m_supply_agg_tw_mc_fifo = m_supply_agg_last_mc_fifo
 
                     if day < wndw:
                     #if day >= wndw:
                         # no "spent last" transactions, only coinbase contribute
                         # to m_supply in circulation in first tw days
-                        m_supply_wh_bill_agg_tw += Velo.m_supply_cbs[day]
-                        m_supply_mc_lifo_agg_tw += Velo.m_supply_cbs[day]
-                        m_supply_mc_fifo_agg_tw += Velo.m_supply_cbs[day]
+                        m_supply_agg_tw_wh_bill += Velo.m_supply_cbs[day]
+                        m_supply_agg_tw_mc_lifo += Velo.m_supply_cbs[day]
+                        m_supply_agg_tw_mc_fifo += Velo.m_supply_cbs[day]
                     else:
-                        m_supply_wh_bill_agg_tw += Velo.m_supply_wh_bill_add_a[tw_i][day]
-                        m_supply_mc_lifo_agg_tw += Velo.m_supply_mc_lifo_add_a[tw_i][day]
-                        m_supply_mc_fifo_agg_tw += Velo.m_supply_mc_fifo_add_a[tw_i][day]
+                        m_supply_agg_tw_wh_bill += Velo.m_supply_add_a_wh_bill[tw_i][day]
+                        m_supply_agg_tw_mc_lifo += Velo.m_supply_add_a_mc_lifo[tw_i][day]
+                        m_supply_agg_tw_mc_fifo += Velo.m_supply_add_a_mc_fifo[tw_i][day]
 
                     #-substract the calculations right before the new window----
                     if day >= wndw:
                         day_sub = day - wndw
 
-                        m_supply_wh_bill_agg_tw -= Velo.m_supply_wh_bill_add_a[0][day_sub]
-                        m_supply_mc_lifo_agg_tw -= Velo.m_supply_mc_lifo_add_a[0][day_sub]
-                        m_supply_mc_fifo_agg_tw -= Velo.m_supply_mc_fifo_add_a[0][day_sub]
+                        m_supply_agg_tw_wh_bill -= Velo.m_supply_add_a_wh_bill[0][day_sub]
+                        m_supply_agg_tw_mc_lifo -= Velo.m_supply_add_a_mc_lifo[0][day_sub]
+                        m_supply_agg_tw_mc_fifo -= Velo.m_supply_add_a_mc_fifo[0][day_sub]
 
-                        m_supply_wh_bill_agg_tw += Velo.m_supply_wh_bill_add_b[tw_i][day_sub]
-                        m_supply_mc_lifo_agg_tw += Velo.m_supply_mc_lifo_add_b[tw_i][day_sub]
-                        m_supply_mc_fifo_agg_tw += Velo.m_supply_mc_fifo_add_b[tw_i][day_sub]
+                        m_supply_agg_tw_wh_bill += Velo.m_supply_add_b_wh_bill[tw_i][day_sub]
+                        m_supply_agg_tw_mc_lifo += Velo.m_supply_add_b_mc_lifo[tw_i][day_sub]
+                        m_supply_agg_tw_mc_fifo += Velo.m_supply_add_b_mc_fifo[tw_i][day_sub]
 
-                    Velo.m_supply_wh_bill_agg[tw_i].append(m_supply_wh_bill_agg_tw)
-                    Velo.m_supply_mc_lifo_agg[tw_i].append(m_supply_mc_lifo_agg_tw)
-                    Velo.m_supply_mc_fifo_agg[tw_i].append(m_supply_mc_fifo_agg_tw)
+                    Velo.m_supply_agg_wh_bill[tw_i].append(m_supply_agg_tw_wh_bill)
+                    Velo.m_supply_agg_mc_lifo[tw_i].append(m_supply_agg_tw_mc_lifo)
+                    Velo.m_supply_agg_mc_fifo[tw_i].append(m_supply_agg_tw_mc_fifo)
 
                 return
 
@@ -1111,86 +1111,86 @@ class Velo:
             #-------------------------------------------------------------------
             m_supply_cbs_key   = "m_circ_cbs"
 
-            m_supply_wh_bill_add_a_key = "m_circ_wh_bill"
-            m_supply_mc_lifo_add_a_key = "m_circ_mc_lifo"
-            m_supply_mc_fifo_add_a_key = "m_circ_mc_fifo"
+            m_supply_add_a_key_wh_bill = "m_circ_wh_bill"
+            m_supply_add_a_key_mc_lifo = "m_circ_mc_lifo"
+            m_supply_add_a_key_mc_fifo = "m_circ_mc_fifo"
 
-            m_supply_wh_bill_add_b_key = "o_loah_wh_bill"
-            m_supply_mc_lifo_add_b_key = "o_loah_mc_lifo"
-            m_supply_mc_fifo_add_b_key = "o_loah_mc_fifo"
+            m_supply_add_b_key_wh_bill = "o_loah_wh_bill"
+            m_supply_add_b_key_mc_lifo = "o_loah_mc_lifo"
+            m_supply_add_b_key_mc_fifo = "o_loah_mc_fifo"
 
-            m_supply_wh_bill_agg_key   = "m_circ_wh_bill"
-            m_supply_mc_lifo_agg_key   = "m_circ_mc_lifo"
-            m_supply_mc_fifo_agg_key   = "m_circ_mc_fifo"
+            m_supply_agg_key_wh_bill   = "m_circ_wh_bill"
+            m_supply_agg_key_mc_lifo   = "m_circ_mc_lifo"
+            m_supply_agg_key_mc_fifo   = "m_circ_mc_fifo"
 
-            m_supply_wh_bill_add_a     = [[] for t in range(Velo.time_windows_cnt)]
-            m_supply_mc_lifo_add_a     = [[] for t in range(Velo.time_windows_cnt)]
-            m_supply_mc_fifo_add_a     = [[] for t in range(Velo.time_windows_cnt)]
+            m_supply_add_a_wh_bill     = [[] for t in range(Velo.time_windows_cnt)]
+            m_supply_add_a_mc_lifo     = [[] for t in range(Velo.time_windows_cnt)]
+            m_supply_add_a_mc_fifo     = [[] for t in range(Velo.time_windows_cnt)]
 
-            m_supply_wh_bill_add_b     = [[] for t in range(Velo.time_windows_cnt)]
-            m_supply_mc_lifo_add_b     = [[] for t in range(Velo.time_windows_cnt)]
-            m_supply_mc_fifo_add_b     = [[] for t in range(Velo.time_windows_cnt)]
+            m_supply_add_b_wh_bill     = [[] for t in range(Velo.time_windows_cnt)]
+            m_supply_add_b_mc_lifo     = [[] for t in range(Velo.time_windows_cnt)]
+            m_supply_add_b_mc_fifo     = [[] for t in range(Velo.time_windows_cnt)]
 
-            m_supply_wh_bill_agg       = [[] for t in range(Velo.time_windows_cnt)]
-            m_supply_mc_lifo_agg       = [[] for t in range(Velo.time_windows_cnt)]
-            m_supply_mc_fifo_agg       = [[] for t in range(Velo.time_windows_cnt)]
+            m_supply_agg_wh_bill       = [[] for t in range(Velo.time_windows_cnt)]
+            m_supply_agg_mc_lifo       = [[] for t in range(Velo.time_windows_cnt)]
+            m_supply_agg_mc_fifo       = [[] for t in range(Velo.time_windows_cnt)]
 
             # get sum and sub for aggregation-----------------------------------
             for tw_i, t_w in enumerate(Velo.time_windows):
-                m_supply_wh_bill_add_a_key_tw = "{}_{}".format(
-                    m_supply_wh_bill_add_a_key,
+                m_supply_add_a_key_tw_wh_bill = "{}_{}".format(
+                    m_supply_add_a_key_wh_bill,
                     t_w,
                 )
-                m_supply_mc_lifo_add_a_key_tw = "{}_{}".format(
-                    m_supply_mc_lifo_add_a_key,
+                m_supply_add_a_key_tw_mc_lifo = "{}_{}".format(
+                    m_supply_add_a_key_mc_lifo,
                     t_w,
                 )
-                m_supply_mc_fifo_add_a_key_tw = "{}_{}".format(
-                    m_supply_mc_fifo_add_a_key,
+                m_supply_add_a_key_tw_mc_fifo = "{}_{}".format(
+                    m_supply_add_a_key_mc_fifo,
                     t_w,
                 )
-                m_supply_wh_bill_add_b_key_tw = "{}_{}".format(
-                    m_supply_wh_bill_add_b_key,
+                m_supply_add_b_key_tw_wh_bill = "{}_{}".format(
+                    m_supply_add_b_key_wh_bill,
                     t_w,
                 )
-                m_supply_mc_lifo_add_b_key_tw = "{}_{}".format(
-                    m_supply_mc_lifo_add_b_key,
+                m_supply_add_b_key_tw_mc_lifo = "{}_{}".format(
+                    m_supply_add_b_key_mc_lifo,
                     t_w,
                 )
-                m_supply_mc_fifo_add_b_key_tw = "{}_{}".format(
-                    m_supply_mc_fifo_add_b_key,
+                m_supply_add_b_key_tw_mc_fifo = "{}_{}".format(
+                    m_supply_add_b_key_mc_fifo,
                     t_w,
                 )
 
-                m_supply_wh_bill_add_a[tw_i] = results_raw[
-                    m_supply_wh_bill_add_a_key_tw
+                m_supply_add_a_wh_bill[tw_i] = results_raw[
+                    m_supply_add_a_key_tw_wh_bill
                 ]
-                m_supply_mc_lifo_add_a[tw_i] = results_raw[
-                    m_supply_mc_lifo_add_a_key_tw
+                m_supply_add_a_mc_lifo[tw_i] = results_raw[
+                    m_supply_add_a_key_tw_mc_lifo
                 ]
-                m_supply_mc_fifo_add_a[tw_i] = results_raw[
-                    m_supply_mc_fifo_add_a_key_tw
+                m_supply_add_a_mc_fifo[tw_i] = results_raw[
+                    m_supply_add_a_key_tw_mc_fifo
                 ]
-                m_supply_wh_bill_add_b[tw_i] = results_raw[
-                    m_supply_wh_bill_add_b_key_tw
+                m_supply_add_b_wh_bill[tw_i] = results_raw[
+                    m_supply_add_b_key_tw_wh_bill
                 ]
-                m_supply_mc_lifo_add_b[tw_i] = results_raw[
-                    m_supply_mc_lifo_add_b_key_tw
+                m_supply_add_b_mc_lifo[tw_i] = results_raw[
+                    m_supply_add_b_key_tw_mc_lifo
                 ]
-                m_supply_mc_fifo_add_b[tw_i] = results_raw[
-                    m_supply_mc_fifo_add_b_key_tw
+                m_supply_add_b_mc_fifo[tw_i] = results_raw[
+                    m_supply_add_b_key_tw_mc_fifo
                 ]
 
             Velo.m_supply_cbs   = results_raw[m_supply_cbs_key]
-            Velo.m_supply_wh_bill_add_a = m_supply_wh_bill_add_a
-            Velo.m_supply_mc_lifo_add_a = m_supply_mc_lifo_add_a
-            Velo.m_supply_mc_fifo_add_a = m_supply_mc_fifo_add_a
-            Velo.m_supply_wh_bill_add_b = m_supply_wh_bill_add_b
-            Velo.m_supply_mc_lifo_add_b = m_supply_mc_lifo_add_b
-            Velo.m_supply_mc_fifo_add_b = m_supply_mc_fifo_add_b
-            Velo.m_supply_wh_bill_agg   = m_supply_wh_bill_agg
-            Velo.m_supply_mc_lifo_agg   = m_supply_mc_lifo_agg
-            Velo.m_supply_mc_fifo_agg   = m_supply_mc_fifo_agg
+            Velo.m_supply_add_a_wh_bill = m_supply_add_a_wh_bill
+            Velo.m_supply_add_a_mc_lifo = m_supply_add_a_mc_lifo
+            Velo.m_supply_add_a_mc_fifo = m_supply_add_a_mc_fifo
+            Velo.m_supply_add_b_wh_bill = m_supply_add_b_wh_bill
+            Velo.m_supply_add_b_mc_lifo = m_supply_add_b_mc_lifo
+            Velo.m_supply_add_b_mc_fifo = m_supply_add_b_mc_fifo
+            Velo.m_supply_agg_wh_bill   = m_supply_agg_wh_bill
+            Velo.m_supply_agg_mc_lifo   = m_supply_agg_mc_lifo
+            Velo.m_supply_agg_mc_fifo   = m_supply_agg_mc_fifo
 
             # aggreation steps per day------------------------------------------
             for day_i in range(Velo.cnt_days):
@@ -1198,30 +1198,30 @@ class Velo:
 
             # prepare return----------------------------------------------------
             for tw_i, t_w in enumerate(Velo.time_windows[1:], start=1):
-                m_supply_wh_bill_agg_key_tw = "{}_{}".format(
-                    m_supply_wh_bill_agg_key,
+                m_supply_agg_key_tw_wh_bill = "{}_{}".format(
+                    m_supply_agg_key_wh_bill,
                     t_w,
                 )
-                m_supply_mc_lifo_agg_key_tw = "{}_{}".format(
-                    m_supply_mc_lifo_agg_key,
+                m_supply_agg_key_tw_mc_lifo = "{}_{}".format(
+                    m_supply_agg_key_mc_lifo,
                     t_w,
                 )
-                m_supply_mc_fifo_agg_key_tw = "{}_{}".format(
-                    m_supply_mc_fifo_agg_key,
+                m_supply_agg_key_tw_mc_fifo = "{}_{}".format(
+                    m_supply_agg_key_mc_fifo,
                     t_w,
                 )
 
                 results_raw[
-                    m_supply_wh_bill_agg_key_tw
-                ] = Velo.m_supply_wh_bill_agg[tw_i]
+                    m_supply_agg_key_tw_wh_bill
+                ] = Velo.m_supply_agg_wh_bill[tw_i]
 
                 results_raw[
-                    m_supply_mc_lifo_agg_key_tw
-                ] = Velo.m_supply_mc_lifo_agg[tw_i]
+                    m_supply_agg_key_tw_mc_lifo
+                ] = Velo.m_supply_agg_mc_lifo[tw_i]
 
                 results_raw[
-                    m_supply_mc_fifo_agg_key_tw
-                ] = Velo.m_supply_mc_fifo_agg[tw_i]
+                    m_supply_agg_key_tw_mc_fifo
+                ] = Velo.m_supply_agg_mc_fifo[tw_i]
 
             return results_raw
 
@@ -1660,7 +1660,7 @@ class Velo:
             df_final["{}_o".format(m_circ_type)] = results_raw_old[m_circ_type]
 
         #--handle m_circ_tests--------------------------------------------------
-        daychunks = collect_daychunks(1)
+        daychunks = collect_daychunks(2)
         m_circ_wh_bill_raw_test, m_circ_mc_lifo_raw_test, m_circ_mc_fifo_raw_test = m_circ_test(
             daychunks,
             switch_cbso=0,
@@ -2238,6 +2238,7 @@ class Velo:
             def outs_spent_bl_heights(
                 tx,
                 bh_look_ahead,
+                switch_circ_effective=True,
                 switch_wb_bill=True,
                 switch_sort=False,
                 switch_cbso=0,
@@ -2302,85 +2303,57 @@ class Velo:
                         # handle coinbase and normal transactions---------------
                         # for coinbase txes: get part of out.value to be added
                         # according to coinbase fee/new generated coins
-                        cbs_out_bh = cbs_outs[tx.block_height]
-                        key        = "{}_{}".format(out.address, out.value)
-                        if tx_is_coinbase:
-                            if key not in cbs_out_bh:
-                                break
-
-                            cbs_out_index = cbs_out_bh[key][0]
-                            gen_rem       = cbs_out_bh["gen_rem"]
-                            gen_rem_index = cbs_out_bh["gen_rem_index"]
-                            fee_rem       = cbs_out_bh["fee_rem"]
-
-                            # check if output represents newly generated coins--
-                            if cbs_out_index > gen_rem_index:
-                                break
-
-                            # output represents fees collected in coinbase tx---
-                            if cbs_out_index == gen_rem_index:
-
-                                out_spent_add = fee_rem
-                                #outs_spent[tw_i] += fee_rem
-                                #continue
-                        else:
-                            out_spent_add = out.value
-
                         if True == switch_wb_bill:
+                            cbs_out_bh = cbs_outs[tx.block_height]
+                            key        = "{}_{}".format(out.address, out.value)
+                            if tx_is_coinbase:
+                                if key not in cbs_out_bh:
+                                    break
+
+                                cbs_out_index = cbs_out_bh[key][0]
+                                gen_rem       = cbs_out_bh["gen_rem"]
+                                gen_rem_index = cbs_out_bh["gen_rem_index"]
+                                fee_rem       = cbs_out_bh["fee_rem"]
+
+                                # output represents newly generated coins-------
+                                if cbs_out_index > gen_rem_index:
+                                    break
+
+                                # outs represents fees collected in coinbase tx-
+                                if cbs_out_index == gen_rem_index:
+
+                                    out_spent_add = fee_rem
+                                    #outs_spent[tw_i] += fee_rem
+                                    #continue
+                            else:
+                                out_spent_add = out.value
+
                             outs_spent[tw_i] += out_spent_add
                             continue
 
-                        # don't compute whole bill, but lifo/fifo --> simulate
-                        # lifo/fifo mechanism in spending tx in order to analyze
-                        # whether out is allowed to be counted
-                        spending_tx    = out.spending_tx
-                        add_allowed    = False
-                        inps           = spending_tx.inputs
-                        val_outs_break = 0
-                        val_outs       = spending_tx.output_value
+                        add_allowed = handle_tx_m_circ (
+                            out_spending_tx,
+                            [bh_day_next],
+                            switch_circ_effective=switch_circ_effective,
+                            switch_wb_bill=switch_wb_bill,
+                            switch_sort=switch_sort,
+                            switch_time=False,
+                            switch_cbso=switch_cbso,
+                            switch_out_check=True,
+                            out=out,
+                        )
 
-                        # 1) of lifo/fifo
-                        val_outs_sent_to_others  = val_outs
-                        val_outs_sent_to_others -= get_selfchurn(spending_tx)
-
-                        # 2) of lifo/fifo
-                        if val_outs_sent_to_others < 0:
-                            raise ValueError(
-                                "val_outs_sent_to_others must not be less than 0!"
+                        if type(add_allowed) is not int:
+                            raise TypeError(
+                                "add_allowed needs to be an int"
+                                ", but is of type {} with value {}"
+                                "while switch_wb_bill is {}".format(
+                                    type(add_allowed),
+                                    add_allowed,
+                                    switch_wb_bill,
+                                )
                             )
-
-                        # 3) of lifo/fifo
-                        inps = sort_together(
-                            [
-                                inps.age,
-                                inps,
-                            ],
-                            # differentiate between lifo/fifo
-                            reverse = switch_sort
-                        )[1]
-
-                        for inp in inps:
-                            val_inp         = inp.value
-                            val_outs_break += val_inp
-                            key_inp         = "{}_{}".format(inp.address, val_inp)
-
-                            if val_outs_break == val_outs_sent_to_others:
-                                if key == key_inp:
-                                    #add_allowed = True
-                                break
-
-                            if val_outs_break > val_outs_sent_to_others:
-                                if m_circ_mc_break >= val_outs_sent_to_others:
-                                    m_circ_mc[0] = val_outs_sent_to_others
-                                break
-
-                            if key == key_inp:
-                                #add_allowed = True
-                                break
-
-                        # TODO: remove "or True" condition toggle
-                        if True == add_allowed or True:
-                            outs_spent[tw_i] += out_spent_add
+                        outs_spent[tw_i] += add_allowed
 
                 return outs_spent
 
@@ -2404,6 +2377,8 @@ class Velo:
                 switch_sort=False,
                 switch_time=False,
                 switch_cbso=0,
+                switch_out_check=False,
+                out=None,
             ):
                 """
                 Compute and return satoshi days desdroyed (sdd) per tx.
@@ -2429,26 +2404,43 @@ class Velo:
                     up.
                 """
                 #---------------------------------------------------------------
-                m_circ_mc        = [0 for t in range(Velo.time_windows_cnt)]
-                m_circ_mc_timed  = [0 for t in range(Velo.time_windows_cnt)]
-                m_circ_mc_break  = 0
-                inps             = tx.inputs
-                val_outs_break   = 0
-                val_outs         = tx.output_value
-                cbs_outs         = Velo.f_cbs_outs_of_bh
+                m_circ_mc       = [0 for t in range(Velo.time_windows_cnt)]
+                m_circ_mc_timed = [0 for t in range(Velo.time_windows_cnt)]
+                m_circ_mc_break = 0
+                inps            = tx.inputs
+                val_outs_break  = 0
+                val_outs        = tx.output_value
+                cbs_outs        = Velo.f_cbs_outs_of_bh
+                key_out         = None
+                time_windows    = Velo.time_windows
+                
+                # 0)
+                if True == switch_out_check:
+                    time_windows = [1]
+                    # make really sure that tx is the spending tx of the output
+                    tx = out.spending_tx
+                    # should actually never trigger because of blockchain design
+                    if out.tx.block_height >= tx.block_height:
+                        raise ValueError(
+                            "Block height of look ahead output is within window!"
+                        )
+                        exit(1)
+                    if True == switch_wb_bill:
+                        return True
+
+                    key_out = "{}_{}".format(out.address, out.value)
 
                 if tx.is_coinbase or tx.input_value == 0:
                 #or val_outs == 0:
                     return m_circ_mc
 
                 # 1)
-                val_outs_sent_to_others = val_outs
+                val_outs_sent_to_others = val_outs + tx.fee
 
-                if switch_wb_bill == True:
-                    val_outs_sent_to_others += tx.fee
-                else:
-                    # TODO: why not +tx.fee?
+                if False == switch_wb_bill:
                     val_outs_sent_to_others -= get_selfchurn(tx)
+                    # TODO: why not incl tx.fee?
+                    val_outs_sent_to_others -= tx.fee
 
                 # 2)
                 if val_outs_sent_to_others < 0:
@@ -2456,7 +2448,10 @@ class Velo:
                         "val_outs_sent_to_others must not be less than 0!"
                     )
                 elif val_outs_sent_to_others == 0:
-                    return m_circ_mc
+                    if True == switch_out_check:
+                        return 0
+                    else:
+                        return m_circ_mc
 
                 # 3)
                 if switch_wb_bill == False:
@@ -2477,7 +2472,7 @@ class Velo:
                     val_inp_add     = 0
                     val_inp         = inp.value
                     val_outs_break += val_inp
-                    key             = None
+                    key_inp         = "{}_{}".format(inp.address, val_inp)
 
                     inp_spent_index = inp_spent_before_bh_or_coinbase(
                         inp,
@@ -2492,14 +2487,15 @@ class Velo:
                         cbs_out_bh    = cbs_outs[inp_spt_tx_bh]
                         gen_rem_index = cbs_out_bh["gen_rem_index"]
                         gen_rem       = cbs_out_bh["gen_rem"]
-                        key           = "{}_{}".format(inp.address, val_inp)
+                        #key_inp       = "{}_{}".format(inp.address, val_inp)
 
-                    for tw_i, _ in enumerate(Velo.time_windows):
+
+                    for tw_i, _ in enumerate(time_windows):
                         if 0 == inp_spent_index[tw_i]:
                             break
 
-                        if 2 == inp_spent_index[tw_i] and key in cbs_out_bh:
-                            cbs_out_index = cbs_out_bh[key][0]
+                        if 2 == inp_spent_index[tw_i] and key_inp in cbs_out_bh:
+                            cbs_out_index = cbs_out_bh[key_inp][0]
 
                             if cbs_out_index < gen_rem_index:
                                 break
@@ -2525,11 +2521,21 @@ class Velo:
                             val_inp
                         )
 
+                        if True == switch_out_check and key_out == key_inp:
+                            break
+
                     # **)
+                    # if we checked all input candidates
                     if val_outs_break >= val_outs_sent_to_others:
+                        # if input candites are more then values send to others
                         if m_circ_mc_break >= val_outs_sent_to_others:
                             m_circ_mc[0] = val_outs_sent_to_others
+                            if True == switch_out_check and key_out == key_inp:
+                                return val_outs_sent_to_others - (m_circ_mc_break - out.value)
                         break
+                    else:
+                        if True == switch_out_check and key_out == key_inp:
+                            return val_inp
 
                 if m_circ_mc[0] < 0:
                     Velo.logger.error(
@@ -2571,9 +2577,10 @@ class Velo:
                             ),
                         )
                     )
-                    raise ValueError(
-                        "m_circ_m must not be less than 0!"
-                        )
+                    raise ValueError( "m_circ_m must not be less than 0!" )
+                
+                if True == switch_out_check:
+                    return 0
 
                 if switch_time == True:
                     return m_circ_mc_timed
@@ -2680,6 +2687,8 @@ class Velo:
                         switch_sort=False,
                         switch_time=True,
                         switch_cbso=0,
+                        switch_out_check=False,
+                        out=None,
                     )
                     m_circ_wh_bill_per_tx   = handle_tx_m_circ(
                         tx,
@@ -2689,6 +2698,8 @@ class Velo:
                         switch_sort=False,
                         switch_time=False,
                         switch_cbso=0,
+                        switch_out_check=False,
+                        out=None,
                     )
                     m_circ_mc_lifo_per_tx   = handle_tx_m_circ(
                         tx,
@@ -2698,6 +2709,8 @@ class Velo:
                         switch_sort=False,
                         switch_time=False,
                         switch_cbso=0,
+                        switch_out_check=False,
+                        out=None,
                     )
                     m_circ_mc_fifo_per_tx   = handle_tx_m_circ(
                         tx,
@@ -2707,6 +2720,8 @@ class Velo:
                         switch_sort=True,
                         switch_time=False,
                         switch_cbso=0,
+                        switch_out_check=False,
+                        out=None,
                     )
                     m_circ_cbs_per_tx       = inp_spent_coinbase(
                         tx,
@@ -2729,6 +2744,7 @@ class Velo:
                         o_loah_wh_bill_per_tx = outs_spent_bl_heights(
                             tx,
                             bh_look_ahead,
+                            switch_circ_effective=True,
                             switch_wb_bill=True,
                             switch_sort=False,
                             switch_cbso=0,
@@ -2736,6 +2752,7 @@ class Velo:
                         o_loah_mc_lifo_per_tx = outs_spent_bl_heights(
                             tx,
                             bh_look_ahead,
+                            switch_circ_effective=True,
                             switch_wb_bill=False,
                             switch_sort=False,
                             switch_cbso=0,
@@ -2743,6 +2760,7 @@ class Velo:
                         o_loah_mc_fifo_per_tx = outs_spent_bl_heights(
                             tx,
                             bh_look_ahead,
+                            switch_circ_effective=True,
                             switch_wb_bill=False,
                             switch_sort=True,
                             switch_cbso=0,
