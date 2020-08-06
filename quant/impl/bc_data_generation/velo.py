@@ -2251,7 +2251,6 @@ class Velo:
                 cbs_outs       = Velo.f_cbs_outs_of_bh
                 bh_day_next    = bh_look_ahead[0]
                 tx_is_coinbase = tx.is_coinbase
-                add_allowed    = False
 
                 if switch_cbso == 1 and tx_is_coinbase:
                     return outs_spent
@@ -2330,8 +2329,8 @@ class Velo:
 
                             outs_spent[tw_i] += out_spent_add
                             continue
-
-                        add_allowed = handle_tx_m_circ (
+                        break
+                        out_spent_add = handle_tx_m_circ (
                             out_spending_tx,
                             [bh_day_next],
                             switch_circ_effective=switch_circ_effective,
@@ -2343,17 +2342,17 @@ class Velo:
                             out=out,
                         )
 
-                        if type(add_allowed) is not int:
+                        if type(out_spent_add) is not int:
                             raise TypeError(
                                 "add_allowed needs to be an int"
                                 ", but is of type {} with value {}"
                                 "while switch_wb_bill is {}".format(
-                                    type(add_allowed),
-                                    add_allowed,
+                                    type(out_spent_add),
+                                    out_spent_add,
                                     switch_wb_bill,
                                 )
                             )
-                        outs_spent[tw_i] += add_allowed
+                        outs_spent[tw_i] += out_spent_add
 
                 return outs_spent
 
@@ -2413,7 +2412,7 @@ class Velo:
                 cbs_outs        = Velo.f_cbs_outs_of_bh
                 key_out         = None
                 time_windows    = Velo.time_windows
-                
+
                 # 0)
                 if True == switch_out_check:
                     time_windows = [1]
@@ -2426,6 +2425,11 @@ class Velo:
                         )
                         exit(1)
                     if True == switch_wb_bill:
+                        raise ValueError(
+                            "switch_out_check + switch_wb_bill"
+                            "must not be true at the same time!"
+                        )
+                        exit(-1)
                         return True
 
                     key_out = "{}_{}".format(out.address, out.value)
@@ -2578,7 +2582,7 @@ class Velo:
                         )
                     )
                     raise ValueError( "m_circ_m must not be less than 0!" )
-                
+
                 if True == switch_out_check:
                     return 0
 
