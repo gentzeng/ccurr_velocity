@@ -140,13 +140,19 @@ class Velo:
                                               # analyzed------------------------
     bl_height_max  = 0                        # maximum block height regarding--
                                               # given end date for analysis-----
-    tx_vol_agg        = None                  # helper: daily aggr. tx volume---
-    m_supply_add_a    = None                  # helper: money supply agg 1st add
-    m_supply_add_b    = None                  # helper: money supply agg 2nd add
-    m_supply_agg      = None                  # helper: money supply agg target-
-    m_supply_cbs      = None                  # helper: money supply coinbased--
-    tx_vol_churn_agg  = None                  # daily aggr. selfchurning tx vol-
-    secs_per_day      = 86400                 # seconds per day 24*60*60--------
+    tx_vol_agg             = None             # helper: daily aggr. tx volume---
+    m_supply_add_a_wh_bill = None             # helper: money supply agg 1st add
+    m_supply_add_a_mc_lifo = None             # helper: money supply agg 1st add
+    m_supply_add_a_mc_fifo = None             # helper: money supply agg 1st add
+    m_supply_add_b_wh_bill = None             # helper: money supply agg 2nd add
+    m_supply_add_b_mc_lifo = None             # helper: money supply agg 2nd add
+    m_supply_add_b_mc_fifo = None             # helper: money supply agg 2nd add
+    m_supply_agg_wh_bill   = None             # helper: money supply agg target-
+    m_supply_agg_mc_lifo   = None             # helper: money supply agg target-
+    m_supply_agg_mc_fifo   = None             # helper: money supply agg target-
+    m_supply_cbs           = None             # helper: money supply coinbased--
+    tx_vol_churn_agg       = None             # daily aggr. selfchurning tx vol-
+    secs_per_day           = 86400            # seconds per day 24*60*60--------
 
     #==[ CLASSLEVEL | SessionSetup & precaching of global data struct ]=========
     def setup(
@@ -2279,7 +2285,7 @@ class Velo:
                         continue
 
                     # check block heights for each time window------------------
-                    for tw_i, _ in enumerate(Velo.time_windows[1:], start=1):
+                    for tw_i, tw in enumerate(Velo.time_windows[1:], start=1):
                         bh_la = bh_look_ahead[tw_i]
 
                         # check if bh_tw is in analyzed block range-------------
@@ -2302,10 +2308,12 @@ class Velo:
                         # handle coinbase and normal transactions---------------
                         # for coinbase txes: get part of out.value to be added
                         # according to coinbase fee/new generated coins
+                        out_spent_add = out.value
                         if True == switch_wb_bill:
-                            cbs_out_bh = cbs_outs[tx.block_height]
-                            key        = "{}_{}".format(out.address, out.value)
-                            if tx_is_coinbase:
+                            if True == tx_is_coinbase:
+                                cbs_out_bh = cbs_outs[tx.block_height]
+                                key        = "{}_{}".format(out.address, out.value)
+
                                 if key not in cbs_out_bh:
                                     break
 
@@ -2320,16 +2328,15 @@ class Velo:
 
                                 # outs represents fees collected in coinbase tx-
                                 if cbs_out_index == gen_rem_index:
-
                                     out_spent_add = fee_rem
-                                    #outs_spent[tw_i] += fee_rem
-                                    #continue
-                            else:
-                                out_spent_add = out.value
 
                             outs_spent[tw_i] += out_spent_add
                             continue
-                        break
+                        
+                        # ignore lifo for now
+                        if True == switch_sort:
+                            return outs_spent
+
                         out_spent_add = handle_tx_m_circ (
                             out_spending_tx,
                             [bh_day_next],
