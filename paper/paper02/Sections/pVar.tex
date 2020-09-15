@@ -6,7 +6,7 @@
 \newcommand{\mcaType}       {{\mathtt{mca(type)}}}
 \newcommand{\aggr}          {{\mathtt{aggregated}}}
 \newcommand{\sorted}        {{\mathtt{sort}}}
-\newcommand{\cbs}           {{\mathtt{coinbase}}}
+\newcommand{\cbs}           {{\mathtt{cbs}}}
 \newcommand{\nameOld}       {{\total}}
 \newcommand{\nameNew}       {{\mathtt{circ}}}
 \newcommand{\Start}         {{\mathtt{start}}}
@@ -17,15 +17,22 @@
 \newcommand{\est}           {{\mathtt{msr}}}
 \newcommand{\dateGen}       {{\mathtt{dateGen}}}
 \newcommand{\genByCoinbase} {{\mathtt{genByCoinbase}}}
+\newcommand{\isCoinbase}    {{\mathtt{isCoinbase}}}
+\newcommand{\inpSpentCase}  {{\mathtt{inpSpentCase}}}
+\newcommand{\bhSpentTx}     {{\mathtt{blockHeightSpentTx}}}
 
+\newcommand{\andbf}         {{\mathbf{and}}}
+\newcommand{\orbf}          {{\mathbf{or}}}
 \newcommand{\coins}         {{\mathtt{coins}}}
 \newcommand{\sheep}         {{\mathtt{sheep}}}
 \newcommand{\maxtt}         {{\mathtt{max}}}
 \newcommand{\mintt}         {{\mathtt{min}}}
 \newcommand{\daytt}         {{\mathtt{day}}}
 \newcommand{\bdd}           {\mathtt{cdd}}
+\newcommand{\addr}          {{\mathtt{address}}}
 \newcommand{\val}           {{\mathtt{val}}}
 \newcommand{\valI}          {{\mathtt{valInp}}}
+\newcommand{\valIAdd}       {{\mathtt{valInpAdd}}}
 \newcommand{\valO}          {{\mathtt{valOut}}}
 \newcommand{\vEc}           {{\mathtt{vec}}}
 \newcommand{\vEcI}          {{\mathtt{vecInp}}}
@@ -40,6 +47,11 @@
 \newcommand{\outs}          {{\mathtt{outputs}}}
 \newcommand{\selfchurn}     {{\mathtt{selfchurn}}}
 \newcommand{\sendToOthers}  {{\mathtt{toOthers}}}
+\newcommand{\typett}        {{\mathtt{type}}}
+\newcommand{\minedRemIndex} {{\mathtt{minedRemIndex}}}
+\newcommand{\minedRem}      {{\mathtt{minedRem}}}
+\newcommand{\cbsOutIndex}   {{\mathtt{cbsOutIndex}}}
+\newcommand{\keyInp}        {{\mathtt{keyInp}}}
 
 \newcommand{\wndw}          {{w}}
 \newcommand{\wndwT}         {{\wndw_t}}
@@ -120,6 +132,19 @@
 \newcommand{\OutPTi}        {{\Out_\perdTi}}
 \newcommand{\OutPTo}        {{\Out_\perdTo}}
 \newcommand{\OutPTc}        {{\Out_\perdTc}}
+
+
+\newcommand{\Fee}           {{\mathbb{F}}}
+\newcommand{\FeeW}          {{\Fee_\wndw}}
+\newcommand{\FeeWT}         {{\Fee_\wndwT}}
+\newcommand{\FeeWTi}        {{\Fee_\wndwTi}}
+\newcommand{\FeeWTo}        {{\Fee_\wndwTo}}
+\newcommand{\FeeWTc}        {{\Fee_\wndwTc}}
+\newcommand{\FeeP}          {{\Fee_\perd}}
+\newcommand{\FeePT}         {{\Fee_\perdT}}
+\newcommand{\FeePTi}        {{\Fee_\perdTi}}
+\newcommand{\FeePTo}        {{\Fee_\perdTo}}
+\newcommand{\FeePTc}        {{\Fee_\perdTc}}
 
 \newcommand{\Pp}            {{P_\perd}}
 \newcommand{\Pw}            {{P_\wndw}}

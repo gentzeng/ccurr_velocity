@@ -14,7 +14,7 @@
 		\ForEach {$ i \in \InpT $                                 	\tcc*[]{Loop through inputs $i$ of transaction $t$}}%
 		{%
 			\If{%
-				$\dateGen(i)<\wndw_\Start$\ or\ $\genByCoinbase(i)$\label{algo:code_mcirc_wbCond}\tcc*{Was $i$ generated before $\wndw_\Start$/from a coinbase transaction?}%
+				$\dateGen(i)<\wndw_\Start$\ or\ $\genByCoinbase(i)$\ref{algo:code_mcirc_wbCond}\tcc*{Was $i$ generated before $\wndw_\Start$/from a coinbase transaction?}%
 			}{%
 				$\MCircWb \gets{\MCircWb + \valI(i)}$				\tcc*{Update money supply}%
 			}%

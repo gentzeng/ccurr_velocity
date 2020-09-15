@@ -6,7 +6,7 @@
 	\renewcommand{\algocf@linesnumbered}{\everypar={\nl}}}%
 %
 \let\oldnl\nl% Store \nl in \oldnl
-\newcommand{\nonl}{\renewcommand{\nl}{\let\nl\oldnl}}% Remove line number for one line
+\renewcommand{\nonl}{\renewcommand{\nl}{\let\nl\oldnl}}% Remove line number for one line
 %
 \ifdefined\varInputAlgos%
 \renewcommand{\arraystretch}{1.90}%
