@@ -5,18 +5,21 @@
 	\caption{Precompute $\Out^{\cbs}$: outputs of coinbase transactions representing collected fees}\label{algo:code_cbs_out}%
 	$\Out^{\cbs} \gets{\emptyset}$                                      \tcc*{The set of maps of coinbase tx outputs representing collected fees per blockheight}%
 	\ForEach{$\mathrm{blockheight}\ bh\ \mathrm{of\ a\ given\ Blockchain}$}{%
-		$\Out^{\cbs} \gets{\Out^{\cbs}\cup\overset{\rightarrow}{\emptyset}}$   \tcc*{Append an empty map for this blockheight}%
-		$ \outSum  \gets{0}$                                            \tcc*{Initializing sum of regarded outputs}%
-		$ \feeRem   \gets{0}$                                           \tcc*{Initializing value of last output (partly) representing collected fees}%
-		$ \minedRem \gets{0}$                                           \tcc*{Initializing value of first output (partly) representing mined coins}%
-		$ \feeSum   \gets{\sum_{f\in{}\Fee(bh)} \val(f)}$               \tcc*{Initializing sum of all fees collected in block}%
+		$\Out^{\cbs}_{bh} \gets{\overset{\rightarrow}{\emptyset}}$      \tcc*{Append an empty map for this blockheight}%
+		$ \outSum  \gets{0}$                                            \tcc*{Sum of regarded outputs}%
+		$ \feeRem   \gets{0}$                                           \tcc*{Value of last output (partly) representing collected fees}%
+		$ \minedRem \gets{0}$                                           \tcc*{Value of first output (partly) representing mined coins}%
+		$ \feeSum   \gets{\sum_{f\in{}\Fee(bh)} \val(f)}$               \tcc*{Sum of all fees collected in block}%
 		$ \Out'_{t}\gets{sortSpentOnly(\OutT)}$                         \tcc*{Sort ascending by indexes of transactions spending the outputs and discard utxos}%
-		\lIf(\tcc*[f]{Continue if all outputs are unspent}){%
+		\If(\tcc*[f]{Continue if all outputs are unspent}){%
 			$\Out'_{t} = \emptyset$%
-		}{continue}%
+		}{%
+			$\Out^{\cbs} \gets{\Out^{\cbs}\,\cup\,\{\Out^{\cbs}_{bh}\}}$\\%
+			continue
+		}%
 		\ForEach{$o \in \Out'_{t}$}{%
-			$\keyOut \gets {"\addr(o)\_\val(o)"}$                       \tcc*{Map key for $\Out^{\cbs}[-1]$, supposed to be unique}%
-			$\Out^{\cbs}[-1][\keyOut] \gets {(\indextt(o),\,\val(o))}$  \tcc*{Add map entry, where $\keyOut$ is mapped to tuple of index of $o$ within $\Out'_{t}$ and its value}%
+			$\keyOut \gets {(\addr(o),\ \val(o))}$                       \tcc*{Map key for $\Out^{\cbs}[-1]$, supposed to be unique}%
+			$\Out^{\cbs}_{bh}[\keyOut] \gets {(\indextt(o),\,\val(o))}$  \tcc*{Add map entry, where $\keyOut$ is mapped to tuple of index of $o$ within $\Out'_{t}$ and its value}%
 			$\outSum \gets {\outSum + \val(o)}$                         \tcc*{Update $\outSum$}%
 			\If(\tcc*[f]{If we exceded all outputs representing fees}%
 			){$\outSum \ge \feeSum$}{%
@@ -25,9 +28,10 @@
 				break
 			}%
 		}%
-		$\Out^{\cbs}[-1][\mathtt{"minedRemIndex"}] \gets {\indextt(o)}$ \tcc*{Add index of last regard $o$ within $\Out'_{t}$}%
-		$\Out^{\cbs}[-1][\mathtt{"minedRem"}] \gets {\minedRem}$        \tcc*{Add value of first output (partly) representing mined coins}%
-		$\Out^{\cbs}[-1][\mathtt{"feeRem"}] \gets {\feeRem}$            \tcc*{Add value of last output (partly) representing collected fees}%
+		$\Out^{\cbs}_{bh}[\mathtt{"minedRemIndex"}] \gets {\indextt(o)}$ \tcc*{Add index of last regard $o$ within $\Out'_{t}$}%
+		$\Out^{\cbs}_{bh}[\mathtt{"minedRem"}] \gets {\minedRem}$        \tcc*{Add value of first output (partly) representing mined coins}%
+		$\Out^{\cbs}_{bh}[\mathtt{"feeRem"}] \gets {\feeRem}$            \tcc*{Add value of last output (partly) representing collected fees}%
+		$\Out^{\cbs} \gets{\Out^{\cbs}\,\cup\,\{\Out^{\cbs}_{bh}\}}$\\%
 	}%
 %
 	return $\Out^{\cbs}$                                                \tcc*{Result: The set of maps of coinbase tx outputs representing collected fees}%

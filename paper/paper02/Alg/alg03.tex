@@ -35,7 +35,7 @@
 			%
 		}(\tcc*[f]{\ac*{mca}: Discounting selfchurning outputs}%
 		){% 
-			$\Out'_{t} \gets{\Out_{t}\cap\Out^{\selfchurn}}$                        \tcc*{Determine the set of selfchurning outputs of $t$}%
+			$\Out'_{t} \gets{\Out_{t}\,\cap\,\Out^{\selfchurn}}$                        \tcc*{Determine the set of selfchurning outputs of $t$}%
 			$\valO^\sendToOthers(t)  \gets{\valO^\sendToOthers(t) - \sum_{o\in{}\Out'_{t}} \val(o) }$%
 		}%
 		\lIf(\tcc*[f]{Skip current transaction and go to the next}){$\valO^\sendToOthers(t) = 0$}{continue}%
@@ -52,9 +52,9 @@
 				$\inpSpentCase = 2$
 			}{%        
 				$\Out^{\cbs}_{i} \gets{\Out^{\cbs}[\bhSpentTx(i)]}$                \tcc*{Get map of outputs of the coinbase tx that is referenced by input $i$}%
-				$\keyInp \gets {"\addr(i)\_\val(i)"}$                              \tcc*{dictionary/map key for $\Out^{\cbs}_{i}$, supposed to be unique}%
+				$\keyInp \gets {(\addr(i),\ \val(i))}$                              \tcc*{dictionary/map key for $\Out^{\cbs}_{i}$, supposed to be unique}%
 				\If(\tcc*[f]{Check wheather $i$ represents fees}%
-				){$\keyInp \in \Out^{\cbs}_{i}$
+				){$\keyInp \in \keys(\Out^{\cbs}_{i})$
 				}{%				
 					$\minedRemIndex \gets {\Out^{\cbs}_{i}[\mathtt{"minedRemIndex"}]}$ \tcc*{Get index of the first output representing mined coins}%
 					$\cbsOutIndex \gets {\Out^{\cbs}_{i}[\keyInp][0]}$                 \tcc*{Get index of the output referenced by $i$}%
