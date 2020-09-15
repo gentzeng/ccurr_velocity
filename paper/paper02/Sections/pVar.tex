@@ -1,165 +1,163 @@
 
-\newcommand{\G}{{\mathbb{G}}}
-\newcommand{\sorted}{{\mathtt{sort}}}
-\newcommand{\cbs}{{\mathtt{coinbase}}}
+\newcommand{\wba}           {{\mathtt{wba}}}
+\newcommand{\mca}           {{\mathtt{mca}}}
+\newcommand{\mcaFifo}       {{\mathtt{mcaFifo}}}
+\newcommand{\mcaLifo}       {{\mathtt{mcaLifo}}}
+\newcommand{\mcaType}       {{\mathtt{mca(type)}}}
+\newcommand{\sorted}        {{\mathtt{sort}}}
+\newcommand{\cbs}           {{\mathtt{coinbase}}}
+\newcommand{\nameOld}       {{\total}}
+\newcommand{\nameNew}       {{\mathtt{circ}}}
+\newcommand{\Start}         {{\mathtt{start}}}
+\newcommand{\End}           {{\mathtt{end}}}
+\newcommand{\total}         {\mathtt{total}}
+\newcommand{\naive}         {\mathtt{triv}}
+\newcommand{\app}           {{\mathtt{app}}}
+\newcommand{\est}           {{\mathtt{msr}}}
+\newcommand{\dateGen}       {{\mathtt{dateGen}}}
+\newcommand{\genByCoinbase} {{\mathtt{genByCoinbase}}}
 
-\newcommand{\Start}{{\mathtt{start}}}
-\newcommand{\End}{{\mathtt{end}}}
+\newcommand{\coins}         {{\mathtt{coins}}}
+\newcommand{\sheep}         {{\mathtt{sheep}}}
+\newcommand{\bdd}           {\mathtt{cdd}}
+\newcommand{\val}           {{\mathtt{val}}}
+\newcommand{\valI}          {{\mathtt{valInp}}}
+\newcommand{\valO}          {{\mathtt{valOut}}}
+\newcommand{\vEc}           {{\mathtt{vec}}}
+\newcommand{\vEcI}          {{\mathtt{vecInp}}}
+\newcommand{\vEcO}          {{\mathtt{vecIout}}}
+\newcommand{\tx}            {{\mathtt{tx}}}
+\newcommand{\inp}           {{\mathtt{input}}}
+\newcommand{\inps}          {{\mathtt{inputs}}}
+\newcommand{\inpsSort}      {{\mathtt{inputs}_\sorted}}
+\newcommand{\summed}        {{\mathtt{sum}}}
+\newcommand{\inpsSum}       {{\mathtt{inputs}_\mathtt{sum}}}
+\newcommand{\out}           {{\mathtt{output}}}
+\newcommand{\outs}          {{\mathtt{outputs}}}
+\newcommand{\selfchurn}     {{\mathtt{selfchurn}}}
+\newcommand{\sendToOthers}  {{\mathtt{toOthers}}}
 
-\newcommand{\total}{\mathtt{total}}
-\newcommand{\naive}{\mathtt{triv}}
-\newcommand{\app}{{\mathtt{app}}}
-\newcommand{\est}{{\mathtt{msr}}}
+\newcommand{\wndw}          {{w}}
+\newcommand{\wndwT}         {{\wndw_t}}
+\newcommand{\wndwTi}        {{{\wndw_t}_i}}
+\newcommand{\wndwTo}        {{{\wndw_t}_o}}
+\newcommand{\wndwTc}        {{{\wndw_t}_c}}
+\newcommand{\wndwLength}    {{\ell}}
 
-\newcommand{\wndw}{{w}}
-\newcommand{\wndwT}{{\wndw_t}}
-\newcommand{\wndwTi}{{{\wndw_t}_i}}
-\newcommand{\wndwTo}{{{\wndw_t}_o}}
-\newcommand{\wndwTc}{{{\wndw_t}_c}}
-\newcommand{\wndwLength}{{\ell}}
+\newcommand{\perd}          {{p}}
+\newcommand{\perdT}         {{\perd_t}}
+\newcommand{\perdTi}        {{{\perd_t}_i}}
+\newcommand{\perdTo}        {{{\perd_t}_o}}
+\newcommand{\perdTc}        {{{\perd_t}_c}}
 
-\newcommand{\perd}{{p}}
-\newcommand{\perdT}{{\perd_t}}
-\newcommand{\perdTi}{{{\perd_t}_i}}
-\newcommand{\perdTo}{{{\perd_t}_o}}
-\newcommand{\perdTc}{{{\perd_t}_c}}
+\newcommand{\perdWl}        {{\perd[\wndwLength]}}
+\newcommand{\perdWlT}       {{\perd_t[\wndwLength]}}
+\newcommand{\perdWlTi}      {{{\perd_t}_i[\wndwLength]}}
+\newcommand{\perdWlTo}      {{{\perd_t}_o[\wndwLength]}}
+\newcommand{\perdWlTc}      {{{\perd_t}_c[\wndwLength]}}
 
-\newcommand{\perdWl}{{\perd[\wndwLength]}}
-\newcommand{\perdWlT}{{\perd_t[\wndwLength]}}
-\newcommand{\perdWlTi}{{{\perd_t}_i[\wndwLength]}}
-\newcommand{\perdWlTo}{{{\perd_t}_o[\wndwLength]}}
-\newcommand{\perdWlTc}{{{\perd_t}_c[\wndwLength]}}
+\newcommand{\circtt}        {\mathtt{circ}}
+\newcommand{\circttNot}     {{\mathtt{nonRecycling}}}
+\newcommand{\circttWb}      {\mathtt{circWba}}
+\newcommand{\circttM}       {\mathtt{circMca}}
+\newcommand{\circttMf}      {\mathtt{circMcaFifo}}
+\newcommand{\circttMl}      {\mathtt{circMcaLifo}}
+\newcommand{\circttMt}      {\mathtt{circMcaType}}
+\newcommand{\circttWbWl}    {\mathtt{circWba}[\wndwLength]}
+\newcommand{\circttMWl}     {\mathtt{circMca}[\wndwLength]}
+\newcommand{\circttMfWl}    {\mathtt{circMcaFifo}[\wndwLength]}
+\newcommand{\circttMlWl}    {\mathtt{circMcaLifo}[\wndwLength]}
+\newcommand{\circttMtWl}    {\mathtt{circMcaType}[\wndwLength]}
 
-\newcommand{\GStrokeP}{{\G'_\perd}}
+\newcommand{\Tx}            {{\mathbb{T}}}
+\newcommand{\TxW}           {{\Tx_\wndw}}
+\newcommand{\TxWT}          {{\Tx_\wndwT}}
+\newcommand{\TxWTi}         {{\Tx_\wndwTi}}
+\newcommand{\TxWTo}         {{\Tx_\wndwTo}}
+\newcommand{\TxWTc}         {{\Tx_\wndwTc}}
+\newcommand{\TxP}           {{\Tx_\perd}}
+\newcommand{\TxPT}          {{\Tx_\perdT}}
+\newcommand{\TxPTi}         {{\Tx_\perdTi}}
+\newcommand{\TxPTo}         {{\Tx_\perdTo}}
+\newcommand{\TxPTc}         {{\Tx_\perdTc}}
+\newcommand{\TxC}           {{\Tx^{\cbs}_{\mathbb{P}}}}
 
-\newcommand{\circtt}     {\mathtt{circ}}
-\newcommand{\circttNot}  {{\mathtt{nonRecycling}}}
-\newcommand{\circttWb}   {\mathtt{circWba}}
-\newcommand{\circttM}    {\mathtt{circMca}}
-\newcommand{\circttMf}   {\mathtt{circMcaFifo}}
-\newcommand{\circttMl}   {\mathtt{circMcaLifo}}
-\newcommand{\circttMt}   {\mathtt{circMcaType}}
-\newcommand{\circttWbWl} {\mathtt{circWba}[\wndwLength]}
-\newcommand{\circttMWl}  {\mathtt{circMca}[\wndwLength]}
-\newcommand{\circttMfWl} {\mathtt{circMcaFifo}[\wndwLength]}
-\newcommand{\circttMlWl} {\mathtt{circMcaLifo}[\wndwLength]}
-\newcommand{\circttMtWl} {\mathtt{circMcaType}[\wndwLength]}
+\newcommand{\Inp}           {{\mathbb{I}}}
+\newcommand{\InpT}          {{\Inp_{\mathtt{t}}}}
+\newcommand{\InpW}          {{\Inp_\wndw}}
+\newcommand{\InpWT}         {{\Inp_\wndwT}}
+\newcommand{\InpWTi}        {{\Inp_\wndwTi}}
+\newcommand{\InpWTo}        {{\Inp_\wndwTo}}
+\newcommand{\InpWTc}        {{\Inp_\wndwTc}}
+\newcommand{\InpP}          {{\Inp_\perd}}
+\newcommand{\InpPT}         {{\Inp_\perdT}}
+\newcommand{\InpPTi}        {{\Inp_\perdTi}}
+\newcommand{\InpPTo}        {{\Inp_\perdTo}}
+\newcommand{\InpPTc}        {{\Inp_\perdTc}}
+\newcommand{\InpSorted}     {{\Inp^\sorted}}
+\newcommand{\InpSortedT}    {{\Inp^\sorted_{t}}}
+\newcommand{\InpSortedW}    {{\Inp^\sorted_\wndw}}
+\newcommand{\InpSortedWT}   {{\Inp^\sorted_\wndwT}}
+\newcommand{\InpSortedP}    {{\Inp^\sorted_\perd}}
+\newcommand{\InpSortedPT}   {{\Inp^\sorted_\perdT}}
 
-\newcommand{\Tx}          {{\mathbb{T}}}
-\newcommand{\TxW}         {{\Tx_\wndw}}
-\newcommand{\TxWT}        {{\Tx_\wndwT}}
-\newcommand{\TxWTi}       {{\Tx_\wndwTi}}
-\newcommand{\TxWTo}       {{\Tx_\wndwTo}}
-\newcommand{\TxWTc}       {{\Tx_\wndwTc}}
-\newcommand{\TxP}         {{\Tx_\perd}}
-\newcommand{\TxPT}        {{\Tx_\perdT}}
-\newcommand{\TxPTi}       {{\Tx_\perdTi}}
-\newcommand{\TxPTo}       {{\Tx_\perdTo}}
-\newcommand{\TxPTc}       {{\Tx_\perdTc}}
-\newcommand{\TxC}         {{\Tx^{\cbs}_{\mathbb{P}}}}
+\newcommand{\Out}           {{\mathbb{O}}}
+\newcommand{\OutW}          {{\Out_\wndw}}
+\newcommand{\OutWT}         {{\Out_\wndwT}}
+\newcommand{\OutWTi}        {{\Out_\wndwTi}}
+\newcommand{\OutWTo}        {{\Out_\wndwTo}}
+\newcommand{\OutWTc}        {{\Out_\wndwTc}}
+\newcommand{\OutP}          {{\Out_\perd}}
+\newcommand{\OutPT}         {{\Out_\perdT}}
+\newcommand{\OutPTi}        {{\Out_\perdTi}}
+\newcommand{\OutPTo}        {{\Out_\perdTo}}
+\newcommand{\OutPTc}        {{\Out_\perdTc}}
 
-\newcommand{\Inp}         {{\mathbb{I}}}
-\newcommand{\InpT}        {{\Inp_{\mathtt{t}}}}
-\newcommand{\InpW}        {{\Inp_\wndw}}
-\newcommand{\InpWT}       {{\Inp_\wndwT}}
-\newcommand{\InpWTi}      {{\Inp_\wndwTi}}
-\newcommand{\InpWTo}      {{\Inp_\wndwTo}}
-\newcommand{\InpWTc}      {{\Inp_\wndwTc}}
-\newcommand{\InpP}        {{\Inp_\perd}}
-\newcommand{\InpPT}       {{\Inp_\perdT}}
-\newcommand{\InpPTi}      {{\Inp_\perdTi}}
-\newcommand{\InpPTo}      {{\Inp_\perdTo}}
-\newcommand{\InpPTc}      {{\Inp_\perdTc}}
-\newcommand{\InpSorted}   {{\Inp^\sorted}}
-\newcommand{\InpSortedT}  {{\Inp^\sorted_{t}}}
-\newcommand{\InpSortedW}  {{\Inp^\sorted_\wndw}}
-\newcommand{\InpSortedWT} {{\Inp^\sorted_\wndwT}}
-\newcommand{\InpSortedP}  {{\Inp^\sorted_\perd}}
-\newcommand{\InpSortedPT} {{\Inp^\sorted_\perdT}}
+\newcommand{\Pp}            {{P_\perd}}
+\newcommand{\Pw}            {{P_\wndw}}
 
-\newcommand{\Out}         {{\mathbb{O}}}
-\newcommand{\OutW}        {{\Out_\wndw}}
-\newcommand{\OutWT}       {{\Out_\wndwT}}
-\newcommand{\OutWTi}      {{\Out_\wndwTi}}
-\newcommand{\OutWTo}      {{\Out_\wndwTo}}
-\newcommand{\OutWTc}      {{\Out_\wndwTc}}
-\newcommand{\OutP}        {{\Out_\perd}}
-\newcommand{\OutPT}       {{\Out_\perdT}}
-\newcommand{\OutPTi}      {{\Out_\perdTi}}
-\newcommand{\OutPTo}      {{\Out_\perdTo}}
-\newcommand{\OutPTc}      {{\Out_\perdTc}}
+\newcommand{\Tw}            {{T_\wndw}}
+\newcommand{\Tp}            {{T_\perd}}
 
-\newcommand{\Pp}{{P_\perd}}
-\newcommand{\Tp}{{T_\perd}}
-\newcommand{\Gp}{{\G_\perd}}
-\newcommand{\Np}{{N_\perd}}
-\newcommand{\Ip}{{I_\perd}}
-\newcommand{\tp}{{t_\perd}}
-\newcommand{\vp}{{v_\perd}} 
-\newcommand{\Op}{{O_\perd}}
+\newcommand{\G}             {{\mathbb{G}}}
+\newcommand{\Gw}            {{\G_\wndw}}
+\newcommand{\Gp}            {{\G_\perd}}
+\newcommand{\GStrokeW}      {{\G'_\wndw}}
+\newcommand{\GStrokeP}      {{\G'_\perd}}
 
+\newcommand{\Nw}            {{N_\wndw}}
+\newcommand{\Np}            {{N_\perd}}
 
+\newcommand{\Iw}            {{I_\wndw}}
+\newcommand{\Ip}            {{I_\perd}}
 
-\newcommand{\Pw}{{P_\wndw}}
-\newcommand{\Tw}{{T_\wndw}}
-\newcommand{\Gw}{{\G_\wndw}}
-\newcommand{\Nw}{{N_\wndw}}
-\newcommand{\Iw}{{I_\wndw}}
-\newcommand{\tw}{{t_\wndw}}
-\newcommand{\vw}{{v_\wndw}} 
-\newcommand{\Cw}{{C_\wndw}}
+\newcommand{\tw}            {{t_\wndw}}
+\newcommand{\tp}            {{t_\perd}}
 
-\newcommand{\GStrokeW}{{\G'_\wndw}}
+\newcommand{\vw}            {{v_\wndw}} 
+\newcommand{\vp}            {{v_\perd}}
 
-\newcommand{\coins}{{\mathtt{coins}}}
-\newcommand{\sheep}{{\mathtt{sheep}}}
-\newcommand{\bdd}{\mathtt{cdd}}
-\newcommand{\val}{{\mathtt{val}}}
-\newcommand{\valI}{{\mathtt{valInp}}}
-\newcommand{\valO}{{\mathtt{valOut}}}
-\newcommand{\vEc}{{\mathtt{vec}}}
-\newcommand{\vEcI}{{\mathtt{vecInp}}}
-\newcommand{\vEcO}{{\mathtt{vecIout}}}
-\newcommand{\tx}{{\mathtt{tx}}}
-\newcommand{\inp}{{\mathtt{input}}}
-\newcommand{\inps}{{\mathtt{inputs}}}
-\newcommand{\inpsSort}{{\mathtt{inputs}_\sorted}}
-\newcommand{\summed}{{\mathtt{sum}}}
-\newcommand{\inpsSum}{{\mathtt{inputs}_\mathtt{sum}}}
-\newcommand{\out}{{\mathtt{output}}}
-\newcommand{\outs}{{\mathtt{outputs}}}
-\newcommand{\selfchurn}{{\mathtt{selfchurn}}}
-\newcommand{\sendToOthers}{{\mathtt{toOthers}}}
+\newcommand{\Cw}            {{C_\wndw}}
+ 
+\newcommand{\Op}            {{O_\perd}}
 
+\newcommand{\TurnoverP}     {{{V^{\app}_{\mathtt{turnover}}}_{\perd}}}
 
-\newcommand{\wba}{{\mathtt{wba}}}
-\newcommand{\mca}{{\mathtt{mca}}}
-\newcommand{\mcaFifo}{{\mathtt{mcaFifo}}}
-\newcommand{\mcaLifo}{{\mathtt{mcaLifo}}}
-\newcommand{\mcaType}{{\mathtt{mca(type)}}}
+\newcommand{\Bdd}           {{V^{\app}_{\mathtt{cdd}}}}
+\newcommand{\BddW}          {{{V^{\app}_{\mathtt{cdd}}}_{\!\wndw}}}
+\newcommand{\BddP}          {{{V^{\app}_{\mathtt{cdd}}}_{\!\perd}}}
 
-\newcommand{\nameOld}{{\total}}
-\newcommand{\nameNew}{{\mathtt{circ}}}
+\newcommand{\Dorm}          {\mathtt{dorm}}
+\newcommand{\DormW}         {\mathtt{dorm}_\wndw}
+\newcommand{\DormP}         {\mathtt{dorm}_\perd}
 
-\newcommand{\TurnoverP}{{{V^{\app}_{\mathtt{turnover}}}_{\perd}}}
+\newcommand{\Turn}          {{V^{\app}_{\mathtt{turn}}}}
+\newcommand{\TurnW}         {{{V^{\app}_{\mathtt{turn}}}_{\wndw}}}
+\newcommand{\TurnP}         {{{V^{\app}_{\mathtt{turn}}}_{\perd}}}
 
-\newcommand{\Bdd}{{V^{\app}_{\mathtt{cdd}}}}
-\newcommand{\Dorm}{\mathtt{dorm}}
-\newcommand{\Turn}{{V^{\app}_{\mathtt{turn}}}}
-\newcommand{\Num}{{V^{\app}_{\mathtt{tx-number}}}}
-
-\newcommand{\BddP}{{{V^{\app}_{\mathtt{cdd}}}_{\!\perd}}}
-\newcommand{\DormP}{\mathtt{dorm}_\perd}
-\newcommand{\TurnP}{{{V^{\app}_{\mathtt{turn}}}_{\perd}}}
-\newcommand{\NumP}{{{V^{\app}_{\mathtt{tx-number}}}_{\perd}}}
-%
-\newcommand{\BddW}{{{V^{\app}_{\mathtt{cdd}}}_{\!\wndw}}}
-\newcommand{\DormW}{\mathtt{dorm}_\perd}
-\newcommand{\TurnW}{{{V^{\app}_{\mathtt{turn}}}_{\wndw}}}
-\newcommand{\NumW}{{{V^{\app}_{\mathtt{tx-number}}}_{\wndw}}}
-
-\newcommand{\dateGen}{{\mathtt{dateGen}}}
-\newcommand{\genByCoinbase}{{\mathtt{genByCoinbase}}}
+\newcommand{\Num}           {{V^{\app}_{\mathtt{tx-number}}}}
+\newcommand{\NumW}          {{{V^{\app}_{\mathtt{tx-number}}}_{\wndw}}}
+\newcommand{\NumP}          {{{V^{\app}_{\mathtt{tx-number}}}_{\perd}}}
 
 %Definitions for M-------------------------------------
 % \perd in subscript
@@ -284,14 +282,14 @@
 \newcommand{\Vw}{{V_\wndw}}
 
 %Variations of V
-\newcommand{\VCirc}       {{V_{\circtt}}}
-\newcommand{\VCircWb}     {{V_{\circttWb}}}
-\newcommand{\VCircM}      {{V_{\circttM}}}
-\newcommand{\VCircMl}     {{V_{\circttMl}}}
-\newcommand{\VCircMf}     {{V_{\circttMf}}}
-\newcommand{\VCircMt}     {{V_{\circttMt}}}
-\newcommand{\VTotal}      {{V_\total}}
-\newcommand{\VNaive}      {{V_\naive}}
+\newcommand{\VCirc}         {{V_{\circtt}}}
+\newcommand{\VCircWb}       {{V_{\circttWb}}}
+\newcommand{\VCircM}        {{V_{\circttM}}}
+\newcommand{\VCircMl}       {{V_{\circttMl}}}
+\newcommand{\VCircMf}       {{V_{\circttMf}}}
+\newcommand{\VCircMt}       {{V_{\circttMt}}}
+\newcommand{\VTotal}        {{V_\total}}
+\newcommand{\VNaive}        {{V_\naive}}
 
 %Variations of V with window length
 \newcommand{\VCircWl}       {{V_{\circttWl}}}
@@ -302,14 +300,14 @@
 \newcommand{\VCircMtWl}     {{V_{\circttMtWl}}}
 
 %Varations of V, estimated
-\newcommand{\VCircEst}     {{V_{\circtt}^\est}}
-\newcommand{\VCircWbEst}   {{V_{\circttWb}^\est}}
-\newcommand{\VCircMEst}    {{V_{\circttM}^\est}}
-\newcommand{\VCircMlEst}   {{V_{\circttMl}^\est}}
-\newcommand{\VCircMfEst}   {{V_{\circttMf}^\est}}
-\newcommand{\VCircMtEst}   {{V_{\circttMt}^\est}}
-\newcommand{\VTotalEst}    {{V_\total^\est}}
-\newcommand{\VNaiveEst}    {{V_\naive^\est}}
+\newcommand{\VCircEst}      {{V_{\circtt}^\est}}
+\newcommand{\VCircWbEst}    {{V_{\circttWb}^\est}}
+\newcommand{\VCircMEst}     {{V_{\circttM}^\est}}
+\newcommand{\VCircMlEst}    {{V_{\circttMl}^\est}}
+\newcommand{\VCircMfEst}    {{V_{\circttMf}^\est}}
+\newcommand{\VCircMtEst}    {{V_{\circttMt}^\est}}
+\newcommand{\VTotalEst}     {{V_\total^\est}}
+\newcommand{\VNaiveEst}     {{V_\naive^\est}}
 
 %Variations of V with window length, estimated
 \newcommand{\VCircEstWl}    {{V_{\circttWl}^\est}}
@@ -320,24 +318,24 @@
 \newcommand{\VCircMtEstWl}  {{V_{\circttMtWl}^\est}}
 
 %Variations of V with \perd in subscript
-\newcommand{\VCircP}       {{\VCirc_\perd}}
-\newcommand{\VCircWbP}     {{\VCircWb_\perd}}
-\newcommand{\VCircMP}      {{\VCircM_\perd}}
-\newcommand{\VCircMlP}     {{\VCircMl_\perd}}
-\newcommand{\VCircMfP}     {{\VCircMf_\perd}}
-\newcommand{\VCircMtP}     {{\VCircMt_\perd}}
-\newcommand{\VTotalP}      {{\VTotal_\perd}}
-\newcommand{\VNaiveP}      {{\VNaive_\perd}}
+\newcommand{\VCircP}        {{\VCirc_\perd}}
+\newcommand{\VCircWbP}      {{\VCircWb_\perd}}
+\newcommand{\VCircMP}       {{\VCircM_\perd}}
+\newcommand{\VCircMlP}      {{\VCircMl_\perd}}
+\newcommand{\VCircMfP}      {{\VCircMf_\perd}}
+\newcommand{\VCircMtP}      {{\VCircMt_\perd}}
+\newcommand{\VTotalP}       {{\VTotal_\perd}}
+\newcommand{\VNaiveP}       {{\VNaive_\perd}}
 
 %Variations of V with \wndw in subscript
-\newcommand{\VCircW}       {{\VCirc_\wndw}}
-\newcommand{\VCircWbW}     {{\VCircWb_\wndw}}
-\newcommand{\VCircMW}      {{\VCircM_\wndw}}
-\newcommand{\VCircMlW}     {{\VCircMl_\wndw}}
-\newcommand{\VCircMfW}     {{\VCircMf_\wndw}}
-\newcommand{\VCircMtW}     {{\VCircMt_\wndw}}
-\newcommand{\VTotalW}      {{\VTotal_\wndw}}
-\newcommand{\VNaiveW}      {{\VNaive_\wndw}}
+\newcommand{\VCircW}        {{\VCirc_\wndw}}
+\newcommand{\VCircWbW}      {{\VCircWb_\wndw}}
+\newcommand{\VCircMW}       {{\VCircM_\wndw}}
+\newcommand{\VCircMlW}      {{\VCircMl_\wndw}}
+\newcommand{\VCircMfW}      {{\VCircMf_\wndw}}
+\newcommand{\VCircMtW}      {{\VCircMt_\wndw}}
+\newcommand{\VTotalW}       {{\VTotal_\wndw}}
+\newcommand{\VNaiveW}       {{\VNaive_\wndw}}
 
 %Variations of V with \perd(window length)
 \newcommand{\VCircPWl}      {{\VCirc_\perdWl}}
@@ -356,24 +354,24 @@
 \newcommand{\VCircMtWlW}    {{\VCircMtWl_\wndw}}
 
 %Varations of V, estimated with \perd in subscript
-\newcommand{\VCircEstP}    {{\VCircEst_\perd}}
-\newcommand{\VCircWbEstP}  {{\VCircWbEst_\perd}}
-\newcommand{\VCircMEstP}   {{\VCircMEst_\perd}}
-\newcommand{\VCircMlEstP}  {{\VCircMlEst_\perd}}
-\newcommand{\VCircMfEstP}  {{\VCircMfEst_\perd}}
-\newcommand{\VCircMtEstP}  {{\VCircMtEst_\perd}}
-\newcommand{\VTotalEstP}   {{\VTotalEst_\perd}}
-\newcommand{\VNaiveEstP}   {{\VNaiveEst_\perd}}
+\newcommand{\VCircEstP}     {{\VCircEst_\perd}}
+\newcommand{\VCircWbEstP}   {{\VCircWbEst_\perd}}
+\newcommand{\VCircMEstP}    {{\VCircMEst_\perd}}
+\newcommand{\VCircMlEstP}   {{\VCircMlEst_\perd}}
+\newcommand{\VCircMfEstP}   {{\VCircMfEst_\perd}}
+\newcommand{\VCircMtEstP}   {{\VCircMtEst_\perd}}
+\newcommand{\VTotalEstP}    {{\VTotalEst_\perd}}
+\newcommand{\VNaiveEstP}    {{\VNaiveEst_\perd}}
 
 %Varations of V, estimated with \wndw in subscript
-\newcommand{\VCircEstW}    {{\VCircEst_\wndw}}
-\newcommand{\VCircWbEstW}  {{\VCircWbEst_\wndw}}
-\newcommand{\VCircMEstW}   {{\VCircMEst_\wndw}}
-\newcommand{\VCircMlEstW}  {{\VCircMlEst_\wndw}}
-\newcommand{\VCircMfEstW}  {{\VCircMfEst_\wndw}}
-\newcommand{\VCircMtEstW}  {{\VCircMtEst_\wndw}}
-\newcommand{\VTotalEstW}   {{\VTotalEst_\wndw}}
-\newcommand{\VNaiveEstW}   {{\VNaiveEst_\wndw}}
+\newcommand{\VCircEstW}     {{\VCircEst_\wndw}}
+\newcommand{\VCircWbEstW}   {{\VCircWbEst_\wndw}}
+\newcommand{\VCircMEstW}    {{\VCircMEst_\wndw}}
+\newcommand{\VCircMlEstW}   {{\VCircMlEst_\wndw}}
+\newcommand{\VCircMfEstW}   {{\VCircMfEst_\wndw}}
+\newcommand{\VCircMtEstW}   {{\VCircMtEst_\wndw}}
+\newcommand{\VTotalEstW}    {{\VTotalEst_\wndw}}
+\newcommand{\VNaiveEstW}    {{\VNaiveEst_\wndw}}
 
 %Variations of V with , estimated with \wndwLength
 \newcommand{\VCircEstPWl}   {{\VCircEst_\perdWl}}
