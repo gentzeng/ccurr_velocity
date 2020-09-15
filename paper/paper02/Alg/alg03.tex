@@ -14,7 +14,7 @@
 \begin{algorithm*}[!h]%
 	\DontPrintSemicolon
   \caption{Measurement of $\protect\MCirc$ for given $\typett$ (\acs*{wbaType}, \acs*{fifo}, \acs*{lifo}) within period $\perd$, window $\wndw$.%
-  }\label{algo:code_mcirc_mc}%
+  }\label{algo:code_mcirc}%
 %
 	\KwData{$\wndw_\Start$                                                          \tcc*{Begin of look-back window $w$}}%
 	\KwData{$ \TxP$                                                                 \tcc*{Set of transactions in period $\perd$}}%
@@ -27,11 +27,11 @@
 	{%
 		$\MCirc(t) \gets {0}$                                                       \tcc*{Set summand of $\MCirc(t)$ for every transaction $t$}%
 		$\valO^\mathtt{break}(t) \gets {0}$                                         \tcc*{Set break condition helper for every transaction $t$}%
-		$\valO^\sendToOthers(t)  \gets{\sum_{o\in{}\Out_{t}} \val(o)}$              \tcc*{Initialize amount of money sent to third parties with sum of outputs}%
+		$\valO^\sendToOthers(t)  \gets{\sum_{o\in{}\OutT} \val(o)}$              \tcc*{Initialize amount of money sent to third parties with sum of outputs}%
 		\lIf(\tcc*[f]{Skip current transaction and go to the next}){$\isCoinbase(t)\ \orbf\ \sum_{i\in{}\Inp_{t}} \val(i)\,=\,0$}{continue}%
 		\eIf(\tcc*[f]{\ac*{wba}: Regarding all outgoing coins ensures all inputs are regarded}%
 		){$\typett\,=\,\mathrm{\acs*{wbaType}}$}{%
-			$\valO^\sendToOthers(t)  \gets{\valO^\sendToOthers(t) + \sum_{f\in{}\Fee_{t}} \val(f)}$%
+			$\valO^\sendToOthers(t)  \gets{\valO^\sendToOthers(t) + \sum_{f\in{}\FeeT} \val(f)}$%
 			%
 		}(\tcc*[f]{\ac*{mca}: Discounting selfchurning outputs}%
 		){% 
@@ -39,8 +39,8 @@
 			$\valO^\sendToOthers(t)  \gets{\valO^\sendToOthers(t) - \sum_{o\in{}\Out'_{t}} \val(o) }$%
 		}%
 		\lIf(\tcc*[f]{Skip current transaction and go to the next}){$\valO^\sendToOthers(t) = 0$}{continue}%
-		$\InpT(\typett) \gets{sort(\InpT,\ \typett)}$ \tcc*{sort ascending (\acs*{fifo})/descending (\acs*{lifo}) by generation time of inputs/ skip (\acs*{wbaType})}%
-	    \ForEach {$i \in \InpT(\typett)$\label{algo:code_mcirc_mc_for}%
+		$\Inp'_{t}(\typett) \gets{sort(\InpT,\ \typett)}$ \tcc*{sort ascending (\acs*{fifo})/descending (\acs*{lifo}) by generation time of inputs/ skip (\acs*{wbaType})}%
+	    \ForEach {$i \in \Inp'_{t}(\typett)$\label{algo:code_mcirc_for}%
     	}{%
     		$\valIAdd \gets {0}$                                                   \tcc*{}%
 	    	$\valO^\mathtt{break} \gets{\valO^\mathtt{break} + \valI(i)}$          \tcc*{Update foreach-loop break helper}%
@@ -52,7 +52,7 @@
 				$\inpSpentCase = 2$
 			}{%        
 				$\Out^{\cbs}_{i} \gets{\Out^{\cbs}[\bhSpentTx(i)]}$                \tcc*{Get map of outputs of the coinbase tx that is referenced by input $i$}%
-				$\keyInp \gets {"\addr(i)\_\val(i)"}$                              \tcc*{dictionary/map key for $\Out^{\cbs}_{i}$}%
+				$\keyInp \gets {"\addr(i)\_\val(i)"}$                              \tcc*{dictionary/map key for $\Out^{\cbs}_{i}$, supposed to be unique}%
 				\If(\tcc*[f]{Check wheather $i$ represents fees}%
 				){$\keyInp \in \Out^{\cbs}_{i}$
 				}{%				
@@ -82,11 +82,11 @@
 		  		}{%
 		  			$\MCirc(t) \gets{ \valO^\sendToOthers(t) }$%
 		  		}{%
-		  			break                                                          \tcc*{Break foreach-loop on line \ref{algo:code_mcirc_mc_for} and proceed with line \ref{algo:code_mcirc_mc_break}}%
+		  			break                                                          \tcc*{Break foreach-loop on line \ref{algo:code_mcirc_for} and proceed with line \ref{algo:code_mcirc_break}}%
 		  		}% 
 		  	}% 
 		}%
-	   	$ \MCirc \gets{\MCirc + \MCirc(t)} $\label{algo:code_mcirc_mc_break}%
+	   	$ \MCirc \gets{\MCirc + \MCirc(t)} $\label{algo:code_mcirc_break}%
 	}%
 	return $\MCirc$                                                                \tcc*{Result: Return estimated money in circulation in period $\perd$ with window $\wndw$}%
 \end{algorithm*}%

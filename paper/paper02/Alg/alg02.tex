@@ -2,25 +2,35 @@
 \renewcommand{\arraystretch}{1.5}%
 \begin{algorithm*}[!h]%
 	\DontPrintSemicolon
-	\caption{Whole-bill-approach: Measurement of $\protect\MCircWb$ within period $\perd$ with look-back window $\wndw$.}\label{algo:code_mcirc_wb}%
-	\KwData{$\wndw_\Start$                                    	    \tcc*{Beginn of look-back window $w$}}%
-	\KwData{$\TxP$                                              	\tcc*{Set of transactions in period $\perd$}}%
-%	\KwResult{$\MCircWb$                                           \tcc*{Money supply to be estimated within period $\perd$}}%
-%
-	$ \MCircWb \gets {0} $											\tcc*{Money supply to be estimated within period $\perd$}%
-%
-	\ForEach {$ t \in \TxP $                                      	\tcc*[]{Loop through transactions $t$ of period $\perd$}}%
-	{%
-		\ForEach {$ i \in \InpT $                                 	\tcc*[]{Loop through inputs $i$ of transaction $t$}}%
-		{%
-			\If{%
-				$\dateGen(i)<\wndw_\Start$\ or\ $\genByCoinbase(i)$\ref{algo:code_mcirc_wbCond}\tcc*{Was $i$ generated before $\wndw_\Start$/from a coinbase transaction?}%
-			}{%
-				$\MCircWb \gets{\MCircWb + \valI(i)}$				\tcc*{Update money supply}%
+	\caption{Precompute $\Out^{\cbs}$: outputs of coinbase transactions representing collected fees}\label{algo:code_cbs_out}%
+	$\Out^{\cbs} \gets{\emptyset}$                                      \tcc*{The set of maps of coinbase tx outputs representing collected fees per blockheight}%
+	\ForEach{$\mathrm{blockheight}\ bh\ \mathrm{of\ a\ given\ Blockchain}$}{%
+		$\Out^{\cbs} \gets{\Out^{\cbs}\cup\overset{\rightarrow}{\emptyset}}$   \tcc*{Append an empty map for this blockheight}%
+		$ \outSum  \gets{0}$                                            \tcc*{Initializing sum of regarded outputs}%
+		$ \feeRem   \gets{0}$                                           \tcc*{Initializing value of last output (partly) representing collected fees}%
+		$ \minedRem \gets{0}$                                           \tcc*{Initializing value of first output (partly) representing mined coins}%
+		$ \feeSum   \gets{\sum_{f\in{}\Fee(bh)} \val(f)}$               \tcc*{Initializing sum of all fees collected in block}%
+		$ \Out'_{t}\gets{sortSpentOnly(\OutT)}$                         \tcc*{Sort ascending by indexes of transactions spending the outputs and discard utxos}%
+		\lIf(\tcc*[f]{Continue if all outputs are unspent}){%
+			$\Out'_{t} = \emptyset$%
+		}{continue}%
+		\ForEach{$o \in \Out'_{t}$}{%
+			$\keyOut \gets {"\addr(o)\_\val(o)"}$                       \tcc*{Map key for $\Out^{\cbs}[-1]$, supposed to be unique}%
+			$\Out^{\cbs}[-1][\keyOut] \gets {(\indextt(o),\,\val(o))}$  \tcc*{Add map entry, where $\keyOut$ is mapped to tuple of index of $o$ within $\Out'_{t}$ and its value}%
+			$\outSum \gets {\outSum + \val(o)}$                         \tcc*{Update $\outSum$}%
+			\If(\tcc*[f]{If we exceded all outputs representing fees}%
+			){$\outSum \ge \feeSum$}{%
+				$\minedRem \gets {\outSum - \feeSum}$                   \tcc*{Compute value of first output (partly) representing mined coins}%
+				$\feeRem   \gets {\val(o) - \minedRem}$                 \tcc*{Compute value of last output (partly) representing collected fee}%
+				break
 			}%
 		}%
+		$\Out^{\cbs}[-1][\mathtt{"minedRemIndex"}] \gets {\indextt(o)}$ \tcc*{Add index of last regard $o$ within $\Out'_{t}$}%
+		$\Out^{\cbs}[-1][\mathtt{"minedRem"}] \gets {\minedRem}$        \tcc*{Add value of first output (partly) representing mined coins}%
+		$\Out^{\cbs}[-1][\mathtt{"feeRem"}] \gets {\feeRem}$            \tcc*{Add value of last output (partly) representing collected fees}%
 	}%
-	return $\MCircWb$                                             	\tcc*{Result: Return estimated money in circulation within period $\perd$ for \ac*{wba}}%
+%
+	return $\Out^{\cbs}$                                                \tcc*{Result: The set of maps of coinbase tx outputs representing collected fees}%
 \end{algorithm*}%
 \else%
 \fi%
