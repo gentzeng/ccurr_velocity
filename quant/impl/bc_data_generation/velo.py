@@ -1669,7 +1669,7 @@ class Velo:
         daychunks = collect_daychunks(2)
         m_circ_wh_bill_raw_test, m_circ_mc_lifo_raw_test, m_circ_mc_fifo_raw_test = m_circ_test(
             daychunks,
-            switch_cbso=0,
+            switch_cbso=1,
         )
 
         df_final["m_circ_cbs"]          = results_raw["m_circ_cbs"]
@@ -2708,7 +2708,7 @@ class Velo:
                         switch_wb_bill=True,
                         switch_sort=False,
                         switch_time=False,
-                        switch_cbso=0,
+                        switch_cbso=1,
                         switch_out_check=False,
                         out=None,
                     )
@@ -2719,7 +2719,7 @@ class Velo:
                         switch_wb_bill=False,
                         switch_sort=False,
                         switch_time=False,
-                        switch_cbso=0,
+                        switch_cbso=1,
                         switch_out_check=False,
                         out=None,
                     )
@@ -2730,7 +2730,7 @@ class Velo:
                         switch_wb_bill=False,
                         switch_sort=True,
                         switch_time=False,
-                        switch_cbso=0,
+                        switch_cbso=1,
                         switch_out_check=False,
                         out=None,
                     )
@@ -2758,7 +2758,7 @@ class Velo:
                             switch_circ_effective=True,
                             switch_wb_bill=True,
                             switch_sort=False,
-                            switch_cbso=0,
+                            switch_cbso=1,
                         )
                         o_loah_mc_lifo_per_tx = outs_spent_bl_heights(
                             tx,
@@ -2766,7 +2766,7 @@ class Velo:
                             switch_circ_effective=True,
                             switch_wb_bill=False,
                             switch_sort=False,
-                            switch_cbso=0,
+                            switch_cbso=1,
                         )
                         o_loah_mc_fifo_per_tx = outs_spent_bl_heights(
                             tx,
@@ -2774,7 +2774,7 @@ class Velo:
                             switch_circ_effective=True,
                             switch_wb_bill=False,
                             switch_sort=True,
-                            switch_cbso=0,
+                            switch_cbso=1,
                         )
 
                     # prepare data structures for windowed values---------------
