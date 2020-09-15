@@ -4,6 +4,7 @@
 \newcommand{\mcaFifo}       {{\mathtt{mcaFifo}}}
 \newcommand{\mcaLifo}       {{\mathtt{mcaLifo}}}
 \newcommand{\mcaType}       {{\mathtt{mca(type)}}}
+\newcommand{\aggr}          {{\mathtt{aggregated}}}
 \newcommand{\sorted}        {{\mathtt{sort}}}
 \newcommand{\cbs}           {{\mathtt{coinbase}}}
 \newcommand{\nameOld}       {{\total}}
@@ -19,6 +20,9 @@
 
 \newcommand{\coins}         {{\mathtt{coins}}}
 \newcommand{\sheep}         {{\mathtt{sheep}}}
+\newcommand{\maxtt}         {{\mathtt{max}}}
+\newcommand{\mintt}         {{\mathtt{min}}}
+\newcommand{\daytt}         {{\mathtt{day}}}
 \newcommand{\bdd}           {\mathtt{cdd}}
 \newcommand{\val}           {{\mathtt{val}}}
 \newcommand{\valI}          {{\mathtt{valInp}}}
@@ -68,6 +72,10 @@
 \newcommand{\circttMfWl}    {\mathtt{circMcaFifo}[\wndwLength]}
 \newcommand{\circttMlWl}    {\mathtt{circMcaLifo}[\wndwLength]}
 \newcommand{\circttMtWl}    {\mathtt{circMcaType}[\wndwLength]}
+\newcommand{\circAggr}      {\mathtt{circAggr}}
+\newcommand{\circAggrLast}  {\mathtt{circAggrLast}}
+\newcommand{\circAddA}      {\mathtt{circAddA}}
+\newcommand{\circAddB}      {\mathtt{circAddB}}
 
 \newcommand{\Tx}            {{\mathbb{T}}}
 \newcommand{\TxW}           {{\Tx_\wndw}}
@@ -161,20 +169,30 @@
 
 %Definitions for M-------------------------------------
 % \perd in subscript
-\newcommand{\Mp}{{M_\perd}}
+\newcommand{\Mp}            {{M_\perd}}
 
 % \wndw in subscript
-\newcommand{\Mw}{{M_\wndw}}
+\newcommand{\Mw}            {{M_\wndw}}
 
 %Variations of M
-\newcommand{\MCirc}       {{M_{\circtt}}}
-\newcommand{\MCircWb}     {{M_{\circttWb}}}
-\newcommand{\MCircM}      {{M_{\circttM}}}
-\newcommand{\MCircMl}     {{M_{\circttMl}}}
-\newcommand{\MCircMf}     {{M_{\circttMf}}}
-\newcommand{\MCircMt}     {{M_{\circttMt}}}
-\newcommand{\MTotal}      {{M_\total}}
-\newcommand{\MNaive}      {{M_\naive}}
+\newcommand{\MCirc}         {{M_{\circtt}}}
+\newcommand{\MSetCirc}      {{\mathbb{M}_{\circtt}}}
+\newcommand{\MCircWb}       {{M_{\circttWb}}}
+\newcommand{\MCircM}        {{M_{\circttM}}}
+\newcommand{\MCircMl}       {{M_{\circttMl}}}
+\newcommand{\MCircMf}       {{M_{\circttMf}}}
+\newcommand{\MCircMt}       {{M_{\circttMt}}}
+\newcommand{\MCircAggrLast} {{M_{\circAggrLast}}}
+\newcommand{\MCircAggr}     {{M_{\circAggr}}}
+\newcommand{\MCircAddA}     {{M_{\circAddA}}}
+\newcommand{\MCircAddB}     {{M_{\circAddB}}}
+\newcommand{\MSetCircAggr}  {{\mathbb{M}_{\circAggr}}}
+\newcommand{\MSetCircAddA}  {{\mathbb{M}_{\circAddA}}}
+\newcommand{\MSetCircAddB}  {{\mathbb{M}_{\circAddB}}}
+\newcommand{\MCbs}          {{M_{\cbs}}}
+\newcommand{\MSetCbs}       {{\mathbb{M}_{\cbs}}}
+\newcommand{\MTotal}        {{M_\total}}
+\newcommand{\MNaive}        {{M_\naive}}
 
 %Variations of M with window length
 \newcommand{\MCircWl}       {{M_{\circttWl}}}
@@ -185,14 +203,14 @@
 \newcommand{\MCircMtWl}     {{M_{\circttMtWl}}}
 
 %Varations of M, estimated
-\newcommand{\MCircEst}     {{M_{\circtt}^\est}}
-\newcommand{\MCircWbEst}   {{M_{\circttWb}^\est}}
-\newcommand{\MCircMEst}    {{M_{\circttM}^\est}}
-\newcommand{\MCircMlEst}   {{M_{\circttMl}^\est}}
-\newcommand{\MCircMfEst}   {{M_{\circttMf}^\est}}
-\newcommand{\MCircMtEst}   {{M_{\circttMt}^\est}}
-\newcommand{\MTotalEst}    {{M_\total^\est}}
-\newcommand{\MNaiveEst}    {{M_\naive^\est}}
+\newcommand{\MCircEst}      {{M_{\circtt}^\est}}
+\newcommand{\MCircWbEst}    {{M_{\circttWb}^\est}}
+\newcommand{\MCircMEst}     {{M_{\circttM}^\est}}
+\newcommand{\MCircMlEst}    {{M_{\circttMl}^\est}}
+\newcommand{\MCircMfEst}    {{M_{\circttMf}^\est}}
+\newcommand{\MCircMtEst}    {{M_{\circttMt}^\est}}
+\newcommand{\MTotalEst}     {{M_\total^\est}}
+\newcommand{\MNaiveEst}     {{M_\naive^\est}}
 
 %Variations of M with window length, estimated
 \newcommand{\MCircEstWl}    {{M_{\circttWl}^\est}}
@@ -203,24 +221,24 @@
 \newcommand{\MCircMtEstWl}  {{M_{\circttMtWl}^\est}}
 
 %Variations of M with \perd in subscript
-\newcommand{\MCircP}       {{\MCirc_\perd}}
-\newcommand{\MCircWbP}     {{\MCircWb_\perd}}
-\newcommand{\MCircMP}      {{\MCircM_\perd}}
-\newcommand{\MCircMlP}     {{\MCircMl_\perd}}
-\newcommand{\MCircMfP}     {{\MCircMf_\perd}}
-\newcommand{\MCircMtP}     {{\MCircMt_\perd}}
-\newcommand{\MTotalP}      {{\MTotal_\perd}}
-\newcommand{\MNaiveP}      {{\MNaive_\perd}}
+\newcommand{\MCircP}        {{\MCirc_\perd}}
+\newcommand{\MCircWbP}      {{\MCircWb_\perd}}
+\newcommand{\MCircMP}       {{\MCircM_\perd}}
+\newcommand{\MCircMlP}      {{\MCircMl_\perd}}
+\newcommand{\MCircMfP}      {{\MCircMf_\perd}}
+\newcommand{\MCircMtP}      {{\MCircMt_\perd}}
+\newcommand{\MTotalP}       {{\MTotal_\perd}}
+\newcommand{\MNaiveP}       {{\MNaive_\perd}}
 
 %Variations of M with \wndw in subscript
-\newcommand{\MCircW}       {{\MCirc_\wndw}}
-\newcommand{\MCircWbW}     {{\MCircWb_\wndw}}
-\newcommand{\MCircMW}      {{\MCircM_\wndw}}
-\newcommand{\MCircMlW}     {{\MCircMl_\wndw}}
-\newcommand{\MCircMfW}     {{\MCircMf_\wndw}}
-\newcommand{\MCircMtW}     {{\MCircMt_\wndw}}
-\newcommand{\MTotalW}      {{\MTotal_\wndw}}
-\newcommand{\MNaiveW}      {{\MNaive_\wndw}}
+\newcommand{\MCircW}        {{\MCirc_\wndw}}
+\newcommand{\MCircWbW}      {{\MCircWb_\wndw}}
+\newcommand{\MCircMW}       {{\MCircM_\wndw}}
+\newcommand{\MCircMlW}      {{\MCircMl_\wndw}}
+\newcommand{\MCircMfW}      {{\MCircMf_\wndw}}
+\newcommand{\MCircMtW}      {{\MCircMt_\wndw}}
+\newcommand{\MTotalW}       {{\MTotal_\wndw}}
+\newcommand{\MNaiveW}       {{\MNaive_\wndw}}
 
 %Variations of M with \perd(window length)
 \newcommand{\MCircPWl}      {{\MCirc_\perdWl}}
@@ -239,24 +257,24 @@
 \newcommand{\MCircMtWlW}    {{\MCircMtWl_\wndw}}
 
 %Varations of M, estimated with \perd in subscript
-\newcommand{\MCircEstP}    {{\MCircEst_\perd}}
-\newcommand{\MCircWbEstP}  {{\MCircWbEst_\perd}}
-\newcommand{\MCircMEstP}   {{\MCircMEst_\perd}}
-\newcommand{\MCircMlEstP}  {{\MCircMlEst_\perd}}
-\newcommand{\MCircMfEstP}  {{\MCircMfEst_\perd}}
-\newcommand{\MCircMtEstP}  {{\MCircMtEst_\perd}}
-\newcommand{\MTotalEstP}   {{\MTotalEst_\perd}}
-\newcommand{\MNaiveEstP}   {{\MNaiveEst_\perd}}
+\newcommand{\MCircEstP}     {{\MCircEst_\perd}}
+\newcommand{\MCircWbEstP}   {{\MCircWbEst_\perd}}
+\newcommand{\MCircMEstP}    {{\MCircMEst_\perd}}
+\newcommand{\MCircMlEstP}   {{\MCircMlEst_\perd}}
+\newcommand{\MCircMfEstP}   {{\MCircMfEst_\perd}}
+\newcommand{\MCircMtEstP}   {{\MCircMtEst_\perd}}
+\newcommand{\MTotalEstP}    {{\MTotalEst_\perd}}
+\newcommand{\MNaiveEstP}    {{\MNaiveEst_\perd}}
 
 %Varations of M, estimated with \wndw in subscript
-\newcommand{\MCircEstW}    {{\MCircEst_\wndw}}
-\newcommand{\MCircWbEstW}  {{\MCircWbEst_\wndw}}
-\newcommand{\MCircMEstW}   {{\MCircMEst_\wndw}}
-\newcommand{\MCircMlEstW}  {{\MCircMlEst_\wndw}}
-\newcommand{\MCircMfEstW}  {{\MCircMfEst_\wndw}}
-\newcommand{\MCircMtEstW}  {{\MCircMtEst_\wndw}}
-\newcommand{\MTotalEstW}   {{\MTotalEst_\wndw}}
-\newcommand{\MNaiveEstW}   {{\MNaiveEst_\wndw}}
+\newcommand{\MCircEstW}     {{\MCircEst_\wndw}}
+\newcommand{\MCircWbEstW}   {{\MCircWbEst_\wndw}}
+\newcommand{\MCircMEstW}    {{\MCircMEst_\wndw}}
+\newcommand{\MCircMlEstW}   {{\MCircMlEst_\wndw}}
+\newcommand{\MCircMfEstW}   {{\MCircMfEst_\wndw}}
+\newcommand{\MCircMtEstW}   {{\MCircMtEst_\wndw}}
+\newcommand{\MTotalEstW}    {{\MTotalEst_\wndw}}
+\newcommand{\MNaiveEstW}    {{\MNaiveEst_\wndw}}
 
 %Variations of M with , estimated with \wndwLength
 \newcommand{\MCircEstPWl}   {{\MCircEsth_\perdWl}}
@@ -276,10 +294,10 @@
 
 %Definitions for V-------------------------------------
 % \perd in subscript
-\newcommand{\Vp}{{V_\perd}}
+\newcommand{\Vp}            {{V_\perd}}
 
 % \wndw in subscript
-\newcommand{\Vw}{{V_\wndw}}
+\newcommand{\Vw}            {{V_\wndw}}
 
 %Variations of V
 \newcommand{\VCirc}         {{V_{\circtt}}}
@@ -288,6 +306,7 @@
 \newcommand{\VCircMl}       {{V_{\circttMl}}}
 \newcommand{\VCircMf}       {{V_{\circttMf}}}
 \newcommand{\VCircMt}       {{V_{\circttMt}}}
+\newcommand{\VCircAggr}     {{V_{\circAggr}}}
 \newcommand{\VTotal}        {{V_\total}}
 \newcommand{\VNaive}        {{V_\naive}}
 
