@@ -1,0 +1,29 @@
+\ifdefined\varInputAlgos%
+\renewcommand{\arraystretch}{1.5}%
+\begin{algorithm*}[!h]%
+	\DontPrintSemicolon
+	\caption{Get sum of all outputs being spent within window $\wndw$}\label{algo:code_outs_spent_within}%
+	\KwData{$\wndw_\Start$                                                          \tcc*{Begin of look-ahead window $w$}}%
+	\KwData{$\wndw_\End$                                                          \tcc*{End of look-ahead window $w$}}%
+	\KwData{$ \Out^{\cbs}$                                                          \tcc*{Set of maps of coinbase outputs per blockheight, that represent transaction fees}}%
+	\ForEach{$\mathrm{blockheight}\ bh\ \mathrm{of\ a\ given\ Blockchain}$}{%
+		$\Out^{\cbs}_{bh} \gets{\overset{\rightarrow}{\emptyset}}$      \tcc*{Append an empty map for this blockheight}% discard utxos}%
+		\If(\tcc*[f]{Continue if all outputs are unspent}){%
+		}{%
+			continue
+		}%
+		\ForEach{$o \in \Out'_{t}$}{%
+			\If(%
+			){%
+			}{%
+				break
+			}%
+		}%
+		$\Out^{\cbs}_{bh}[\mathtt{"minedRemIndex"}] \gets {\indextt(o)}$ \tcc*{Add index of last regard $o$ within $\Out'_{t}$}%
+	}%
+%
+	return $\Out^{\cbs}$                                                \tcc*{Result: The set of maps of coinbase tx outputs representing collected fees}%
+\end{algorithm*}%
+\else%
+\fi%
+%
