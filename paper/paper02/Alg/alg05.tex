@@ -3,26 +3,46 @@
 \begin{algorithm*}[!h]%
 	\DontPrintSemicolon
 	\caption{Get sum of all outputs being spent within window $\wndw$}\label{algo:code_outs_spent_within}%
-	\KwData{$\wndw_\Start$                                                          \tcc*{Begin of look-ahead window $w$}}%
+	\KwData{$\wndw_\Start$                                                        \tcc*{Begin of look-ahead window $w$}}%
 	\KwData{$\wndw_\End$                                                          \tcc*{End of look-ahead window $w$}}%
-	\KwData{$ \Out^{\cbs}$                                                          \tcc*{Set of maps of coinbase outputs per blockheight, that represent transaction fees}}%
-	\ForEach{$\mathrm{blockheight}\ bh\ \mathrm{of\ a\ given\ Blockchain}$}{%
-		$\Out^{\cbs}_{bh} \gets{\overset{\rightarrow}{\emptyset}}$      \tcc*{Append an empty map for this blockheight}% discard utxos}%
-		\If(\tcc*[f]{Continue if all outputs are unspent}){%
-		}{%
-			continue
-		}%
-		\ForEach{$o \in \Out'_{t}$}{%
-			\If(%
-			){%
+	\KwData{$ \TxP$                                                               \tcc*{Set of transactions in period $\perd$}}%
+	\KwData{$ \Out^{\cbs}$                                                        \tcc*{Set of maps of coinbase outputs per blockheight, that represent transaction fees}}%
+	$\outSpentSum \gets {0}$                                                      \tcc*{Sum of all outputs being spent within window}%
+	\ForEach {$ t \in \TxP $}{%
+		$\outSpentSum(t) \gets {0}$                                               \tcc*{outputs being spent within window $\wndw$ for tx $t$}%
+		$\outSpentAdd(t) \gets {0}$                                               \tcc*{Helper variable for value that gets actually added}%
+		\ForEach{$o \in \Out_{t}$}{%
+			$\outSpentAdd(t) \gets {\val(o)}$                                     \tcc*{Default value to be added is the value of $o$}%
+			\lIf{$\isNotSpent(o)$}{continue}
+			\lIf(\tcc*[f]{If $o$ was spent outside of $\wndw$}%
+			){$\spentBefore(\wndw_\Start)\ \orbf\ \spentAfter(\wndw_\End)$%
 			}{%
-				break
+				continue
+			}%	
+			\If(\tcc*[f]{For coinbase tx, we only want to add outputs representing fees}%
+			){$\isCoinbase(t)$%
+			}{%
+				$\Out^{\cbs}_{t} \gets{\Out^{\cbs}[\bh(t)]}$                  \tcc*{Get map of outputs of the coinbase tx $o$ is belonging to}%
+				$\keyOut \gets {(\addr(o),\ \val(o))}$                        \tcc*{map key for $\Out^{\cbs}_{i}$, supposed to be unique}%
+				\lIf(\tcc*[f]{Output $o$ not representing collected fees}%
+				){$\keyOut \not \in \Out^{\cbs}_{t}$%
+				}{continue}%
+				$\minedRemIndex \gets {\Out^{\cbs}_{t}[\mathtt{"minedRemIndex"}]}$ \tcc*{Get index of the first output representing mined coins}%
+				$\cbsOutIndex \gets {\Out^{\cbs}_{t}[\keyOut][0]}$                 \tcc*{Get index of $o$ within $\Out^{\cbs}_{t}$}%
+				\lIf(\tcc*[f]{Output $o$ represents mined coins and thus not fees}%
+				){$ \cbsOutIndex > \minedRemIndex$
+				}{continue}% 
+				\If(\tcc*[f]{Input $o$ (partly) represents collected fees}%
+				){$ \cbsOutIndex = \minedRemIndex$
+				}{%
+					$\outSpentAdd \gets {\Out^{\cbs}_{t}[\mathtt{"feeRem"}]}$        \tcc*{Add (partly) collected fees represented by $o$}%
+				}%
 			}%
+			$\outSpentSum(t) \gets {\outSpentAdd}$                                   \tcc*{Update $\outSpentSum$}%
 		}%
-		$\Out^{\cbs}_{bh}[\mathtt{"minedRemIndex"}] \gets {\indextt(o)}$ \tcc*{Add index of last regard $o$ within $\Out'_{t}$}%
 	}%
 %
-	return $\Out^{\cbs}$                                                \tcc*{Result: The set of maps of coinbase tx outputs representing collected fees}%
+	return $\outSpentSum$                                                \tcc*{Result: The sum of all outputs being spent within window $\wndw$}%
 \end{algorithm*}%
 \else%
 \fi%
