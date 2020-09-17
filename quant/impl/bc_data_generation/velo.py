@@ -734,11 +734,11 @@ class Velo:
                     reverse = False
                 )[1]
 
-                #ind        = 0
-                outs_sum   = 0
-                out_i      = 0
-                bl_gen_rem = 0
-                bl_fee_rem = 0
+                #ind          = 0
+                outs_sum     = 0
+                out_i        = 0
+                bl_mined_rem = 0
+                bl_fee_rem   = 0
 
                 for out_i, out in enumerate(outs):
                     ind = out.spending_tx_index
@@ -757,7 +757,7 @@ class Velo:
                             "tx_outs_val = {: 15}   "
                             "outs_sum = {: 15}   "
                             "fee = {: 15}   "
-                            "gen_rem = {: 15}   "
+                            "mined_rem = {: 15}   "
                             "fee_rem = {: 15}   "
                             "".format(
                                 key,
@@ -776,14 +776,14 @@ class Velo:
 
                     outs_sum += out.value
                     if outs_sum >= bl_fee:
-                        bl_gen_rem = outs_sum  - bl_fee
-                        bl_fee_rem = out.value - bl_gen_rem
-                        if bl_gen_rem < 0:
+                        bl_mined_rem = outs_sum  - bl_fee
+                        bl_fee_rem   = out.value - bl_mined_rem
+                        if bl_mined_rem < 0:
                             raise ValueError(
                                 "remaining amount of new coins of block {: 7} must not be"
                                 "less than 0 but is {: 12}!".format(
                                     bl_height,
-                                    bl_gen_rem,
+                                    bl_mined_rem,
                                 )
                             )
                         if bl_fee_rem < 0:
@@ -796,11 +796,11 @@ class Velo:
                             )
                         break
 
-                key = "gen_rem_index"
+                key = "mined_rem_index"
                 Velo.f_cbs_outs_of_bh[-1][key] = out_i
 
-                key = "gen_rem"
-                Velo.f_cbs_outs_of_bh[-1][key] = bl_gen_rem
+                key = "mined_rem"
+                Velo.f_cbs_outs_of_bh[-1][key] = bl_mined_rem
 
                 key = "fee_rem"
                 Velo.f_cbs_outs_of_bh[-1][key] = bl_fee_rem
@@ -820,7 +820,7 @@ class Velo:
                 ####        "tx_outs_val = {: 15}   "
                 ####        "outs_sum = {: 15}   "
                 ####        "fee = {: 15}   "
-                ####        "gen_rem = {: 15}   "
+                ####        "mined_rem = {: 15}   "
                 ####        "fee_rem = {: 15}   "
                 ####        "".format(
                 ####            bl_height,
@@ -831,7 +831,7 @@ class Velo:
                 ####            tx.output_value,
                 ####            outs_sum,
                 ####            bl_fee,
-                ####            bl_gen_rem,
+                ####            bl_mined_rem,
                 ####            bl_fee_rem,
                 ####        )
                 ####    )
@@ -1497,8 +1497,8 @@ class Velo:
             # 4)
             for inp in inps:
                 cbs_out_index   = 0
-                gen_rem_index   = 0
-                gen_rem         = 0
+                mined_rem_index = 0
+                mined_rem       = 0
                 val_inp_add     = 0
                 val_inp         = inp.value
                 val_outs_break += val_inp
@@ -1513,11 +1513,11 @@ class Velo:
 
                 # if coming from a coinbase transaction-------------------------
                 if 2 <= inp_spent_index:
-                    inp_spt_tx_bh = inp.spent_tx.block_height
-                    cbs_out_bh    = cbs_outs[inp_spt_tx_bh]
-                    gen_rem_index = cbs_out_bh["gen_rem_index"]
-                    gen_rem       = cbs_out_bh["gen_rem"]
-                    key           = "{}_{}".format(inp.address, val_inp)
+                    inp_spt_tx_bh   = inp.spent_tx.block_height
+                    cbs_out_bh      = cbs_outs[inp_spt_tx_bh]
+                    mined_rem_index = cbs_out_bh["mined_rem_index"]
+                    mined_rem       = cbs_out_bh["mined_rem"]
+                    key             = "{}_{}".format(inp.address, val_inp)
 
                 while True:
                     if 0 == inp_spent_index:
@@ -1526,11 +1526,11 @@ class Velo:
                     if 2 == inp_spent_index and key in cbs_out_bh:
                         cbs_out_index = cbs_out_bh[key][0]
 
-                        if cbs_out_index < gen_rem_index:
+                        if cbs_out_index < mined_rem_index:
                             break
 
-                        if cbs_out_index == gen_rem_index:
-                            val_inp_add = gen_rem
+                        if cbs_out_index == mined_rem_index:
+                            val_inp_add = mined_rem
                             m_circ_mc_break += val_inp_add
                             #m_circ_mc_break += val_inp
                             m_circ_mc += val_inp_add
@@ -1669,7 +1669,7 @@ class Velo:
         daychunks = collect_daychunks(2)
         m_circ_wh_bill_raw_test, m_circ_mc_lifo_raw_test, m_circ_mc_fifo_raw_test = m_circ_test(
             daychunks,
-            switch_cbso=1,
+            switch_cbso=0,
         )
 
         df_final["m_circ_cbs"]          = results_raw["m_circ_cbs"]
@@ -2199,35 +2199,35 @@ class Velo:
                     return m_circ_cbs
 
                 for inp in inps:
-                    cbs_out_index = 0
-                    gen_rem_index = 0
-                    gen_rem       = 0
-                    val_inp       = inp.value
+                    cbs_out_index   = 0
+                    mined_rem_index = 0
+                    mined_rem       = 0
+                    val_inp         = inp.value
 
                     if not inp.spent_tx.is_coinbase:
                         continue
 
-                    inp_spt_tx_bh = inp.spent_tx.block_height
-                    cbs_out_bh    = cbs_outs[inp_spt_tx_bh]
-                    gen_rem       = cbs_out_bh["gen_rem"]
-                    gen_rem_index = cbs_out_bh["gen_rem_index"]
-                    key           = "{}_{}".format(inp.address, val_inp)
+                    inp_spt_tx_bh   = inp.spent_tx.block_height
+                    cbs_out_bh      = cbs_outs[inp_spt_tx_bh]
+                    mined_rem       = cbs_out_bh["mined_rem"]
+                    mined_rem_index = cbs_out_bh["mined_rem_index"]
+                    key             = "{}_{}".format(inp.address, val_inp)
 
                     if key in cbs_out_bh:
                         cbs_out_index = cbs_out_bh[key][0]
 
-                        if cbs_out_index < gen_rem_index:
+                        if cbs_out_index < mined_rem_index:
                             continue
 
-                        if cbs_out_index == gen_rem_index:
+                        if cbs_out_index == mined_rem_index:
                             if switch_time == True:
                                 m_circ_cbs += get_timed_input(
                                     inp,
-                                    gen_rem
+                                    mined_rem
                                 )
                                 continue
 
-                            m_circ_cbs += gen_rem
+                            m_circ_cbs += mined_rem
                             continue
 
                     if switch_time == True:
@@ -2309,57 +2309,32 @@ class Velo:
                         # for coinbase txes: get part of out.value to be added
                         # according to coinbase fee/new generated coins
                         out_spent_add = out.value
-                        if True == switch_wb_bill:
+                        #if True == switch_wb_bill:
+                        if True:
                             if True == tx_is_coinbase:
                                 cbs_out_bh = cbs_outs[tx.block_height]
                                 key        = "{}_{}".format(out.address, out.value)
 
+                                #key not being in cbs_out_bh means, it does not
+                                #represent fees and thus, represents mined coins
                                 if key not in cbs_out_bh:
                                     break
 
-                                cbs_out_index = cbs_out_bh[key][0]
-                                gen_rem       = cbs_out_bh["gen_rem"]
-                                gen_rem_index = cbs_out_bh["gen_rem_index"]
-                                fee_rem       = cbs_out_bh["fee_rem"]
+                                cbs_out_index   = cbs_out_bh[key][0]
+                                mined_rem       = cbs_out_bh["mined_rem"]
+                                mined_rem_index = cbs_out_bh["mined_rem_index"]
+                                fee_rem         = cbs_out_bh["fee_rem"]
 
                                 # output represents newly generated coins-------
-                                if cbs_out_index > gen_rem_index:
+                                if cbs_out_index > mined_rem_index:
                                     break
 
                                 # outs represents fees collected in coinbase tx-
-                                if cbs_out_index == gen_rem_index:
+                                if cbs_out_index == mined_rem_index:
                                     out_spent_add = fee_rem
 
                             outs_spent[tw_i] += out_spent_add
                             continue
-                        
-                        # ignore lifo for now
-                        if True == switch_sort:
-                            return outs_spent
-
-                        out_spent_add = handle_tx_m_circ (
-                            out_spending_tx,
-                            [bh_day_next],
-                            switch_circ_effective=switch_circ_effective,
-                            switch_wb_bill=switch_wb_bill,
-                            switch_sort=switch_sort,
-                            switch_time=False,
-                            switch_cbso=switch_cbso,
-                            switch_out_check=True,
-                            out=out,
-                        )
-
-                        if type(out_spent_add) is not int:
-                            raise TypeError(
-                                "add_allowed needs to be an int"
-                                ", but is of type {} with value {}"
-                                "while switch_wb_bill is {}".format(
-                                    type(out_spent_add),
-                                    out_spent_add,
-                                    switch_wb_bill,
-                                )
-                            )
-                        outs_spent[tw_i] += out_spent_add
 
                 return outs_spent
 
@@ -2383,7 +2358,6 @@ class Velo:
                 switch_sort=False,
                 switch_time=False,
                 switch_cbso=0,
-                switch_out_check=False,
                 out=None,
             ):
                 """
@@ -2420,27 +2394,6 @@ class Velo:
                 key_out         = None
                 time_windows    = Velo.time_windows
 
-                # 0)
-                if True == switch_out_check:
-                    time_windows = [1]
-                    # make really sure that tx is the spending tx of the output
-                    tx = out.spending_tx
-                    # should actually never trigger because of blockchain design
-                    if out.tx.block_height >= tx.block_height:
-                        raise ValueError(
-                            "Block height of look ahead output is within window!"
-                        )
-                        exit(1)
-                    if True == switch_wb_bill:
-                        raise ValueError(
-                            "switch_out_check + switch_wb_bill"
-                            "must not be true at the same time!"
-                        )
-                        exit(-1)
-                        return True
-
-                    key_out = "{}_{}".format(out.address, out.value)
-
                 if tx.is_coinbase or tx.input_value == 0:
                 #or val_outs == 0:
                     return m_circ_mc
@@ -2459,10 +2412,7 @@ class Velo:
                         "val_outs_sent_to_others must not be less than 0!"
                     )
                 elif val_outs_sent_to_others == 0:
-                    if True == switch_out_check:
-                        return 0
-                    else:
-                        return m_circ_mc
+                    return m_circ_mc
 
                 # 3)
                 if switch_wb_bill == False:
@@ -2478,8 +2428,8 @@ class Velo:
                 # 4)
                 for inp in inps:
                     cbs_out_index   = 0
-                    gen_rem_index   = 0
-                    gen_rem         = 0
+                    mined_rem_index = 0
+                    mined_rem       = 0
                     val_inp_add     = 0
                     val_inp         = inp.value
                     val_outs_break += val_inp
@@ -2494,11 +2444,11 @@ class Velo:
 
                     # if coming from a coinbase transaction---------------------
                     if 2 <= inp_spent_index[0]:
-                        inp_spt_tx_bh = inp.spent_tx.block_height
-                        cbs_out_bh    = cbs_outs[inp_spt_tx_bh]
-                        gen_rem_index = cbs_out_bh["gen_rem_index"]
-                        gen_rem       = cbs_out_bh["gen_rem"]
-                        #key_inp       = "{}_{}".format(inp.address, val_inp)
+                        inp_spt_tx_bh   = inp.spent_tx.block_height
+                        cbs_out_bh      = cbs_outs[inp_spt_tx_bh]
+                        mined_rem_index = cbs_out_bh["mined_rem_index"]
+                        mined_rem       = cbs_out_bh["mined_rem"]
+                        #key_inp         = "{}_{}".format(inp.address, val_inp)
 
 
                     for tw_i, _ in enumerate(time_windows):
@@ -2508,11 +2458,11 @@ class Velo:
                         if 2 == inp_spent_index[tw_i] and key_inp in cbs_out_bh:
                             cbs_out_index = cbs_out_bh[key_inp][0]
 
-                            if cbs_out_index < gen_rem_index:
+                            if cbs_out_index < mined_rem_index:
                                 break
 
-                            if cbs_out_index == gen_rem_index:
-                                val_inp_add = gen_rem
+                            if cbs_out_index == mined_rem_index:
+                                val_inp_add = mined_rem
                                 if tw_i == 0:
                                     m_circ_mc_break += val_inp_add
                                     #m_circ_mc_break += val_inp
@@ -2532,21 +2482,13 @@ class Velo:
                             val_inp
                         )
 
-                        if True == switch_out_check and key_out == key_inp:
-                            break
-
                     # **)
                     # if we checked all input candidates
                     if val_outs_break >= val_outs_sent_to_others:
                         # if input candites are more then values send to others
                         if m_circ_mc_break >= val_outs_sent_to_others:
                             m_circ_mc[0] = val_outs_sent_to_others
-                            if True == switch_out_check and key_out == key_inp:
-                                return val_outs_sent_to_others - (m_circ_mc_break - out.value)
                         break
-                    else:
-                        if True == switch_out_check and key_out == key_inp:
-                            return val_inp
 
                 if m_circ_mc[0] < 0:
                     Velo.logger.error(
@@ -2589,9 +2531,6 @@ class Velo:
                         )
                     )
                     raise ValueError( "m_circ_m must not be less than 0!" )
-
-                if True == switch_out_check:
-                    return 0
 
                 if switch_time == True:
                     return m_circ_mc_timed
@@ -2698,7 +2637,6 @@ class Velo:
                         switch_sort=False,
                         switch_time=True,
                         switch_cbso=0,
-                        switch_out_check=False,
                         out=None,
                     )
                     m_circ_wh_bill_per_tx   = handle_tx_m_circ(
@@ -2708,8 +2646,7 @@ class Velo:
                         switch_wb_bill=True,
                         switch_sort=False,
                         switch_time=False,
-                        switch_cbso=1,
-                        switch_out_check=False,
+                        switch_cbso=0,
                         out=None,
                     )
                     m_circ_mc_lifo_per_tx   = handle_tx_m_circ(
@@ -2719,8 +2656,7 @@ class Velo:
                         switch_wb_bill=False,
                         switch_sort=False,
                         switch_time=False,
-                        switch_cbso=1,
-                        switch_out_check=False,
+                        switch_cbso=0,
                         out=None,
                     )
                     m_circ_mc_fifo_per_tx   = handle_tx_m_circ(
@@ -2730,8 +2666,7 @@ class Velo:
                         switch_wb_bill=False,
                         switch_sort=True,
                         switch_time=False,
-                        switch_cbso=1,
-                        switch_out_check=False,
+                        switch_cbso=0,
                         out=None,
                     )
                     m_circ_cbs_per_tx       = inp_spent_coinbase(
@@ -2758,7 +2693,7 @@ class Velo:
                             switch_circ_effective=True,
                             switch_wb_bill=True,
                             switch_sort=False,
-                            switch_cbso=1,
+                            switch_cbso=0,
                         )
                         o_loah_mc_lifo_per_tx = outs_spent_bl_heights(
                             tx,
@@ -2766,7 +2701,7 @@ class Velo:
                             switch_circ_effective=True,
                             switch_wb_bill=False,
                             switch_sort=False,
-                            switch_cbso=1,
+                            switch_cbso=0,
                         )
                         o_loah_mc_fifo_per_tx = outs_spent_bl_heights(
                             tx,
@@ -2774,7 +2709,7 @@ class Velo:
                             switch_circ_effective=True,
                             switch_wb_bill=False,
                             switch_sort=True,
-                            switch_cbso=1,
+                            switch_cbso=0,
                         )
 
                     # prepare data structures for windowed values---------------
