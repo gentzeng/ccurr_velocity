@@ -1391,7 +1391,7 @@ class Velo:
 
                 return val_chouts
 
-            def inp_spent_before_bh_or_coinbase_test(
+            def get_inp_spent_case_test(
                 inp,
                 bl_height,
                 switch_circ_effective,
@@ -1411,34 +1411,34 @@ class Velo:
 
                     (coinbase tx return is return of normal tx +2: 0=>2, 1=>3)
                 """
-                inp_spent_index        = 0
+                inp_spent_case         = 0
                 is_coinbase            = False
                 inp_spent_tx_bl_height = inp.spent_tx.block_height
 
                 # if we do not count money in effective circulation, we count---
                 # every input
                 if switch_circ_effective == False:
-                    inp_spent_index = 1
-                    return inp_spent_index
+                    inp_spent_case = 1
+                    return inp_spent_case
 
                 # check if the tx that spent this input is a coinbase tx--------
                 if inp.spent_tx.is_coinbase:
-                    inp_spent_index = 2
+                    inp_spent_case = 2
                     is_coinbase = True
 
 
                 if switch_cbso == 1 and is_coinbase == True:
-                    inp_spent_index = 0
-                    return inp_spent_index
+                    inp_spent_case = 0
+                    return inp_spent_case
 
                 if switch_cbso == 2 and is_coinbase == False:
-                    #inp_spent_index = 0
-                    return inp_spent_index
+                    #inp_spent_case = 0
+                    return inp_spent_case
 
                 # if bl_height <= 0, we discard this input since it-------------
                 # cannot be spent before this block height
                 if bl_height <= 0 and is_coinbase == False:
-                    #inp_spent_index = 0
+                    #inp_spent_case = 0
                     return 0
 
                 # check if the spent tx linked to this input is older than------
@@ -1446,15 +1446,15 @@ class Velo:
                 if bl_height <= inp_spent_tx_bl_height and (
                     0 != bl_height or 0 != inp_spent_tx_bl_height
                 ):
-                    return inp_spent_index
+                    return inp_spent_case
 
                 # spent tx is older than given blockheight----------------------
                 if is_coinbase:
-                    inp_spent_index = 3
-                    return inp_spent_index
+                    inp_spent_case = 3
+                    return inp_spent_case
 
-                inp_spent_index = 1
-                return inp_spent_index
+                inp_spent_case = 1
+                return inp_spent_case
 
             m_circ_mc       = 0
             m_circ_mc_break = 0
@@ -1504,7 +1504,7 @@ class Velo:
                 val_outs_break += val_inp
                 key             = None
 
-                inp_spent_index = inp_spent_before_bh_or_coinbase_test(
+                inp_spent_case = get_inp_spent_case_test(
                     inp,
                     bl_height,
                     switch_circ_effective,
@@ -1512,7 +1512,7 @@ class Velo:
                 )
 
                 # if coming from a coinbase transaction-------------------------
-                if 2 <= inp_spent_index:
+                if 2 <= inp_spent_case:
                     inp_spt_tx_bh   = inp.spent_tx.block_height
                     cbs_out_bh      = cbs_outs[inp_spt_tx_bh]
                     mined_rem_index = cbs_out_bh["mined_rem_index"]
@@ -1520,10 +1520,10 @@ class Velo:
                     key             = "{}_{}".format(inp.address, val_inp)
 
                 while True:
-                    if 0 == inp_spent_index:
+                    if 0 == inp_spent_case:
                         break
 
-                    if 2 == inp_spent_index and key in cbs_out_bh:
+                    if 2 == inp_spent_case and key in cbs_out_bh:
                         cbs_out_index = cbs_out_bh[key][0]
 
                         if cbs_out_index < mined_rem_index:
@@ -1536,7 +1536,8 @@ class Velo:
                             m_circ_mc += val_inp_add
                             break
 
-                    # inp_spent_index[tw_i] is 1 or 3
+                    # inp_spent_case[tw_i] is 1 or 3 or
+                    # case 2 with cbs_out_index > mined_rem_index
                     m_circ_mc_break += val_inp
                     m_circ_mc += val_inp
                     break
@@ -2105,7 +2106,7 @@ class Velo:
 
                 return input_time
 
-            def inp_spent_before_bh_or_coinbase(
+            def get_inp_spent_case(
                 inp,
                 bl_heights,
                 switch_circ_effective,
@@ -2126,9 +2127,8 @@ class Velo:
                     (coinbase tx return is return of normal tx +2: 0=>2, 1=>3)
                 """
 
-                inp_spent_index        = [
-                    0 for t in range(Velo.time_windows_cnt)
-                ]
+                inp_spent_case = [ 0 for t in range(Velo.time_windows_cnt) ]
+
                 is_coinbase            = False
                 bh_first               = bl_heights[0]
                 inp_spent_tx_bl_height = inp.spent_tx.block_height
@@ -2136,23 +2136,21 @@ class Velo:
                 # if we do not count money in effective circulation, we count---
                 # every input
                 if switch_circ_effective == False:
-                    inp_spent_index = [1 for t in range(Velo.time_windows_cnt)]
-                    return inp_spent_index
+                    inp_spent_case = [1 for t in range(Velo.time_windows_cnt)]
+                    return inp_spent_case
 
                 # check if the tx that spent this input is a coinbase tx--------
                 if inp.spent_tx.is_coinbase:
-                    inp_spent_index        = [
-                        2 for t in range(Velo.time_windows_cnt)
-                    ]
-                    is_coinbase = True
+                    inp_spent_case = [ 2 for t in range(Velo.time_windows_cnt) ]
+                    is_coinbase    = True
 
                 if switch_cbso == 1 and is_coinbase == True:
-                    inp_spent_index = [0 for t in range(Velo.time_windows_cnt)]
-                    return inp_spent_index
+                    inp_spent_case = [0 for t in range(Velo.time_windows_cnt)]
+                    return inp_spent_case
 
                 if switch_cbso == 2 and is_coinbase == False:
-                    #inp_spent_index = [0 for t in range(Velo.time_windows_cnt)]
-                    return inp_spent_index
+                    #inp_spent_case = [0 for t in range(Velo.time_windows_cnt)]
+                    return inp_spent_case
 
                 # if bl_heights[0] <= 0, we discard this input since it cannot--
                 # be spent before this block height, except for the first trans-
@@ -2164,8 +2162,8 @@ class Velo:
                 # also less than 0.
 
                 if bh_first <= 0 and is_coinbase == False:
-                    #inp_spent_index = [0 for t in range(Velo.time_windows_cnt)]
-                    return inp_spent_index
+                    #inp_spent_case = [0 for t in range(Velo.time_windows_cnt)]
+                    return inp_spent_case
 
                 # TODO: What if bh is <= than 0?
                 for bh_i, bh in enumerate(bl_heights):
@@ -2178,12 +2176,12 @@ class Velo:
 
                     # spent tx is older than given blockheight------------------
                     if is_coinbase:
-                        inp_spent_index[bh_i] = 3
+                        inp_spent_case[bh_i] = 3
                         continue
 
-                    inp_spent_index[bh_i] = 1
+                    inp_spent_case[bh_i] = 1
 
-                return inp_spent_index
+                return inp_spent_case
 
             def inp_spent_coinbase(
                 tx,
@@ -2435,7 +2433,7 @@ class Velo:
                     val_outs_break += val_inp
                     key_inp         = "{}_{}".format(inp.address, val_inp)
 
-                    inp_spent_index = inp_spent_before_bh_or_coinbase(
+                    inp_spent_case = get_inp_spent_case(
                         inp,
                         bl_heights,
                         switch_circ_effective,
@@ -2443,7 +2441,7 @@ class Velo:
                     )
 
                     # if coming from a coinbase transaction---------------------
-                    if 2 <= inp_spent_index[0]:
+                    if 2 <= inp_spent_case[0]:
                         inp_spt_tx_bh   = inp.spent_tx.block_height
                         cbs_out_bh      = cbs_outs[inp_spt_tx_bh]
                         mined_rem_index = cbs_out_bh["mined_rem_index"]
@@ -2452,10 +2450,10 @@ class Velo:
 
 
                     for tw_i, _ in enumerate(time_windows):
-                        if 0 == inp_spent_index[tw_i]:
+                        if 0 == inp_spent_case[tw_i]:
                             break
 
-                        if 2 == inp_spent_index[tw_i] and key_inp in cbs_out_bh:
+                        if 2 == inp_spent_case[tw_i] and key_inp in cbs_out_bh:
                             cbs_out_index = cbs_out_bh[key_inp][0]
 
                             if cbs_out_index < mined_rem_index:
@@ -2473,7 +2471,7 @@ class Velo:
                                 )
                                 continue
 
-                        # inp_spent_index[tw_i] is 1 or 3
+                        # inp_spent_case[tw_i] is 1 or 3
                         if tw_i == 0:
                             m_circ_mc_break += val_inp
                         m_circ_mc[tw_i]       += val_inp
