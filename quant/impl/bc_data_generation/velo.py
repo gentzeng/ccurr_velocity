@@ -1115,7 +1115,7 @@ class Velo:
                 )
             )
             #-------------------------------------------------------------------
-            m_supply_cbs_key   = "m_circ_cbs"
+            m_supply_cbs_key           = "m_circ_cbs"
 
             m_supply_add_a_key_wh_bill = "m_circ_wh_bill"
             m_supply_add_a_key_mc_lifo = "m_circ_mc_lifo"
@@ -1360,7 +1360,7 @@ class Velo:
             switch_wb_bill=True,
             switch_sort=False,
             switch_time=False,
-            switch_cbso=0,
+            switch_cbso=1,
         ):
             """
             """
@@ -1395,7 +1395,7 @@ class Velo:
                 inp,
                 bl_height,
                 switch_circ_effective,
-                switch_cbso=0,
+                switch_cbso=1,
             ):
                 """
                 This function represents the condition for the handle_tx_mc
@@ -1557,7 +1557,7 @@ class Velo:
 
         def m_circ_test(
             daychunks,
-            switch_cbso=0,
+            switch_cbso=1,
         ):
             """
             """
@@ -1670,7 +1670,7 @@ class Velo:
         daychunks = collect_daychunks(2)
         m_circ_wh_bill_raw_test, m_circ_mc_lifo_raw_test, m_circ_mc_fifo_raw_test = m_circ_test(
             daychunks,
-            switch_cbso=0,
+            switch_cbso=1,
         )
 
         df_final["m_circ_cbs"]          = results_raw["m_circ_cbs"]
@@ -2110,7 +2110,7 @@ class Velo:
                 inp,
                 bl_heights,
                 switch_circ_effective,
-                switch_cbso=0,
+                switch_cbso=1,
             ):
                 """
                 This function represents the condition for the handle_tx_mc
@@ -2241,20 +2241,59 @@ class Velo:
 
             def outs_spent_bl_heights(
                 tx,
+                bh_this,
                 bh_look_ahead,
                 switch_circ_effective=True,
                 switch_wb_bill=True,
                 switch_sort=False,
-                switch_cbso=0,
+                switch_time=False,
+                switch_cbso=1,
             ):
                 """
                 """
+
+                def m_circ_of_spending_tx_already_adjusted(
+                    bh_day_this,
+                    tx_spending,
+                    tx_index,
+                ):
+                    """
+                    Check, wheater the value of m_circ of any type for
+                    tx_spending has been adjusted.
+                    To do so, we check, wheather a spent tx has already
+                    visited tx_spending by exploiting the globally ordered index
+                    of transactions.
+                    """
+                    inps_spending = tx_spending.inputs
+
+                    for inp in inps_spending:
+                        inp_spent_tx_bl_height = inp.spent_tx.block_height
+                        inp_spent_tx_index     = inp.spent_tx.index
+
+                        # check whether the spent tx is one of those processed
+                        # by outs_spent_bl_heights
+                        if bh_day_this > inp_spent_tx_bl_height:
+                            continue
+
+                        # if the index of the transaction being spent is
+                        # smaller than the currently index, m_circ has already
+                        # been adjusted for the spending transaction
+                        # case == can be ignored since it is handled before
+                        # calling this function
+                        if inp_spent_tx_index < tx_index:
+                            return True
+
+                    return False
+
                 outs           = tx.outputs
                 outs_spent     = [0 for t in range(Velo.time_windows_cnt)]
                 out_spent_add  = 0
                 cbs_outs       = Velo.f_cbs_outs_of_bh
+                bh_day_this    = bh_this
                 bh_day_next    = bh_look_ahead[0]
                 tx_is_coinbase = tx.is_coinbase
+                tx_index       = tx.index
+                txes_checked_by_this_tx = []
 
                 if switch_cbso == 1 and tx_is_coinbase:
                     return outs_spent
@@ -2279,6 +2318,7 @@ class Velo:
                     bh_out = out_spending_tx.block_height
 
                     # output is spent, but not within the analyzed range--------
+                    # => regard as unspent and continue
                     if bh_out >= Velo.bl_height_max:
                         continue
 
@@ -2290,12 +2330,14 @@ class Velo:
                         # we can break here since all following bh_la's will
                         # be even greater!
                         if bh_la >= Velo.bl_height_max:
+                            #continue output loop by breaking inner tw loop
                             break
 
                         # check if bh_out is within window----------------------
                         # we can break here since bh_day_next and bh_out are
                         # independent from bh_la
                         if bh_day_next > bh_out:
+                            #continue output loop by breaking inner tw loop
                             break
 
                         # since bh_la is growing with each time window, we check
@@ -2303,12 +2345,13 @@ class Velo:
                         if bh_out >= bh_la:
                             continue
 
-                        # handle coinbase and normal transactions---------------
-                        # for coinbase txes: get part of out.value to be added
-                        # according to coinbase fee/new generated coins
-                        out_spent_add = out.value
-                        #if True == switch_wb_bill:
-                        if True:
+
+                        # adjust m_circ for whole bill and lifo/fifo------------
+                        # note that we can use the algorithm for lifo/fifo also
+                        # for whole bill, but the subsequent code for whole bill
+                        # is faster
+                        if True == switch_wb_bill and True == False:
+                            out_spent_add = out.value
                             if True == tx_is_coinbase:
                                 cbs_out_bh = cbs_outs[tx.block_height]
                                 key        = "{}_{}".format(out.address, out.value)
@@ -2334,6 +2377,52 @@ class Velo:
                             outs_spent[tw_i] += out_spent_add
                             continue
 
+                        if True:
+                            # check if out_spending_tx has already been processed---
+                            # earlier within the loop step processing the current
+                            # transaction tx
+                            if out_spending_tx.index in txes_checked_by_this_tx:
+                                #continue output loop by breaking inner tw loop
+                                break
+
+                            txes_checked_by_this_tx.append(out_spending_tx.index)
+
+                            # check if out_spending_tx has already been processed---
+                            # earlier while processing some tx in some earlier
+                            # loop step
+                            if m_circ_of_spending_tx_already_adjusted(
+                                bh_day_this,
+                                out_spending_tx,
+                                tx_index,
+                            ):
+                                #continue output loop by breaking inner tw loop
+                                break
+
+                            # compute m_circ of given type for old and new windows--
+                            m_circ_old = handle_tx_m_circ(
+                                out_spending_tx,
+                                [bh_day_this],
+                                switch_circ_effective=switch_circ_effective,
+                                switch_wb_bill=switch_wb_bill,
+                                switch_sort=switch_sort,
+                                switch_time=switch_time,
+                                switch_cbso=switch_cbso,
+                            )
+                            m_circ_new = handle_tx_m_circ(
+                                out_spending_tx,
+                                [bh_day_next],
+                                switch_circ_effective=switch_circ_effective,
+                                switch_wb_bill=switch_wb_bill,
+                                switch_sort=switch_sort,
+                                switch_time=switch_time,
+                                switch_cbso=switch_cbso,
+                            )
+
+                            # adjust m_circ for out_spending_tx with difference of--
+                            # new and old value
+                            out_spent_add = m_circ_new[0] - m_circ_old[0]
+                            outs_spent[tw_i] += out_spent_add
+
                 return outs_spent
 
             def get_selfchurn(tx):
@@ -2355,8 +2444,7 @@ class Velo:
                 switch_wb_bill=True,
                 switch_sort=False,
                 switch_time=False,
-                switch_cbso=0,
-                out=None,
+                switch_cbso=1,
             ):
                 """
                 Compute and return satoshi days desdroyed (sdd) per tx.
@@ -2572,6 +2660,7 @@ class Velo:
                 m_circ_cbs      .append(0)
                 m_circ_cbs_timed.append(0)
 
+
                 for tw_i, _ in enumerate(Velo.time_windows):
                     satoshi_dd_raw[tw_i].append(0)
                     dormancy_raw[tw_i]  .append(0)
@@ -2586,10 +2675,13 @@ class Velo:
                 if daychunk == []:
                     continue
 
-                # initialize day_index/first block heights of txes--------------
-                day_index     = dc_i + self.__day_index_first
-                bh_look_back  = [-1 for t in range(Velo.time_windows_cnt)]
-                bh_look_ahead = [-1 for t in range(Velo.time_windows_cnt)]
+                # initialize day_index and first block height of this daychunk,-
+                # block heights representing starts/ends of look-back and
+                # look-ahead windows
+                day_index      = dc_i + self.__day_index_first
+                bh_this        = Velo.f_bh_min_of_day_id[day_index]
+                bh_look_back   = [-1 for t in range(Velo.time_windows_cnt)]
+                bh_look_ahead  = [-1 for t in range(Velo.time_windows_cnt)]
 
                 # prepare look back block heights for money in circulation------
                 # since the first time window is always 1, bh_look_back[0]
@@ -2606,7 +2698,7 @@ class Velo:
 
                 # prepare look ahead block heights for output_spent_bl_heights()
                 # since the first time window is always 1, bh_look_ahead[0]
-                # alsways yields this first block height of the following day
+                # always yields this first block height of the following day
 
                 for tw_i, t_w in enumerate(Velo.time_windows):
                     day_look_ahead = day_index + t_w
@@ -2621,8 +2713,20 @@ class Velo:
                         day_look_ahead
                     ]
 
+
                 # retrieve tx-wise values for money in effective cirulation-----
+                tx_index_last = -1
                 for tx in daychunk:
+                    # check ordering of tx indexes------------------------------
+                    if tx_index_last >= tx.index:
+                        raise ValueError(
+                            "        last index bigger than next index!!!\n"
+                            "        last index = {}, next index = {}\n".format(
+                                tx_index_last,
+                                tx.index,
+                            )
+                        )
+                    tx_index_last = tx.index
                     # Here, dust transaction have to be included, see *)--------
                     if tx.output_value <= tx.fee:
                         pass
@@ -2634,8 +2738,7 @@ class Velo:
                         switch_wb_bill=True,
                         switch_sort=False,
                         switch_time=True,
-                        switch_cbso=0,
-                        out=None,
+                        switch_cbso=1,
                     )
                     m_circ_wh_bill_per_tx   = handle_tx_m_circ(
                         tx,
@@ -2644,8 +2747,7 @@ class Velo:
                         switch_wb_bill=True,
                         switch_sort=False,
                         switch_time=False,
-                        switch_cbso=0,
-                        out=None,
+                        switch_cbso=1,
                     )
                     m_circ_mc_lifo_per_tx   = handle_tx_m_circ(
                         tx,
@@ -2654,8 +2756,7 @@ class Velo:
                         switch_wb_bill=False,
                         switch_sort=False,
                         switch_time=False,
-                        switch_cbso=0,
-                        out=None,
+                        switch_cbso=1,
                     )
                     m_circ_mc_fifo_per_tx   = handle_tx_m_circ(
                         tx,
@@ -2664,20 +2765,29 @@ class Velo:
                         switch_wb_bill=False,
                         switch_sort=True,
                         switch_time=False,
-                        switch_cbso=0,
-                        out=None,
+                        switch_cbso=1,
                     )
-                    m_circ_cbs_per_tx       = inp_spent_coinbase(
+                    m_circ_cbs_per_tx       = handle_tx_m_circ(
                         tx,
-                        False,
+                        [bh_look_back[0]],
+                        switch_circ_effective=False,
+                        switch_wb_bill=True,
+                        switch_sort=False,
+                        switch_time=False,
+                        switch_cbso=2,
                     )
-                    m_circ_cbs_timed_per_tx = inp_spent_coinbase(
+                    m_circ_cbs_timed_per_tx = handle_tx_m_circ(
                         tx,
-                        True,
+                        [bh_look_back[0]],
+                        switch_circ_effective=False,
+                        switch_wb_bill=True,
+                        switch_sort=False,
+                        switch_time=True,
+                        switch_cbso=2,
                     )
 
-                    m_circ_cbs[-1]       += m_circ_cbs_per_tx
-                    m_circ_cbs_timed[-1] += m_circ_cbs_timed_per_tx
+                    m_circ_cbs[-1]       += m_circ_cbs_per_tx[0]
+                    m_circ_cbs_timed[-1] += m_circ_cbs_timed_per_tx[0]
 
                     # outputs spent within time window are only needed for------
                     # aggregation for window sizes > 1
@@ -2687,27 +2797,33 @@ class Velo:
                     if Velo.time_windows_cnt > 1:
                         o_loah_wh_bill_per_tx = outs_spent_bl_heights(
                             tx,
+                            bh_this,
                             bh_look_ahead,
                             switch_circ_effective=True,
                             switch_wb_bill=True,
                             switch_sort=False,
-                            switch_cbso=0,
+                            switch_time=False,
+                            switch_cbso=1,
                         )
                         o_loah_mc_lifo_per_tx = outs_spent_bl_heights(
                             tx,
+                            bh_this,
                             bh_look_ahead,
                             switch_circ_effective=True,
                             switch_wb_bill=False,
                             switch_sort=False,
-                            switch_cbso=0,
+                            switch_time=False,
+                            switch_cbso=1,
                         )
                         o_loah_mc_fifo_per_tx = outs_spent_bl_heights(
                             tx,
+                            bh_this,
                             bh_look_ahead,
                             switch_circ_effective=True,
                             switch_wb_bill=False,
                             switch_sort=True,
-                            switch_cbso=0,
+                            switch_time=False,
+                            switch_cbso=1,
                         )
 
                     # prepare data structures for windowed values---------------
