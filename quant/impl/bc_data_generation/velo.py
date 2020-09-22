@@ -116,6 +116,7 @@ class Velo:
     results_raw_types_m_total      = None
     results_raw_types_m_circ       = None
     results_raw_types_m_circ_tw    = []
+    results_raw_types_m_circ_types = None
     results_raw_types_comp_meas    = None
     results_raw_types_comp_meas_tw = []
 
@@ -271,6 +272,12 @@ class Velo:
                 "o_loah_wh_bill",
                 "o_loah_mc_lifo",
                 "o_loah_mc_fifo",
+            ]
+
+            Velo.results_raw_types_m_circ_types = [
+                "wh_bill",
+                "mc_lifo",
+                "mc_fifo",
             ]
 
             for type in Velo.results_raw_types_m_circ:
@@ -1655,23 +1662,22 @@ class Velo:
         df_final = DataFrame.from_dict(results_raw_basic)
         df_final = df_final.set_index("index_day")
 
-        for m_circ_type in Velo.results_raw_types_m_circ_tw:
-            df_final["{}_o".format(m_circ_type)] = results_raw_old[m_circ_type]
-
-
+        #--handle look-ahead and look-back data for m_circ aggregation----------
+        #for m_circ_type in Velo.results_raw_types_m_circ_tw:
+        #    df_final["{}_o".format(m_circ_type)] = results_raw_old[m_circ_type]
 
         #--handle tv_vol df_types and merge to final data frame-----------------
-        for tx_vol_type in Velo.results_raw_types_tx_vol_tw:
-            df_final[tx_vol_type] = results_raw[tx_vol_type]
+        #for tx_vol_type in Velo.results_raw_types_tx_vol_tw:
+        #    df_final[tx_vol_type] = results_raw[tx_vol_type]
 
         #--handle m_total df_types and merge to final data frame----------------
-        for m_total_type in Velo.results_raw_types_m_total:
-            df_final[m_total_type] = results_raw[m_total_type]
+        #for m_total_type in Velo.results_raw_types_m_total:
+        #    df_final[m_total_type] = results_raw[m_total_type]
 
         #--handle m_circ for coinbase transactions------------------------------
         df_final["m_circ_cbs"] = results_raw["m_circ_cbs"]
 
-        #--handle m_circ_tests--------------------------------------------------
+        #--compute m_circ_tests-------------------------------------------------
         df_test = {}
         for t_w in Velo.time_windows:
             daychunks = collect_daychunks(t_w)
@@ -1682,7 +1688,7 @@ class Velo:
             df_test["m_circ_mc_lifo_{}_t".format(t_w)] = m_circ_mc_lifo_raw_test
             df_test["m_circ_mc_fifo_{}_t".format(t_w)] = m_circ_mc_fifo_raw_test
 
-        #--handle m_circ diffs--------------------------------------------------
+        #--compute m_circ diffs-------------------------------------------------
         df_diff = {}
         for type in Velo.results_raw_types_m_circ:
             if (type    == "o_loah_wh_bill"
@@ -1703,16 +1709,19 @@ class Velo:
                     )
 
         #--handle m_circ df_types incl. tests and merge to final data frame-----
-        for type in Velo.results_raw_types_m_circ:
-            if (type    == "o_loah_wh_bill"
-                or type == "o_loah_mc_lifo"
-                or type == "o_loah_mc_fifo"):
-                continue
-
+        for type in Velo.results_raw_types_m_circ_types:
             for t_w in Velo.time_windows:
-                key      = "{}_{}".format( type, t_w )
+                key      = "m_circ_{}_{}".format( type, t_w )
                 key_test = "{}_t".format( key )
                 key_diff = "{}_d".format( key )
+
+                if t_w > 1:
+                    key_loba   = "{}_o".format( key )
+                    key_loah   = "o_loah_{}_{}".format( type, t_w )
+                    key_loah_o = "{}_o".format( key_loah )
+                    df_final[key_loah_o] = results_raw[key_loah]
+                    df_final[key_loba] = results_raw[key]
+
                 df_final[key_test] = df_test[key_test]
                 df_final[key_diff] = df_diff[key_diff]
                 df_final[key]      = results_raw[key]
