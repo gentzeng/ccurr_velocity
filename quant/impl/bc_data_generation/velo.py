@@ -128,17 +128,17 @@ class Velo:
     f_cbs_outs_of_bh       = []               # f_coinbase-outputs(block height)
 
     #--remaining class attributes-----------------------------------------------
-    args              = None                  # commandline arguments-----------
-    date_format       = "%Y-%m-%d %H:%M:%S"   # date formatting information-----
-    start_date_gen    = "01/03/2009"          # date of bitcoin genesis---------
-    path_data_output  = None                  # path for data output------------
-    log_level         = INFO                  # default logging level-----------
-    logger            = None                  # logging object------------------
-    test_level        = 0                     # default basic test level-------
-    process_cnt       = 0                     # count of sub procs for printing-
-    cnt_days          = 0                     # count of days in range to be----
+    args             = None                   # commandline arguments-----------
+    date_format      = "%Y-%m-%d %H:%M:%S"    # date formatting information-----
+    start_date_gen   = "01/03/2009"           # date of bitcoin genesis---------
+    path_data_output = None                   # path for data output------------
+    log_level        = INFO                   # default logging level-----------
+    logger           = None                   # logging object------------------
+    test_level       = 0                      # default basic test level-------
+    bl_height_max    = 0                      # maximum block height regarding--
+    process_cnt      = 0                      # count of sub procs for printing-
+    cnt_days         = 0                      # count of days in range to be----
                                               # analyzed------------------------
-    bl_height_max  = 0                        # maximum block height regarding--
                                               # given end date for analysis-----
     tx_vol_agg             = None             # helper: daily aggr. tx volume---
     m_supply_add_a_wh_bill = None             # helper: money supply agg 1st add
@@ -178,6 +178,7 @@ class Velo:
             Velo.cnt_cls_only     = args.count_clustering_only
             Velo.path_data_output = args.path_data_output
             Velo.chain            = Blockchain(args.path_data_input)
+            Velo.switch_cbso      = int(args.coinbase_mode)
 
             Velo.start_date       = args.start_date
             if Velo.test_level > 0:
@@ -1360,7 +1361,6 @@ class Velo:
             switch_wb_bill=True,
             switch_sort=False,
             switch_time=False,
-            switch_cbso=1,
         ):
             """
             """
@@ -1395,7 +1395,6 @@ class Velo:
                 inp,
                 bl_height,
                 switch_circ_effective,
-                switch_cbso=1,
             ):
                 """
                 This function represents the condition for the handle_tx_mc
@@ -1425,15 +1424,6 @@ class Velo:
                 if inp.spent_tx.is_coinbase:
                     inp_spent_case = 2
                     is_coinbase = True
-
-
-                if switch_cbso == 1 and is_coinbase == True:
-                    inp_spent_case = 0
-                    return inp_spent_case
-
-                if switch_cbso == 2 and is_coinbase == False:
-                    #inp_spent_case = 0
-                    return inp_spent_case
 
                 # if bl_height <= 0, we discard this input since it-------------
                 # cannot be spent before this block height
@@ -1504,11 +1494,17 @@ class Velo:
                 val_outs_break += val_inp
                 key             = None
 
+
+                if Velo.switch_cbso == 1 and inp.spent_tx.is_coinbase == True:
+                    continue
+
+                if Velo.switch_cbso == 2 and inp.spent_tx.is_coinbase == False:
+                    continue
+
                 inp_spent_case = get_inp_spent_case_test(
                     inp,
                     bl_height,
                     switch_circ_effective,
-                    switch_cbso,
                 )
 
                 # if coming from a coinbase transaction-------------------------
@@ -1557,7 +1553,6 @@ class Velo:
 
         def m_circ_test(
             daychunks,
-            switch_cbso=1,
         ):
             """
             """
@@ -1602,7 +1597,6 @@ class Velo:
                         switch_wb_bill=True,
                         switch_sort=False,
                         switch_time=False,
-                        switch_cbso=switch_cbso,
                     )
 
                     m_circ_mc_lifo_test[-1] += m_circ_per_tx_test(
@@ -1612,7 +1606,6 @@ class Velo:
                         switch_wb_bill=False,
                         switch_sort=False,
                         switch_time=False,
-                        switch_cbso=switch_cbso,
                     )
 
                     m_circ_mc_fifo_test[-1] += m_circ_per_tx_test(
@@ -1622,7 +1615,6 @@ class Velo:
                         switch_wb_bill=False,
                         switch_sort=True,
                         switch_time=False,
-                        switch_cbso=switch_cbso,
                     )
 
             return m_circ_wh_bill_test, m_circ_mc_lifo_test, m_circ_mc_fifo_test
@@ -1666,17 +1658,7 @@ class Velo:
         for m_circ_type in Velo.results_raw_types_m_circ_tw:
             df_final["{}_o".format(m_circ_type)] = results_raw_old[m_circ_type]
 
-        #--handle m_circ_tests--------------------------------------------------
-        daychunks = collect_daychunks(2)
-        m_circ_wh_bill_raw_test, m_circ_mc_lifo_raw_test, m_circ_mc_fifo_raw_test = m_circ_test(
-            daychunks,
-            switch_cbso=1,
-        )
 
-        df_final["m_circ_cbs"]          = results_raw["m_circ_cbs"]
-        df_final["m_circ_wh_bill_test"] = m_circ_wh_bill_raw_test
-        df_final["m_circ_mc_lifo_test"] = m_circ_mc_lifo_raw_test
-        df_final["m_circ_mc_fifo_test"] = m_circ_mc_fifo_raw_test
 
         #--handle tv_vol df_types and merge to final data frame-----------------
         for tx_vol_type in Velo.results_raw_types_tx_vol_tw:
@@ -1686,13 +1668,63 @@ class Velo:
         for m_total_type in Velo.results_raw_types_m_total:
             df_final[m_total_type] = results_raw[m_total_type]
 
+        #--handle m_circ for coinbase transactions------------------------------
+        df_final["m_circ_cbs"] = results_raw["m_circ_cbs"]
+
+        #--handle m_circ_tests--------------------------------------------------
+        df_test = {}
+        for t_w in Velo.time_windows:
+            daychunks = collect_daychunks(t_w)
+            m_circ_wh_bill_raw_test, m_circ_mc_lifo_raw_test, m_circ_mc_fifo_raw_test = m_circ_test(
+                daychunks,
+            )
+            df_test["m_circ_wh_bill_{}_t".format(t_w)] = m_circ_wh_bill_raw_test
+            df_test["m_circ_mc_lifo_{}_t".format(t_w)] = m_circ_mc_lifo_raw_test
+            df_test["m_circ_mc_fifo_{}_t".format(t_w)] = m_circ_mc_fifo_raw_test
+
+        #--handle m_circ diffs--------------------------------------------------
+        df_diff = {}
+        for type in Velo.results_raw_types_m_circ:
+            if (type    == "o_loah_wh_bill"
+                or type == "o_loah_mc_lifo"
+                or type == "o_loah_mc_fifo"):
+                continue
+
+            for t_w in Velo.time_windows:
+                key      = "{}_{}".format( type, t_w )
+                key_test = "{}_t".format( key )
+                key_diff = "{}_d".format( key )
+
+                df_diff[key_diff] = []
+
+                for i in range(len(df_test[key_test])):
+                    df_diff[key_diff].append(
+                        df_test[key_test][i] - results_raw[key][i]
+                    )
+
+        #--handle m_circ df_types incl. tests and merge to final data frame-----
+        for type in Velo.results_raw_types_m_circ:
+            if (type    == "o_loah_wh_bill"
+                or type == "o_loah_mc_lifo"
+                or type == "o_loah_mc_fifo"):
+                continue
+
+            for t_w in Velo.time_windows:
+                key      = "{}_{}".format( type, t_w )
+                key_test = "{}_t".format( key )
+                key_diff = "{}_d".format( key )
+                df_final[key_test] = df_test[key_test]
+                df_final[key_diff] = df_diff[key_diff]
+                df_final[key]      = results_raw[key]
+
+
         #--handle m_circ df_types and merge to final data frame-----------------
-        for m_circ_type in Velo.results_raw_types_m_circ_tw:
-            df_final[m_circ_type] = results_raw[m_circ_type]
+        #for m_circ_type in Velo.results_raw_types_m_circ_tw:
+        #    df_final[m_circ_type] = results_raw[m_circ_type]
 
         #--handle measurements from literature and merge to finale data frame---
-        for comp_meas_type in Velo.results_raw_types_comp_meas_tw:
-            df_final[comp_meas_type] = results_raw[comp_meas_type]
+        #for comp_meas_type in Velo.results_raw_types_comp_meas_tw:
+        #    df_final[comp_meas_type] = results_raw[comp_meas_type]
 
         #--print status message-------------------------------------------------
         Velo.logger.info("{}[{}built dataframe{}]   {}   {}".format(
@@ -1719,10 +1751,12 @@ class Velo:
         end_date_str   = end_date_d.strftime("%Y%m%d")
         path           = "{}_csv/".format(Velo.path_data_output)
         filename_dates = "{}{}_e_{}".format(path, now_date_str, end_date_str)
-        filename       = "{}_{}.csv".format(filename_dates, "velo_daily")
+        filename       = "{}_{}".format(filename_dates, "velo_daily")
+        #if Velo.switch_cbso != 0:
+        filename       = "{}_c_{}.csv".format(filename, Velo.switch_cbso)
 
         df_final.to_csv(
-            filename,
+        filename,
             sep=",",
             header=True,
             date_format=Velo.date_format,
@@ -1825,7 +1859,7 @@ class Velo:
                     self.process_name,
                     Velo.process_cnt-1,
                     cs.RES,
-                    "{}[          {: 3}%]".format(
+                    "{}[         {: 3}%]".format(
                         cs.WHI,
                         date_perc,
                     ),
@@ -2110,7 +2144,6 @@ class Velo:
                 inp,
                 bl_heights,
                 switch_circ_effective,
-                switch_cbso=1,
             ):
                 """
                 This function represents the condition for the handle_tx_mc
@@ -2143,14 +2176,6 @@ class Velo:
                 if inp.spent_tx.is_coinbase:
                     inp_spent_case = [ 2 for t in range(Velo.time_windows_cnt) ]
                     is_coinbase    = True
-
-                if switch_cbso == 1 and is_coinbase == True:
-                    inp_spent_case = [0 for t in range(Velo.time_windows_cnt)]
-                    return inp_spent_case
-
-                if switch_cbso == 2 and is_coinbase == False:
-                    #inp_spent_case = [0 for t in range(Velo.time_windows_cnt)]
-                    return inp_spent_case
 
                 # if bl_heights[0] <= 0, we discard this input since it cannot--
                 # be spent before this block height, except for the first trans-
@@ -2247,7 +2272,6 @@ class Velo:
                 switch_wb_bill=True,
                 switch_sort=False,
                 switch_time=False,
-                switch_cbso=1,
             ):
                 """
                 """
@@ -2295,10 +2319,12 @@ class Velo:
                 tx_index       = tx.index
                 txes_checked_by_this_tx = []
 
-                if switch_cbso == 1 and tx_is_coinbase:
+                if Velo.switch_cbso == 1 and tx_is_coinbase == True:
+                    outs_spent = [0 for t in range(Velo.time_windows_cnt)]
                     return outs_spent
 
-                if switch_cbso == 2 and not tx_is_coinbase:
+                if Velo.switch_cbso == 2 and tx_is_coinbase == False:
+                    outs_spent = [0 for t in range(Velo.time_windows_cnt)]
                     return outs_spent
 
                 # if tx is coinbase and there are no further days/blocks,-------
@@ -2406,7 +2432,6 @@ class Velo:
                                 switch_wb_bill=switch_wb_bill,
                                 switch_sort=switch_sort,
                                 switch_time=switch_time,
-                                switch_cbso=switch_cbso,
                             )
                             m_circ_new = handle_tx_m_circ(
                                 out_spending_tx,
@@ -2415,7 +2440,6 @@ class Velo:
                                 switch_wb_bill=switch_wb_bill,
                                 switch_sort=switch_sort,
                                 switch_time=switch_time,
-                                switch_cbso=switch_cbso,
                             )
 
                             # adjust m_circ for out_spending_tx with difference of--
@@ -2444,7 +2468,6 @@ class Velo:
                 switch_wb_bill=True,
                 switch_sort=False,
                 switch_time=False,
-                switch_cbso=1,
             ):
                 """
                 Compute and return satoshi days desdroyed (sdd) per tx.
@@ -2521,11 +2544,16 @@ class Velo:
                     val_outs_break += val_inp
                     key_inp         = "{}_{}".format(inp.address, val_inp)
 
+                    if Velo.switch_cbso == 1 and inp.spent_tx.is_coinbase == True:
+                        continue
+
+                    if Velo.switch_cbso == 2 and inp.spent_tx.is_coinbase == False:
+                        continue
+
                     inp_spent_case = get_inp_spent_case(
                         inp,
                         bl_heights,
                         switch_circ_effective,
-                        switch_cbso,
                     )
 
                     # if coming from a coinbase transaction---------------------
@@ -2660,7 +2688,6 @@ class Velo:
                 m_circ_cbs      .append(0)
                 m_circ_cbs_timed.append(0)
 
-
                 for tw_i, _ in enumerate(Velo.time_windows):
                     satoshi_dd_raw[tw_i].append(0)
                     dormancy_raw[tw_i]  .append(0)
@@ -2738,7 +2765,6 @@ class Velo:
                         switch_wb_bill=True,
                         switch_sort=False,
                         switch_time=True,
-                        switch_cbso=1,
                     )
                     m_circ_wh_bill_per_tx   = handle_tx_m_circ(
                         tx,
@@ -2747,7 +2773,6 @@ class Velo:
                         switch_wb_bill=True,
                         switch_sort=False,
                         switch_time=False,
-                        switch_cbso=1,
                     )
                     m_circ_mc_lifo_per_tx   = handle_tx_m_circ(
                         tx,
@@ -2756,7 +2781,6 @@ class Velo:
                         switch_wb_bill=False,
                         switch_sort=False,
                         switch_time=False,
-                        switch_cbso=1,
                     )
                     m_circ_mc_fifo_per_tx   = handle_tx_m_circ(
                         tx,
@@ -2765,7 +2789,6 @@ class Velo:
                         switch_wb_bill=False,
                         switch_sort=True,
                         switch_time=False,
-                        switch_cbso=1,
                     )
                     m_circ_cbs_per_tx       = handle_tx_m_circ(
                         tx,
@@ -2774,7 +2797,6 @@ class Velo:
                         switch_wb_bill=True,
                         switch_sort=False,
                         switch_time=False,
-                        switch_cbso=2,
                     )
                     m_circ_cbs_timed_per_tx = handle_tx_m_circ(
                         tx,
@@ -2783,7 +2805,6 @@ class Velo:
                         switch_wb_bill=True,
                         switch_sort=False,
                         switch_time=True,
-                        switch_cbso=2,
                     )
 
                     m_circ_cbs[-1]       += m_circ_cbs_per_tx[0]
@@ -2803,7 +2824,6 @@ class Velo:
                             switch_wb_bill=True,
                             switch_sort=False,
                             switch_time=False,
-                            switch_cbso=1,
                         )
                         o_loah_mc_lifo_per_tx = outs_spent_bl_heights(
                             tx,
@@ -2813,7 +2833,6 @@ class Velo:
                             switch_wb_bill=False,
                             switch_sort=False,
                             switch_time=False,
-                            switch_cbso=1,
                         )
                         o_loah_mc_fifo_per_tx = outs_spent_bl_heights(
                             tx,
@@ -2823,7 +2842,6 @@ class Velo:
                             switch_wb_bill=False,
                             switch_sort=True,
                             switch_time=False,
-                            switch_cbso=1,
                         )
 
                     # prepare data structures for windowed values---------------

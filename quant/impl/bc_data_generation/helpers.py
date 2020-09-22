@@ -104,7 +104,14 @@ def setup_parse_args (
             , action='store'
             , default=0
             , help="Toggle script for only counting adresses in clusters."
-        )
+    )
+    parser.add_argument(
+              '-cbs'
+            , '--coinbase_mode'
+            , action='store'
+            , default=0
+            , help="Toggle wheather coinbase txes should be included, ignored or solely considered."
+    )
     args = parser.parse_args()
     return(args)
 
