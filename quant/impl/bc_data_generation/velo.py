@@ -114,6 +114,8 @@ class Velo:
     results_raw_types_tx_vol       = None
     results_raw_types_tx_vol_tw    = []
     results_raw_types_m_total      = None
+    results_raw_types_m_total_tw   = []
+    results_raw_types_m_all        = None
     results_raw_types_m_circ       = None
     results_raw_types_m_circ_tw    = []
     results_raw_types_m_circ_types = None
@@ -142,6 +144,8 @@ class Velo:
                                               # analyzed------------------------
                                               # given end date for analysis-----
     tx_vol_agg             = None             # helper: daily aggr. tx volume---
+    tx_vol_churn_agg       = None             # daily aggr. selfchurning tx vol-
+    m_total_agg            = None             # daily aggr. m total-------------
     m_supply_add_a_wh_bill = None             # helper: money supply agg 1st add
     m_supply_add_a_mc_lifo = None             # helper: money supply agg 1st add
     m_supply_add_a_mc_fifo = None             # helper: money supply agg 1st add
@@ -152,7 +156,6 @@ class Velo:
     m_supply_agg_mc_lifo   = None             # helper: money supply agg target-
     m_supply_agg_mc_fifo   = None             # helper: money supply agg target-
     m_supply_cbs           = None             # helper: money supply coinbased--
-    tx_vol_churn_agg       = None             # daily aggr. selfchurning tx vol-
     secs_per_day           = 86400            # seconds per day 24*60*60--------
 
     #==[ CLASSLEVEL | SessionSetup & precaching of global data struct ]=========
@@ -265,6 +268,15 @@ class Velo:
             # money supply, total-----------------------------------------------
             Velo.results_raw_types_m_total = ["m_total"]
 
+            for type in Velo.results_raw_types_m_total:
+                for t_w in Velo.time_windows:
+                    Velo.results_raw_types_m_total_tw.append(
+                        "{}_{}".format(
+                            type,
+                            t_w,
+                        )
+                    )
+
             # money supply in effective circulation-----------------------------
             Velo.results_raw_types_m_circ = [
                 "m_circ_wh_bill",
@@ -297,6 +309,14 @@ class Velo:
                             t_w,
                         )
                     )
+
+            # money supply, all types-------------------------------------------
+            Velo.results_raw_types_m_all = [
+                "m_total",
+                "m_circ_wh_bill",
+                "m_circ_mc_lifo",
+                "m_circ_mc_fifo",
+            ]
 
             # compeating measurements for comparision---------------------------
             Velo.results_raw_types_comp_meas = [
@@ -974,15 +994,16 @@ class Velo:
         """
         Builds a pandas data frame and csv from pre-computed data.
         """
-        def agg_time_windowed_tx_vol(results_raw):
+        def agg_time_windowed_tx_vol_and_m_total(results_raw):
             """
             Compute transaction volume aggregates for given times in
             Velo.time_windows.
             """
-            def agg_time_windowed_tx_vol_per_day(
-                    day,
-                    tx_vol_agg_nxt_day,
-                    tx_vol_churn_agg_nxt_day,
+            def agg_time_windowed_tx_vol_and_m_total_per_day(
+                day,
+                tx_vol_agg_nxt_day,
+                tx_vol_churn_agg_nxt_day,
+                m_total_nxt_day,
             ):
                 """
                 Compute daily transaction volume aggregates for given times in
@@ -991,17 +1012,20 @@ class Velo:
                 for tw_i, _ in enumerate(Velo.time_windows[1:], start=1):
                     tx_vol_agg_last       = 0
                     tx_vol_churn_agg_last = 0
+                    m_total_last          = 0
 
                     # get the previously computed window------------------------
                     if day > 0:
                         tx_vol_agg_last       = Velo.tx_vol_agg[tw_i][day-1]
                         tx_vol_churn_agg_last = Velo.tx_vol_churn_agg[tw_i][day-1]
+                        m_total_last          = Velo.m_total_agg[tw_i][day-1]
 
                     #-add the current daily calculations------------------------
                     tx_vol_agg_tw       = tx_vol_agg_last + tx_vol_agg_nxt_day
                     tx_vol_churn_agg_tw = (
                         tx_vol_churn_agg_last + tx_vol_churn_agg_nxt_day
                     )
+                    m_total_agg_tw      = m_total_last + m_total_nxt_day
 
                     #-substract the calculations right before the new window----
                     if day >= Velo.time_windows[tw_i]:
@@ -1009,9 +1033,11 @@ class Velo:
 
                         tx_vol_agg_tw       -= Velo.tx_vol_agg[0][day_sub]
                         tx_vol_churn_agg_tw -= Velo.tx_vol_churn_agg[0][day_sub]
+                        m_total_agg_tw      -= Velo.m_total_agg[0][day_sub]
 
                     Velo.tx_vol_agg[tw_i]      .append(tx_vol_agg_tw)
                     Velo.tx_vol_churn_agg[tw_i].append(tx_vol_churn_agg_tw)
+                    Velo.m_total_agg[tw_i]     .append(m_total_agg_tw)
 
                 return
 
@@ -1022,36 +1048,43 @@ class Velo:
                     cs.PRGnBI,
                     cs.RES,
                     "                 ",
-                    "{}windowed tx volume".format(cs.PRGnBI),
+                    "{}windowed tx volume and m total".format(cs.PRGnBI),
                 )
             )
             #-------------------------------------------------------------------
             tx_vol                = results_raw["tx_vol_1"]
             tx_vol_churn          = results_raw["tx_vol_churn_1"]
+            m_total               = results_raw["m_total_1"]
             Velo.tx_vol_agg       = [[] for t in range(Velo.time_windows_cnt)]
             Velo.tx_vol_churn_agg = [[] for t in range(Velo.time_windows_cnt)]
+            Velo.m_total_agg      = [[] for t in range(Velo.time_windows_cnt)]
 
             # aggreation steps per day------------------------------------------
             for day_i in range(Velo.cnt_days):
                 tx_vol_day       = tx_vol[day_i]
                 tx_vol_churn_day = tx_vol_churn[day_i]
+                m_total_day      = m_total[day_i]
 
                 Velo.tx_vol_agg[0]      .append(tx_vol_day)
                 Velo.tx_vol_churn_agg[0].append(tx_vol_churn_day)
+                Velo.m_total_agg[0].append(m_total_day)
 
                 # aggregate txes volume for given time windows------------------
-                agg_time_windowed_tx_vol_per_day(
+                agg_time_windowed_tx_vol_and_m_total_per_day(
                     day_i,
                     tx_vol_day,
                     tx_vol_churn_day,
+                    m_total_day,
                 )
 
             # prepare return----------------------------------------------------
             for tw_i, t_w in enumerate(Velo.time_windows[1:], start=1):
                 tx_vol_key       = "tx_vol_{}"      .format(t_w)
                 tx_vol_churn_key = "tx_vol_churn_{}".format(t_w)
+                m_total_key      = "m_total_{}".format(t_w)
                 results_raw[tx_vol_key]       = Velo.tx_vol_agg[tw_i]
                 results_raw[tx_vol_churn_key] = Velo.tx_vol_churn_agg[tw_i]
+                results_raw[m_total_key]      = Velo.m_total_agg[tw_i]
 
             return results_raw
 
@@ -1637,11 +1670,12 @@ class Velo:
             )
         )
 
-        #-aggregate transaction volume (e.g., for dormancy)-----------------
+        #-aggregate transaction volume (e.g., for dormancy) and m_total-----
         results_raw["tx_vol_1"]       = results_raw.pop("tx_vol")
         results_raw["tx_vol_churn_1"] = results_raw.pop("tx_vol_churn")
+        results_raw["m_total_1"]      = results_raw.pop("m_total")
 
-        results_raw = agg_time_windowed_tx_vol(results_raw)
+        results_raw = agg_time_windowed_tx_vol_and_m_total(results_raw)
         results_raw_old = deepcopy(results_raw)
 
         #--aggregate money supply-------------------------------------------
@@ -1667,73 +1701,104 @@ class Velo:
         #    df_final["{}_o".format(m_circ_type)] = results_raw_old[m_circ_type]
 
         #--handle tv_vol df_types and merge to final data frame-----------------
-        #for tx_vol_type in Velo.results_raw_types_tx_vol_tw:
-        #    df_final[tx_vol_type] = results_raw[tx_vol_type]
+        for tx_vol_type in Velo.results_raw_types_tx_vol_tw:
+            df_final[tx_vol_type] = results_raw[tx_vol_type]
 
         #--handle m_total df_types and merge to final data frame----------------
-        #for m_total_type in Velo.results_raw_types_m_total:
-        #    df_final[m_total_type] = results_raw[m_total_type]
+        for m_total_type in Velo.results_raw_types_m_total_tw:
+            df_final[m_total_type] = results_raw[m_total_type]
 
         #--handle m_circ for coinbase transactions------------------------------
         df_final["m_circ_cbs"] = results_raw["m_circ_cbs"]
 
         #--compute m_circ_tests-------------------------------------------------
-        df_test = {}
-        for t_w in Velo.time_windows:
-            daychunks = collect_daychunks(t_w)
-            m_circ_wh_bill_raw_test, m_circ_mc_lifo_raw_test, m_circ_mc_fifo_raw_test = m_circ_test(
-                daychunks,
-            )
-            df_test["m_circ_wh_bill_{}_t".format(t_w)] = m_circ_wh_bill_raw_test
-            df_test["m_circ_mc_lifo_{}_t".format(t_w)] = m_circ_mc_lifo_raw_test
-            df_test["m_circ_mc_fifo_{}_t".format(t_w)] = m_circ_mc_fifo_raw_test
+        #df_test = {}
+        #for t_w in Velo.time_windows:
+        #    daychunks = collect_daychunks(t_w)
+        #    m_circ_wh_bill_raw_test, m_circ_mc_lifo_raw_test, m_circ_mc_fifo_raw_test = m_circ_test(
+        #        daychunks,
+        #    )
+        #    df_test["m_circ_wh_bill_{}_t".format(t_w)] = m_circ_wh_bill_raw_test
+        #    df_test["m_circ_mc_lifo_{}_t".format(t_w)] = m_circ_mc_lifo_raw_test
+        #    df_test["m_circ_mc_fifo_{}_t".format(t_w)] = m_circ_mc_fifo_raw_test
 
         #--compute m_circ diffs-------------------------------------------------
-        df_diff = {}
-        for type in Velo.results_raw_types_m_circ:
-            if (type    == "o_loah_wh_bill"
-                or type == "o_loah_mc_lifo"
-                or type == "o_loah_mc_fifo"):
-                continue
+        #df_diff = {}
+        #for type in Velo.results_raw_types_m_circ:
+        #    if (type    == "o_loah_wh_bill"
+        #        or type == "o_loah_mc_lifo"
+        #        or type == "o_loah_mc_fifo"):
+        #        continue
 
-            for t_w in Velo.time_windows:
-                key      = "{}_{}".format( type, t_w )
-                key_test = "{}_t".format( key )
-                key_diff = "{}_d".format( key )
+        #    for t_w in Velo.time_windows:
+        #        key      = "{}_{}".format( type, t_w )
+        #        key_test = "{}_t".format( key )
+        #        key_diff = "{}_d".format( key )
 
-                df_diff[key_diff] = []
+        #        df_diff[key_diff] = []
 
-                for i in range(len(df_test[key_test])):
-                    df_diff[key_diff].append(
-                        df_test[key_test][i] - results_raw[key][i]
-                    )
+        #        for i in range(len(df_test[key_test])):
+        #            df_diff[key_diff].append(
+        #                df_test[key_test][i] - results_raw[key][i]
+        #            )
 
         #--handle m_circ df_types incl. tests and merge to final data frame-----
-        for type in Velo.results_raw_types_m_circ_types:
-            for t_w in Velo.time_windows:
-                key      = "m_circ_{}_{}".format( type, t_w )
-                key_test = "{}_t".format( key )
-                key_diff = "{}_d".format( key )
+        #for type in Velo.results_raw_types_m_circ_types:
+        #    for t_w in Velo.time_windows:
+        #        key      = "m_circ_{}_{}".format( type, t_w )
+        #        key_test = "{}_t".format( key )
+        #        key_diff = "{}_d".format( key )
 
-                if t_w > 1:
-                    key_loba   = "{}_o".format( key )
-                    key_loah   = "o_loah_{}_{}".format( type, t_w )
-                    key_loah_o = "{}_o".format( key_loah )
-                    df_final[key_loah_o] = results_raw_old[key_loah]
-                    df_final[key_loba] = results_raw_old[key]
+        #        if t_w > 1:
+        #            key_loba   = "{}_o".format( key )
+        #            key_loah   = "o_loah_{}_{}".format( type, t_w )
+        #            key_loah_o = "{}_o".format( key_loah )
+        #            df_final[key_loah_o] = results_raw_old[key_loah]
+        #            df_final[key_loba] = results_raw_old[key]
 
-                df_final[key_test] = df_test[key_test]
-                df_final[key_diff] = df_diff[key_diff]
-                df_final[key]      = results_raw[key]
+        #        df_final[key_test] = df_test[key_test]
+        #        df_final[key_diff] = df_diff[key_diff]
+        #        df_final[key]      = results_raw[key]
 
 
         #--handle m_circ df_types and merge to final data frame-----------------
-        #for m_circ_type in Velo.results_raw_types_m_circ_tw:
-        #    df_final[m_circ_type] = results_raw[m_circ_type]
+        for m_circ_type in Velo.results_raw_types_m_circ_tw:
+            df_final[m_circ_type] = results_raw[m_circ_type]
+
+        #--compute velocity-----------------------------------------------------
+        Velo.logger.info(
+            "{}[{}Finalize       {}]   {}   {}".format(
+                cs.RES,
+                cs.PRGnBI,
+                cs.RES,
+                "                 ",
+                "{}velocity types".format(cs.PRGnBI),
+            )
+        )
+        df_velo = {}
+        for t_w in Velo.time_windows:
+            for type_txvol in Velo.results_raw_types_tx_vol:
+                key_txvol = "{}_{}".format( type_txvol, t_w )
+
+                for type_mcirc in Velo.results_raw_types_m_all:
+                    key_mcirc = "{}_{}".format( type_mcirc, t_w )
+                    key = "V_{}_{}_{}".format( type_txvol, type_mcirc, t_w )
+
+                    df_velo[key] = []
+
+                    for i in range(len(df_final[key_txvol])):
+                        df_velo[key].append(0)
+                        txvol = df_final[key_txvol][i]
+                        mcirc = df_final[key_mcirc][i]
+                        if mcirc == 0:
+                            continue
+                        df_velo[key][-1] = txvol/mcirc
+
+                    df_final[key] = df_velo[key]
 
         #--handle measurements from literature and merge to finale data frame---
-        #for comp_meas_type in Velo.results_raw_types_comp_meas_tw:
-        #    df_final[comp_meas_type] = results_raw[comp_meas_type]
+        for comp_meas_type in Velo.results_raw_types_comp_meas_tw:
+            df_final[comp_meas_type] = results_raw[comp_meas_type]
 
         #--print status message-------------------------------------------------
         Velo.logger.info("{}[{}built dataframe{}]   {}   {}".format(
@@ -1761,8 +1826,17 @@ class Velo:
         path           = "{}_csv/".format(Velo.path_data_output)
         filename_dates = "{}{}_e_{}".format(path, now_date_str, end_date_str)
         filename       = "{}_{}".format(filename_dates, "velo_daily")
-        #if Velo.switch_cbso != 0:
-        filename       = "{}_c_{}.csv".format(filename, Velo.switch_cbso)
+
+        if len(Velo.time_windows) > 1:
+            filename = "{}_t".format(filename)
+
+        for t_w in Velo.time_windows:
+            filename = "{}_{}".format(filename, t_w)
+
+        if Velo.switch_cbso != 0:
+            filename = "{}_c_{}".format(filename, Velo.switch_cbso)
+
+        filename = "{}.csv".format(filename)
 
         df_final.to_csv(
         filename,
@@ -2541,8 +2615,6 @@ class Velo:
 
                 if tx.is_coinbase or tx.input_value == 0:
                 #or val_outs == 0:
-                    #if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True:
-                    #    print("{}********day_index={}, tx_index={}, is coinbase \n********tx_hash={}{}".format(color, day_index, tx.index, tx.hash, cs.RES))
                     return m_circ_mc
 
                 # 1)
@@ -2559,8 +2631,6 @@ class Velo:
                         "val_outs_sent_to_others must not be less than 0!"
                     )
                 elif val_outs_sent_to_others == 0:
-                    if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True:
-                        print("{}********day_index={}, tx_index={}, val_outs_sent_to_others = 0  \n********tx_hash={}{}".format(color, day_index, tx.index, tx.hash, cs.RES))
                     return m_circ_mc
 
                 # 3)
@@ -2574,10 +2644,6 @@ class Velo:
                         reverse = switch_sort
                     )[1]
 
-
-                if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True:
-                    print("{}********day_index={}, tx_index={}, val_outs_sent_to_others={}, churn={}\n********tx_hash={}{}".format(color, day_index, tx.index, val_outs_sent_to_others, get_selfchurn(tx), tx.hash, cs.RES))
-
                 # 4)
                 for inp in inps:
                     cbs_out_index   = 0
@@ -2588,17 +2654,10 @@ class Velo:
                     val_outs_break += val_inp
                     key_inp         = "{}_{}".format(inp.address, val_inp)
 
-                    if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True:
-                        print("{}**********inp_index = {: 2}, inp_value = {: 12}, inp.spent_tx.index = {}{}".format(color, inp.index, inp.value, inp.spent_tx.index, cs.RES))
-
                     if Velo.switch_cbso == 1 and inp.spent_tx.is_coinbase == True:
-                        if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True:
-                            print("{}**********cbs 1, spent_tx cbs Y{}".format(color, cs.RES))
                         continue
 
                     if Velo.switch_cbso == 2 and inp.spent_tx.is_coinbase == False:
-                        if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True:
-                            print("{}**********cbs 2, spent_tx cbs N{}".format(color, cs.RES))
                         continue
 
                     inp_spent_case = get_inp_spent_case(
@@ -2623,20 +2682,12 @@ class Velo:
                     for tw_i, _ in enumerate(bl_heights):
                         t_w = time_windows[tw_i]
                         if 0 == inp_spent_case[tw_i]:
-                            if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True:
-                                print("{}************t_w = {}, inp_spent_case = {}, 1{}".format(color, t_w, inp_spent_case[tw_i], cs.RES))
                             break
-
-                        if 2 == inp_spent_case[tw_i] and key_inp not in cbs_out_bh:
-                            if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True:
-                                print("{}************t_w = {}, spent_tx is cbs, key_inp not in chs_out_bh!!{}".format(color, t_w, key_inp, cs.RES))
 
                         if 2 == inp_spent_case[tw_i] and key_inp in cbs_out_bh:
                             cbs_out_index = cbs_out_bh[key_inp][0]
 
                             if cbs_out_index < mined_rem_index:
-                                if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True:
-                                    print("{}************t_w = {}, inp_spent_case = {}, 1, is fee{}".format(color, t_w, inp_spent_case[tw_i], cs.RES))
                                 break
 
                             if cbs_out_index == mined_rem_index:
@@ -2644,8 +2695,6 @@ class Velo:
                                 if tw_i == 0:
                                     m_circ_mc_break += val_inp_add
                                     #m_circ_mc_break += val_inp
-                                if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True :
-                                    print("{}************t_w = {}, inp_spent_case = {}, 2, val_inp_add={}, key_inp is in cbs_out_bh{}".format(color, t_w, inp_spent_case[tw_i], val_inp_add, cs.RES))
                                 m_circ_mc[tw_i]       += val_inp_add
                                 m_circ_mc_timed[tw_i] += get_timed_input(
                                     inp,
@@ -2656,8 +2705,6 @@ class Velo:
                         # inp_spent_case[tw_i] is 1 or 3 or 2 while being mined coins in any case
                         if tw_i == 0:
                             m_circ_mc_break += val_inp_add
-                        if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True:
-                            print("{}************t_w = {}, inp_spent_case = {}, 3, val_inp_add={}{}".format(color, t_w, inp_spent_case[tw_i], val_inp_add, cs.RES))
                         m_circ_mc[tw_i]       += val_inp_add
                         m_circ_mc_timed[tw_i] += get_timed_input(
                             inp,
@@ -2674,10 +2721,6 @@ class Velo:
                                 if m_circ_mc[tw_i] > val_outs_sent_to_others:
                                     m_circ_mc[tw_i] = val_outs_sent_to_others
                         break
-
-                if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True and called_from_loah == False and called_from_cbs == False:
-                    print("{}--------------------m_circ(d=1, bh={: 8})={: 17}{}".format(cs.RED, bl_heights[0], m_circ_mc[0], cs.RES))
-                    print("{}--------------------m_circ(d=2, bh={: 8})={: 17}{}".format(cs.RED, bl_heights[1], m_circ_mc[1], cs.RES))
 
                 if m_circ_mc[0] < 0:
                     Velo.logger.error(
@@ -2784,9 +2827,6 @@ class Velo:
                 bh_this        = Velo.f_bh_min_of_day_id[day_index]
                 bh_look_back   = [-1 for t in range(Velo.time_windows_cnt)]
                 bh_look_ahead  = [-1 for t in range(Velo.time_windows_cnt)]
-
-                if day_index == 12:
-                    print("{}********day_index={} has {} transactions{}".format(cs.YEL, day_index, len(daychunk), cs.RES))
 
                 # prepare look back block heights for money in circulation------
                 # since the first time window is always 1, bh_look_back[0]
