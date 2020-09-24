@@ -242,6 +242,7 @@ class Velo:
             # basic data from blockchain----------------------------------------
             Velo.results_raw_types_basic = [
                 "index_day",
+                "bh_max",
                 "tx_count",
                 "tx_fees",
             ]
@@ -1465,13 +1466,12 @@ class Velo:
                 return m_circ_mc
 
             # 1)
-            val_outs_sent_to_others = val_outs
+            val_outs_sent_to_others = val_outs + tx.fee
 
-            if switch_wb_bill == True:
-                val_outs_sent_to_others += tx.fee
-            else:
-                # TODO: why not +tx.fee?
+            if switch_wb_bill == False:
                 val_outs_sent_to_others -= get_selfchurn_test(tx)
+                # TODO: why not incl tx.fee?
+                #val_outs_sent_to_others -= tx.fee
 
             # 2)
             if val_outs_sent_to_others < 0:
@@ -1719,8 +1719,8 @@ class Velo:
                     key_loba   = "{}_o".format( key )
                     key_loah   = "o_loah_{}_{}".format( type, t_w )
                     key_loah_o = "{}_o".format( key_loah )
-                    df_final[key_loah_o] = results_raw[key_loah]
-                    df_final[key_loba] = results_raw[key]
+                    df_final[key_loah_o] = results_raw_old[key_loah]
+                    df_final[key_loba] = results_raw_old[key]
 
                 df_final[key_test] = df_test[key_test]
                 df_final[key_diff] = df_diff[key_diff]
@@ -1993,6 +1993,7 @@ class Velo:
             #--initialize data structures---------------------------------------
             txes_daily       = []            # all transactions of one day------
             index_day        = []            # index list of day ids------------
+            bh_max           = []            # hightest block height of day-----
             txes_count       = []            # daily count of transactions------
             txes_fees        = []            # daily agg. tx fees---------------
             txes_dust_fees   = []            # daily agg. tx dust fees----------
@@ -2040,6 +2041,8 @@ class Velo:
                     Velo.block_times.index >= day_date_next
                 ].iloc[0][0]
 
+                bh_max.append(bl_height_max)
+
                 # get list of aggregated coin supply per given block height-----
                 m_total.append(Velo.f_m_total_of_bh[bl_height_min])
 
@@ -2054,6 +2057,7 @@ class Velo:
 
             # append results to queue dictionary--------------------------------
             self.__queue_dict["index_day"]      = index_day
+            self.__queue_dict["bh_max"]         = bh_max
             self.__queue_dict["tx_count"]       = txes_count
             self.__queue_dict["tx_fees"]        = txes_fees
             self.__queue_dict["tx_dust_fees"]   = txes_dust_fees
@@ -2281,6 +2285,7 @@ class Velo:
                 switch_wb_bill=True,
                 switch_sort=False,
                 switch_time=False,
+                day_index=10000000000000,
             ):
                 """
                 """
@@ -2314,6 +2319,17 @@ class Velo:
                         # case == can be ignored since it is handled before
                         # calling this function
                         if inp_spent_tx_index < tx_index:
+
+                            # If we ignore cbs txes, than we possibly ignored inp.spent_tx.
+                            # Thus, the spending tx was not visited yet
+                            if Velo.switch_cbso == 1 and inp.spent_tx.is_coinbase == True:
+                                return False
+                            # The same goes for the other scenario:
+                            # If we ignore normal txes, than the spending tx might not
+                            # be visited yet
+                            if Velo.switch_cbso == 2 and inp.spent_tx.is_coinbase == False:
+                                return False
+
                             return True
 
                     return False
@@ -2349,6 +2365,7 @@ class Velo:
                     # only consider output if it is spent-----------------------
                     if out_spending_tx is None:
                         continue
+
 
                     bh_out = out_spending_tx.block_height
 
@@ -2390,6 +2407,7 @@ class Velo:
                             if True == tx_is_coinbase:
                                 cbs_out_bh = cbs_outs[tx.block_height]
                                 key        = "{}_{}".format(out.address, out.value)
+
 
                                 #key not being in cbs_out_bh means, it does not
                                 #represent fees and thus, represents mined coins
@@ -2441,6 +2459,8 @@ class Velo:
                                 switch_wb_bill=switch_wb_bill,
                                 switch_sort=switch_sort,
                                 switch_time=switch_time,
+                                day_index=day_index,
+                                called_from_loah=True,
                             )
                             m_circ_new = handle_tx_m_circ(
                                 out_spending_tx,
@@ -2449,6 +2469,8 @@ class Velo:
                                 switch_wb_bill=switch_wb_bill,
                                 switch_sort=switch_sort,
                                 switch_time=switch_time,
+                                day_index=day_index,
+                                called_from_loah=True,
                             )
 
                             # adjust m_circ for out_spending_tx with difference of--
@@ -2477,6 +2499,9 @@ class Velo:
                 switch_wb_bill=True,
                 switch_sort=False,
                 switch_time=False,
+                day_index=10000000000000,
+                called_from_loah=False,
+                called_from_cbs=False,
             ):
                 """
                 Compute and return satoshi days desdroyed (sdd) per tx.
@@ -2512,8 +2537,12 @@ class Velo:
                 key_out         = None
                 time_windows    = Velo.time_windows
 
+                color = cs.RES
+
                 if tx.is_coinbase or tx.input_value == 0:
                 #or val_outs == 0:
+                    #if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True:
+                    #    print("{}********day_index={}, tx_index={}, is coinbase \n********tx_hash={}{}".format(color, day_index, tx.index, tx.hash, cs.RES))
                     return m_circ_mc
 
                 # 1)
@@ -2522,7 +2551,7 @@ class Velo:
                 if False == switch_wb_bill:
                     val_outs_sent_to_others -= get_selfchurn(tx)
                     # TODO: why not incl tx.fee?
-                    val_outs_sent_to_others -= tx.fee
+                    #val_outs_sent_to_others -= tx.fee
 
                 # 2)
                 if val_outs_sent_to_others < 0:
@@ -2530,6 +2559,8 @@ class Velo:
                         "val_outs_sent_to_others must not be less than 0!"
                     )
                 elif val_outs_sent_to_others == 0:
+                    if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True:
+                        print("{}********day_index={}, tx_index={}, val_outs_sent_to_others = 0  \n********tx_hash={}{}".format(color, day_index, tx.index, tx.hash, cs.RES))
                     return m_circ_mc
 
                 # 3)
@@ -2543,20 +2574,31 @@ class Velo:
                         reverse = switch_sort
                     )[1]
 
+
+                if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True:
+                    print("{}********day_index={}, tx_index={}, val_outs_sent_to_others={}, churn={}\n********tx_hash={}{}".format(color, day_index, tx.index, val_outs_sent_to_others, get_selfchurn(tx), tx.hash, cs.RES))
+
                 # 4)
                 for inp in inps:
                     cbs_out_index   = 0
                     mined_rem_index = 0
                     mined_rem       = 0
-                    val_inp_add     = 0
+                    val_inp_add     = inp.value
                     val_inp         = inp.value
                     val_outs_break += val_inp
                     key_inp         = "{}_{}".format(inp.address, val_inp)
 
+                    if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True:
+                        print("{}**********inp_index = {: 2}, inp_value = {: 12}, inp.spent_tx.index = {}{}".format(color, inp.index, inp.value, inp.spent_tx.index, cs.RES))
+
                     if Velo.switch_cbso == 1 and inp.spent_tx.is_coinbase == True:
+                        if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True:
+                            print("{}**********cbs 1, spent_tx cbs Y{}".format(color, cs.RES))
                         continue
 
                     if Velo.switch_cbso == 2 and inp.spent_tx.is_coinbase == False:
+                        if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True:
+                            print("{}**********cbs 2, spent_tx cbs N{}".format(color, cs.RES))
                         continue
 
                     inp_spent_case = get_inp_spent_case(
@@ -2573,15 +2615,28 @@ class Velo:
                         mined_rem       = cbs_out_bh["mined_rem"]
                         #key_inp         = "{}_{}".format(inp.address, val_inp)
 
-
-                    for tw_i, _ in enumerate(time_windows):
+                    #for tw_i, t_w in enumerate(time_windows):
+                    # only iterate for given block heights, that might be less
+                    # than the overall time_windows, e.g., computing m_circ
+                    # for output look-ahead adjustments only need to check
+                    # for one block height and hence only for one time window
+                    for tw_i, _ in enumerate(bl_heights):
+                        t_w = time_windows[tw_i]
                         if 0 == inp_spent_case[tw_i]:
+                            if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True:
+                                print("{}************t_w = {}, inp_spent_case = {}, 1{}".format(color, t_w, inp_spent_case[tw_i], cs.RES))
                             break
+
+                        if 2 == inp_spent_case[tw_i] and key_inp not in cbs_out_bh:
+                            if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True:
+                                print("{}************t_w = {}, spent_tx is cbs, key_inp not in chs_out_bh!!{}".format(color, t_w, key_inp, cs.RES))
 
                         if 2 == inp_spent_case[tw_i] and key_inp in cbs_out_bh:
                             cbs_out_index = cbs_out_bh[key_inp][0]
 
                             if cbs_out_index < mined_rem_index:
+                                if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True:
+                                    print("{}************t_w = {}, inp_spent_case = {}, 1, is fee{}".format(color, t_w, inp_spent_case[tw_i], cs.RES))
                                 break
 
                             if cbs_out_index == mined_rem_index:
@@ -2589,6 +2644,8 @@ class Velo:
                                 if tw_i == 0:
                                     m_circ_mc_break += val_inp_add
                                     #m_circ_mc_break += val_inp
+                                if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True :
+                                    print("{}************t_w = {}, inp_spent_case = {}, 2, val_inp_add={}, key_inp is in cbs_out_bh{}".format(color, t_w, inp_spent_case[tw_i], val_inp_add, cs.RES))
                                 m_circ_mc[tw_i]       += val_inp_add
                                 m_circ_mc_timed[tw_i] += get_timed_input(
                                     inp,
@@ -2596,13 +2653,15 @@ class Velo:
                                 )
                                 continue
 
-                        # inp_spent_case[tw_i] is 1 or 3
+                        # inp_spent_case[tw_i] is 1 or 3 or 2 while being mined coins in any case
                         if tw_i == 0:
-                            m_circ_mc_break += val_inp
-                        m_circ_mc[tw_i]       += val_inp
+                            m_circ_mc_break += val_inp_add
+                        if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True:
+                            print("{}************t_w = {}, inp_spent_case = {}, 3, val_inp_add={}{}".format(color, t_w, inp_spent_case[tw_i], val_inp_add, cs.RES))
+                        m_circ_mc[tw_i]       += val_inp_add
                         m_circ_mc_timed[tw_i] += get_timed_input(
                             inp,
-                            val_inp
+                            val_inp_add
                         )
 
                     # **)
@@ -2610,8 +2669,15 @@ class Velo:
                     if val_outs_break >= val_outs_sent_to_others:
                         # if input candites are more then values send to others
                         if m_circ_mc_break >= val_outs_sent_to_others:
-                            m_circ_mc[0] = val_outs_sent_to_others
+                            #m_circ_mc[0] = val_outs_sent_to_others
+                            for tw_i, _ in enumerate(bl_heights):
+                                if m_circ_mc[tw_i] > val_outs_sent_to_others:
+                                    m_circ_mc[tw_i] = val_outs_sent_to_others
                         break
+
+                if (day_index == 12) and True == switch_circ_effective and False == switch_wb_bill and switch_sort == True and called_from_loah == False and called_from_cbs == False:
+                    print("{}--------------------m_circ(d=1, bh={: 8})={: 17}{}".format(cs.RED, bl_heights[0], m_circ_mc[0], cs.RES))
+                    print("{}--------------------m_circ(d=2, bh={: 8})={: 17}{}".format(cs.RED, bl_heights[1], m_circ_mc[1], cs.RES))
 
                 if m_circ_mc[0] < 0:
                     Velo.logger.error(
@@ -2719,6 +2785,9 @@ class Velo:
                 bh_look_back   = [-1 for t in range(Velo.time_windows_cnt)]
                 bh_look_ahead  = [-1 for t in range(Velo.time_windows_cnt)]
 
+                if day_index == 12:
+                    print("{}********day_index={} has {} transactions{}".format(cs.YEL, day_index, len(daychunk), cs.RES))
+
                 # prepare look back block heights for money in circulation------
                 # since the first time window is always 1, bh_look_back[0]
                 # always yields the first block height of this day/daychunk
@@ -2774,6 +2843,7 @@ class Velo:
                         switch_wb_bill=True,
                         switch_sort=False,
                         switch_time=True,
+                        day_index=day_index,
                     )
                     m_circ_wh_bill_per_tx   = handle_tx_m_circ(
                         tx,
@@ -2782,6 +2852,7 @@ class Velo:
                         switch_wb_bill=True,
                         switch_sort=False,
                         switch_time=False,
+                        day_index=day_index,
                     )
                     m_circ_mc_lifo_per_tx   = handle_tx_m_circ(
                         tx,
@@ -2790,6 +2861,7 @@ class Velo:
                         switch_wb_bill=False,
                         switch_sort=False,
                         switch_time=False,
+                        day_index=day_index,
                     )
                     m_circ_mc_fifo_per_tx   = handle_tx_m_circ(
                         tx,
@@ -2798,6 +2870,7 @@ class Velo:
                         switch_wb_bill=False,
                         switch_sort=True,
                         switch_time=False,
+                        day_index=day_index,
                     )
                     m_circ_cbs_per_tx       = handle_tx_m_circ(
                         tx,
@@ -2806,6 +2879,9 @@ class Velo:
                         switch_wb_bill=True,
                         switch_sort=False,
                         switch_time=False,
+                        day_index=day_index,
+                        called_from_loah=False,
+                        called_from_cbs=True,
                     )
                     m_circ_cbs_timed_per_tx = handle_tx_m_circ(
                         tx,
@@ -2814,6 +2890,9 @@ class Velo:
                         switch_wb_bill=True,
                         switch_sort=False,
                         switch_time=True,
+                        day_index=day_index,
+                        called_from_loah=False,
+                        called_from_cbs=True,
                     )
 
                     m_circ_cbs[-1]       += m_circ_cbs_per_tx[0]
@@ -2833,6 +2912,7 @@ class Velo:
                             switch_wb_bill=True,
                             switch_sort=False,
                             switch_time=False,
+                            day_index=day_index,
                         )
                         o_loah_mc_lifo_per_tx = outs_spent_bl_heights(
                             tx,
@@ -2842,6 +2922,7 @@ class Velo:
                             switch_wb_bill=False,
                             switch_sort=False,
                             switch_time=False,
+                            day_index=day_index,
                         )
                         o_loah_mc_fifo_per_tx = outs_spent_bl_heights(
                             tx,
@@ -2851,6 +2932,7 @@ class Velo:
                             switch_wb_bill=False,
                             switch_sort=True,
                             switch_time=False,
+                            day_index=day_index,
                         )
 
                     # prepare data structures for windowed values---------------
