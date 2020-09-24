@@ -1,49 +1,64 @@
+%
+% line numbering
+%
+\renewcommand{\LinesNumbered}{%
+	\setboolean{algocf@linesnumbered}{true}%
+	\renewcommand{\algocf@linesnumbered}{\everypar={\nl}}}%
+%
+\let\oldnl\nl% Store \nl in \oldnl
+\renewcommand{\nonl}{\renewcommand{\nl}{\let\nl\oldnl}}% Remove line number for one line
+%
 \ifdefined\varInputAlgos%
-\renewcommand{\arraystretch}{1.5}%
+\renewcommand{\arraystretch}{1.90}%
+%\todo{Do we mean non-recycling or not circulating?}%
 \begin{algorithm*}[!h]%
 	\DontPrintSemicolon
-	\caption{Get sum of all outputs being spent within window $\wndw$}\label{algo:code_outs_spent_within}%
-	\KwData{$\wndw_\Start$                                                        \tcc*{Begin of look-ahead window $w$}}%
-	\KwData{$\wndw_\End$                                                          \tcc*{End of look-ahead window $w$}}%
-	\KwData{$ \TxP$                                                               \tcc*{Set of transactions in period $\perd$}}%
-	\KwData{$ \Out^{\cbs}$                                                        \tcc*{Set of maps of coinbase outputs per blockheight, that represent transaction fees}}%
-	$\outSpentSum \gets {0}$                                                      \tcc*{Sum of all outputs being spent within window}%
-	\ForEach {$ t \in \TxP $}{%
-		$\outSpentSum(t) \gets {0}$                                               \tcc*{outputs being spent within window $\wndw$ for tx $t$}%
-		$\outSpentAdd(t) \gets {0}$                                               \tcc*{Helper variable for value that gets actually added}%
-		\ForEach{$o \in \Out_{t}$}{%
-			$\outSpentAdd(t) \gets {\val(o)}$                                     \tcc*{Default value to be added is the value of $o$}%
-			\lIf{$\isNotSpent(o)$}{continue}
-			\lIf(\tcc*[f]{If $o$ was spent outside of $\wndw$}%
-			){$\spentBefore(\wndw_\Start)\ \orbf\ \spentAfter(\wndw_\End)$%
-			}{%
-				continue
-			}%	
-			\If(\tcc*[f]{For coinbase tx, we only want to add outputs representing fees}%
-			){$\isCoinbase(t)$%
-			}{%
-				$\Out^{\cbs}_{t} \gets{\Out^{\cbs}[\bh(t)]}$                  \tcc*{Get map of outputs of the coinbase tx $o$ is belonging to}%
-				$\keyOut \gets {(\addr(o),\ \val(o))}$                        \tcc*{map key for $\Out^{\cbs}_{i}$, supposed to be unique}%
-				\lIf(\tcc*[f]{Output $o$ not representing collected fees}%
-				){$\keyOut \not \in \Out^{\cbs}_{t}$%
-				}{continue}%
-				$\minedRemIndex \gets {\Out^{\cbs}_{t}[\mathtt{"minedRemIndex"}]}$ \tcc*{Get index of the first output representing mined coins}%
-				$\cbsOutIndex \gets {\Out^{\cbs}_{t}[\keyOut][0]}$                 \tcc*{Get index of $o$ within $\Out^{\cbs}_{t}$}%
-				\lIf(\tcc*[f]{Output $o$ represents mined coins and thus not fees}%
-				){$ \cbsOutIndex > \minedRemIndex$
-				}{continue}% 
-				\If(\tcc*[f]{Input $o$ (partly) represents collected fees}%
-				){$ \cbsOutIndex = \minedRemIndex$
-				}{%
-					$\outSpentAdd \gets {\Out^{\cbs}_{t}[\mathtt{"feeRem"}]}$        \tcc*{Add (partly) collected fees represented by $o$}%
-				}%
-			}%
-			$\outSpentSum(t) \gets {\outSpentAdd}$                                   \tcc*{Update $\outSpentSum$}%
+	\caption{Aggregating $\protect\MCirc$ for arbitrary $\typett$ for given window $\wndw$ from genesis day to $\daytt_\maxtt$.%
+	}\label{algo:code_aggr}%
+	%  \caption{Moved-coin-approach: Measurement $\protect\MCircM$ for $\mathtt{type}$ (\acs*{fifo}, \acs*{lifo}) within period $\perd$, window $\wndw$.%
+	%  }\label{algo:code_mcirc_mc}%
+	%
+	
+	\KwData{$\wndw$                                                        \tcc*{Begin of lookback window $w$}}%
+	\KwData{$ \TxP$                                                        \tcc*{Set of transactions in period $\perd$}}%
+	\KwData{$ \Out^{\selfchurn}$                                           \tcc*{Set of self-churning outputs}}%
+	$ \MSetCbs \gets \emptyset$                                            \tcc*{Set of cumulated coinbase coins per day}%
+	$ \MSetCirc_{1} \gets \emptyset$                                       \tcc*{Set of $\MCirc$ calculated per day, with $1$ day as lookback window}%
+	$ \MSetCircLB \gets \emptyset$                                         \tcc*{Set of $\MCirc$ calculated per day, with $\wndw$ day as lookback window}%
+	$ \MSetCircLA \gets \emptyset$                                         \tcc*{Set of $\MCirc$ output adjustments with $\wndw$ day as lookahead window}%
+	$ \MSetCircAggr \gets \emptyset$                                       \tcc*{Initialize Set of $\MCircAggr$}
+	$ \Out^{\cbs} \gets GetCoinbaseFees\bigl(\bigr)$                       \tcc*{Set of maps of coinbase outputs per blockheight, that represent transaction fees}%
+	%
+	\ForEach{$d \in \{0,...,\daytt_\maxtt\}$%
+	}{%
+		$\MSetCircAggr \gets {\MSetCircAggr\,\cup\,\{0\}}$                 \tcc*{Initialize $\MCircAggr$ to be computed for this day}%
+		$\MSetCirc_{1} \gets \MSetCirc_{1}\,\cup\,\{0\}$\\%
+		$\MSetCircLB \gets \MSetCircLB\,\cup\,\{0\}$\\%
+		$\MSetCircLA \gets \MSetCircLA\,\cup\,\{0\}$\\%
+		\tcc*{Step 1: Compute basic $\MCirc$ values for each transaction of day $d$}%
+		\ForEach{$\TxD$}{%
+			$\MSetCirc_{1}[d] \gets \MSetCirc_{1}[d]\,+\,GetMCirc\bigl(t,\,\typett,\,1,\,\Out^{\cbs},\,\Out^{\selfchurn}\bigr)$\\%
+			$\MSetCircLB[d] \gets \MSetCircLB[d]\,+\,GetMCirc\bigl(t,\,\typett,\,\wndw,\,\Out^{\cbs},\,\Out^{\selfchurn}\bigr)$\\%
+			$\MSetCircLA[d] \gets \MSetCircLA[d]\,+\,AdjustMCirc\bigl(t,\,\typett,\,\wndw,\,\Out^{\cbs},\,\Out^{\selfchurn}\bigr)$\\%
+		}
+		\tcc*{Step 2: Use $\MCircAggr$ calculated for $d-1$ as base for aggregation at $d$, except for $d=0$}
+		\If{$d > 0$}{%
+			$\MSetCircAggr[d] \gets \MSetCircAggr[d-1]$%
+		}%
+		\tcc*{Step 3: Add values of day $d$ to aggregation for $w$}%
+		\eIf{$d < w$}{%
+			$\MSetCircAggr[d] \gets \MSetCircAggr[d]\,+\,\MSetCbs[d]$        \tcc*{For $d<w$, only coinbase coins represent $\MCirc$}%
+		}{%
+			$\MSetCircAggr[d] \gets \MSetCircAggr[d]\,+\,\MSetCircLB[d]$     \tcc*{For $d\ge{}w$, add $\MCirc$ of day $d$ calculated for lookback window $w$}%
+		}%
+		\tcc*{Step 4: Substract/adjust values of day $d-w$}%
+		\If{$d \ge w$}{%
+			$d_\mathtt{sub}\,=\,d\,-\,w$                                       \tcc*{Get the first day of the last aggregate}%
+			$\MSetCircAggr[d] \gets \MSetCircAggr[d]\,-\,\MSetCirc_{1}[d_\mathtt{sub}]$ \tcc*{Substract full $\MCirc$ value of day $d_\mathtt{sub}$ and ... }%
+			$\MSetCircAggr[d] \gets \MSetCircAggr[d]\,+\,\MSetCircLA[d_\mathtt{sub}]$   \tcc*{... re-add adjusted values}%
 		}%
 	}%
-%
-	return $\outSpentSum$                                                \tcc*{Result: The sum of all outputs being spent within window $\wndw$}%
+	return $\MSetCircAggr$                                                 \tcc*{Result: Return daily aggregated $\MCirc$ for window $w$}%
 \end{algorithm*}%
 \else%
 \fi%
-%

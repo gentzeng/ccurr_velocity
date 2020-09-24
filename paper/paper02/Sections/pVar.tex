@@ -27,6 +27,12 @@
 \newcommand{\bhSpendingTx}  {{\mathtt{blockHeightSpendingTx}}}
 \newcommand{\bh}            {{\mathtt{blockHeight}}}
 
+
+\newcommand{\spenttt}       {{\mathtt{spent}}}
+\newcommand{\spendingtt}    {{\mathtt{spending}}}
+\newcommand{\spentTx}       {{\mathtt{GetSpentTx}}}
+\newcommand{\spendingTx}    {{\mathtt{GetSpendingTx}}}
+
 \newcommand{\andbf}         {{\mathbf{and}}}
 \newcommand{\orbf}          {{\mathbf{or}}}
 \newcommand{\coins}         {{\mathtt{coins}}}
@@ -44,6 +50,7 @@
 \newcommand{\vEcI}          {{\mathtt{vecInp}}}
 \newcommand{\vEcO}          {{\mathtt{vecIout}}}
 \newcommand{\tx}            {{\mathtt{tx}}}
+
 \newcommand{\inp}           {{\mathtt{input}}}
 \newcommand{\inps}          {{\mathtt{inputs}}}
 \newcommand{\inpsSort}      {{\mathtt{inputs}_\sorted}}
@@ -115,6 +122,8 @@
 \newcommand{\TxPTo}         {{\Tx_\perdTo}}
 \newcommand{\TxPTc}         {{\Tx_\perdTc}}
 \newcommand{\TxC}           {{\Tx^{\cbs}_{\mathbb{P}}}}
+\newcommand{\TxD}           {{\Tx_{d}}}
+\newcommand{\TxChecked}      {{\Tx_{\mathtt{checked}}}}
 
 \newcommand{\Inp}           {{\mathbb{I}}}
 \newcommand{\InpT}          {{\Inp_{t}}}
@@ -217,7 +226,14 @@
 
 %Variations of M
 \newcommand{\MCirc}         {{M_{\circtt}}}
+\newcommand{\MCircOld}      {{M_{\circtt}^{\mathtt{old}}}}
+\newcommand{\MCircNew}      {{M_{\circtt}^{\mathtt{new}}}}
+\newcommand{\MCircAdj}      {{M_{\circtt}^{\mathtt{adjusted}}}}
+\newcommand{\MCircLA}       {{\MCirc_{\overset{\rightarrow}{\wndw}}}}
+\newcommand{\MCircLB}       {{\MCirc_{\overset{\leftarrow}{\wndw}}}}
 \newcommand{\MSetCirc}      {{\mathbb{M}_{\circtt}}}
+\newcommand{\MSetCircLA}    {{\MSetCirc_{\overset{\rightarrow}{\wndw}}}}
+\newcommand{\MSetCircLB}    {{\MSetCirc_{\overset{\leftarrow}{\wndw}}}}
 \newcommand{\MCircWb}       {{M_{\circttWb}}}
 \newcommand{\MCircM}        {{M_{\circttM}}}
 \newcommand{\MCircMl}       {{M_{\circttMl}}}
