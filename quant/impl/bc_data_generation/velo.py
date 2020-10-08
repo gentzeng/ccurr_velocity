@@ -2360,6 +2360,7 @@ class Velo:
                 switch_sort=False,
                 switch_time=False,
                 day_index=10000000000000,
+                txes_checked=[],
             ):
                 """
                 """
@@ -2509,10 +2510,12 @@ class Velo:
                             # earlier within the loop step processing the current
                             # transaction tx
                             if out_spending_tx.index in txes_checked_by_this_tx:
+                            #if out_spending_tx.index in txes_checked[tw_i]:
                                 #continue output loop by breaking inner tw loop
                                 break
 
                             txes_checked_by_this_tx.append(out_spending_tx.index)
+                            #txes_checked[tw_i].append(out_spending_tx.index)
 
                             # check if out_spending_tx has already been processed---
                             # earlier while processing some tx in some earlier
@@ -2861,7 +2864,12 @@ class Velo:
 
                 # retrieve tx-wise values for money in effective cirulation-----
                 tx_index_last = -1
+
+                txes_checked_wh_bill = [[] for t in range(Velo.time_windows_cnt)]
+                txes_checked_mc_lifo = [[] for t in range(Velo.time_windows_cnt)]
+                txes_checked_mc_fifo = [[] for t in range(Velo.time_windows_cnt)]
                 for tx in daychunk:
+
                     # check ordering of tx indexes------------------------------
                     if tx_index_last >= tx.index:
                         raise ValueError(
@@ -2953,6 +2961,7 @@ class Velo:
                             switch_sort=False,
                             switch_time=False,
                             day_index=day_index,
+                            txes_checked=txes_checked_wh_bill,
                         )
                         o_loah_mc_lifo_per_tx = outs_spent_bl_heights(
                             tx,
@@ -2963,6 +2972,7 @@ class Velo:
                             switch_sort=False,
                             switch_time=False,
                             day_index=day_index,
+                            txes_checked=txes_checked_mc_lifo,
                         )
                         o_loah_mc_fifo_per_tx = outs_spent_bl_heights(
                             tx,
@@ -2973,6 +2983,7 @@ class Velo:
                             switch_sort=True,
                             switch_time=False,
                             day_index=day_index,
+                            txes_checked=txes_checked_mc_fifo,
                         )
 
                     # prepare data structures for windowed values---------------
