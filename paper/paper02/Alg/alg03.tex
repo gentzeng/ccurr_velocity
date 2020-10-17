@@ -2,33 +2,35 @@
 \renewcommand{\arraystretch}{1.5}%
 \begin{algorithm*}[!h]%
 	\DontPrintSemicolon
-	\caption{$AdjustMCirc$: Forward adjustment of $\MCirc$ for transactions being spent within lookahead window $\wndw$.}\label{algo:code_outs_spent_within}%
-	\KwData{$ \Out^{\cbs}$                                                         \tcc*{Set of maps of coinbase outputs per blockheight, that represent transaction fees}}%
-	\KwData{$ t$                                                                   \tcc*{The transaction for which forward adjustments of $\MCirc$ need to be computed}}%
-	\KwData{$ \TxD$                                                                \tcc*{Set of all transaction of same day to with $t$ belongs as well}}%		
+	\caption{$AdjustMCirc$: Forward adjustment of $\MCirc$ for transaction $t$ being spent within lookahead window $\wndw$.}\label{algo:code_outs_spent_within}%
+%	\KwData{$ \Out^{\cbs}$                                                         \tcc*{Set of maps of coinbase outputs per blockheight, that represent transaction fees}}%
+	\KwData{$ \TxD$                                                                \tcc*{Set of all transaction of same day to with $t$ belongs as well}}%
+%	\KwData{$ \TxChecked$                                                          \tcc*{Helper to recall all spending transactions linked to same spent tx with already adjusted $\MCirc$}}%
+	\KwData{$\TxIndexAdjusted$                                                    \tcc*{Set holding indexes of spending transactions already forwardly adjusted for this day}}%
 	$\MCircAdj \gets {0}$                                                          \tcc*{The adjusted $\MCirc$ after shifting $\wndw$}%
-	$\TxChecked \gets {\emptyset}$                                                 \tcc*{Helper to recall all spending transactions linked to same spent tx with already adjusted $\MCirc$}%
 	\ForEach{$o \in \Out_{t}$}{%
 		\lIf{$\isNotSpent(o)$}{continue}%
 		$t_{\spendingtt} \gets {\spendingTx(o)}$                                   \tcc*{Get the transaction that spent $o$}%
 		\lIf(                                                                      \tcc*[f]{If $t_\spendingtt$ was already adjusted by some output of $t$}%
 		){$\indextt(t_{\spendingtt})\,\in\,\TxChecked$%
-		}{continue}%	
-		$\TxChecked \gets {\TxChecked\,\cup\,\{\indextt(t_{\spendingtt})\}}$       \tcc*[f]{Mark $t_\spendingtt$ as already adjusted by some output of $t$}\\%
-		\ForEach(                                                                  \tcc*[f]{Check if $t_\spendingtt$ was already adjusted previously by some other transaction of $\TxD$}%
-		){$i \in \Inp_{t_{\spendingtt}}$%
-		}{%		
-			$t_{\spenttt} \gets {\spentTx(i)}$                                     \tcc*{Get the transaction that being spent by $i$}%
-			\If(                                                                   %\tcc*[f]{If $t_\spendingtt$ was already adjusted by some output of $t$}%
-			){$t_{\spenttt}\,\in\,\TxD\ \andbf\ \indextt(t_{\spenttt})\,<\,\indextt(t)$%
-			}{continue}%	
-		}
-		$\MCircOld \gets{ GetMCirc\bigl(t,\,\typett,\,\wndw,\,\Out^{\cbs},\,\Out^{\selfchurn}\bigr)}$\\%
-		$\MCircNew \gets{ GetMCirc\bigl(t,\,\typett,\,\wndw+1,\,\Out^{\cbs},\,\Out^{\selfchurn}\bigr)}$\\%
+		}{continue}%
+		$\TxIndexAdjusted \gets {\TxIndexAdjusted\,\cup\,\{\indextt(t_{\spendingtt})\}}$       \tcc*[f]{Mark $t_\spendingtt$ as already adjusted by some output of $t$}\\%
+%		\ForEach(                                                                  \tcc*[f]{Check if $t_\spendingtt$ was already adjusted previously by some other transaction of $\TxD$}%
+%		){$i \in \Inp_{t_{\spendingtt}}$%
+%		}{%
+%			$t_{\spenttt} \gets {\spentTx(i)}$                                     \tcc*{Get the transaction that being spent by $i$}%
+%			\If(                                                                   %\tcc*[f]{If $t_\spendingtt$ was already adjusted by some output of $t$}%
+%			){$t_{\spenttt}\,\in\,\TxD\ \andbf\ \indextt(t_{\spenttt})\,<\,\indextt(t)$%
+%			}{continue}%
+%		}
+%		$\MCircOld \gets{ GetMCirc\bigl(t,\,\typett,\,\wndw,\,\Out^{\cbs},\,\Out^{\selfchurn}\bigr)}$\\%
+%		$\MCircNew \gets{ GetMCirc\bigl(t,\,\typett,\,\wndw+1,\,\Out^{\cbs},\,\Out^{\selfchurn}\bigr)}$\\%
+		$\MCircOld \gets{ GetMCirc\bigl(t,\,\typett,\,\wndw\bigr)}$\\%
+		$\MCircNew \gets{ GetMCirc\bigl(t,\,\typett,\,\wndw+1\bigr)}$\\%
 		$\MCircAdj \gets {\MCircAdj\,+\,\bigl(\MCircNew\,-\,\MCircOld\bigr)}$      \tcc*{Update $\MCircAdj$}%
 	}%
 %
-	return $\MCircAdj$                                                             \tcc*{Result: The adjusted $\MCirc$ after shifting $\wndw$}%
+	return $\MCircAdj,~\TxIndexAdjusted$                                                             \tcc*{Result: The adjusted $\MCirc$ after shifting $\wndw$ and the updated information of adjusted transactions}%
 \end{algorithm*}%
 \else%
 \fi%
