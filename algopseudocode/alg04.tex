@@ -1,0 +1,94 @@
+%
+% line numbering
+%
+\renewcommand{\LinesNumbered}{%
+	\setboolean{algocf@linesnumbered}{true}%
+	\renewcommand{\algocf@linesnumbered}{\everypar={\nl}}}%
+
+\let\oldnl\nl% Store \nl in \oldnl
+\newcommand{\nonl}{\renewcommand{\nl}{\let\nl\oldnl}}% Remove line number for one line
+
+\ifdefined\varInputAlgos%
+\renewcommand{\arraystretch}{1.90}%
+%\todo{Do we mean non-recycling or not circulating?}%
+\begin{algorithm*}[!h]%
+	\DontPrintSemicolon
+	\caption{$GetMCirc$: Measure $\protect\MCirc$ for given transaction $t$, $\typett$ (\acs*{wbaType}, \acs*{fifo}, \acs*{lifo}) within window $\wndw$.%
+	}\label{algo:code_mcirc}%
+	%
+	%
+	\KwData{$ \Out^{\cbs}$                                                                    \tcc*{Set of maps of coinbase outputs per blockheight, that represent transaction fees}}%
+	$\MCirc  \gets {0}$                                                                       \tcc*{Money supply to be estimated for given arguments}%
+	$\valO^\mathtt{break} \gets {0}$                                                          \tcc*{Set break condition helper for every transactionr}%
+	$\valO^\sendToOthers  \gets{\sum_{v\in{}\OutT\cup\FeeT} \val(v)}$                         \tcc*{Initialize amount of money sent to third parties with sum of outputs \& fees}%
+	\lIf(                                                                                     \tcc*[f]{Return transactions without any inputs to be added}){$\isCoinbase(t)\ \orbf\ \sum_{i\in{}\Inp_{t}} \val(i)\,=\,0$}{return $0$}%
+	\If(                                                                                     %\tcc*[f]{\ac*{wba}: Regarding all outgoing coins ensures all inputs are regarded}%
+	){$\typett\,\not=\,\mathrm{\acs*{wbaType}}$}{%
+		$\Out'_{t} \gets{\Out_{t}\,\cap\,\Out^{\selfchurn}}$                                  \tcc*{Determine the set of selfchurning outputs of $t$}%
+		$\valO^\sendToOthers  \gets{\valO^\sendToOthers\,-\,\sum_{o\in{}\Out'_{t}} \val(o) }$%
+	}%
+	\lIf(                                                                                     \tcc*[f]{Skip current transaction and go to the next}){$\valO^\sendToOthers\,=\,0$}{continue}%
+	$\Inp'_{t}(\typett) \gets{sort(\InpT,\ \typett)}$                                         \tcc*{sort ascending (\acs*{fifo})/descending (\acs*{lifo}) by generation time of inputs/ skip (\acs*{wbaType})}%
+	\ForEach {$i \in \Inp'_{t}(\typett)$\label{algo:code_mcirc_for}%
+	}{%
+		$\valIAdd \gets {0}$                                                                  \tcc*{}%
+		$\valO^\mathtt{break} \gets{\valO^\mathtt{break}\,+\,\valI(i)}$                         \tcc*{Update foreach-loop break helper}%
+		$\inpSpentCase \gets {0}$                                                             \tcc*{Get value representing spent case of input $i$}%		
+		\lIf(                                                                                 \tcc*[f]{Check whether input $i$ stems from a coinbase transaction}){%
+			$\genByCoinbase(i)$%
+		}{%
+			$\inpSpentCase \gets {2}$%
+		}%
+		\If(                                                                                 \tcc*[f]{Check if input $i$ was generated before $\wndw_\Start$}){%
+			$\dateGen(i) < \wndw_\Start$
+		}{%
+			$ \inpSpentCase \gets {\inpSpentCase\,+\,1} $
+		}
+		\lIf(                                                                                 \tcc*[f]{Input $i$ was generated within $\wndw$ by a normal transaction}){%
+			$\inpSpentCase\,=\,0$
+		}{continue}% 
+		\If(                                                                                  \tcc*[f]{Input $i$ was generated within $\wndw$ by a coinbase transaction}){%
+			$\inpSpentCase\,=\,2$
+		}{%        
+			$\Out^{\cbs}_{i} \gets{\Out^{\cbs}[\bhSpentTx(i)]}$                               \tcc*{Get map of outputs of the coinbase tx that is spent by input $i$}%
+			$\keyInp \gets {(\addr(i),\ \val(i))}$                                            \tcc*{dictionary/map key for $\Out^{\cbs}_{i}$, supposed to be unique}%
+			\eIf(                                                                              \tcc*[f]{Check wheather $i$ represents fees}%
+			){$\keyInp \in \keys(\Out^{\cbs}_{i})$
+			}{%				
+				$\minedRemIndex \gets {\Out^{\cbs}_{i}[\mathtt{"minedRemIndex"}]}$            \tcc*{Get index of the first output representing mined coins}%
+				$\cbsOutIndex \gets {\Out^{\cbs}_{i}[\keyInp]}$                               \tcc*{Get index of the output referenced by $i$}%
+				\lIf(                                                                         \tcc*[f]{Input $i$ spent an output representing fees}%
+				){$ \cbsOutIndex < \minedRemIndex$
+				}{continue}% 
+				\If(                                                                          \tcc*[f]{Input $i$ (partly) represents mined coins}%
+				){$ \cbsOutIndex\,=\,\minedRemIndex$
+				}{%
+					$\valIAdd \gets {\Out^{\cbs}_{i}[\mathtt{"minedRem"}]}$                   \tcc*{Add (partly) mined coins referenced by $i$}%
+				}
+			}(                                                                                \tcc*[f]{Input $i$ represents mined coins}%
+			){%
+				$\valIAdd \gets {\val(i)}$                                                   \tcc*{Add mined coins referenced by $i$}%
+			}%
+		}%
+		\If(                                                                                  \tcc*[f]{Input $i$ was generated before $\wndw_\Start$ regardless of the transaction type}){%
+			$\inpSpentCase \in \{1,3\}$
+		}{%        
+			$\valIAdd \gets{\val(i)}$                                                         \tcc*{Add the full value of $i$}%
+		}% 
+		$ \MCirc \gets{\MCirc\,+\,\valIAdd} $                                                 \tcc*{Update money supply}%
+		\If{%
+			$\valO^{\mathtt{break}} > \valO^\sendToOthers$%
+		}{%
+			\If(                                                                              \tcc*[f]{Use $\valO^\sendToOthers$ as upper cap for  $\MCirc$}){%
+				$\MCirc > \valO^\sendToOthers$%
+			}{%
+				$\MCirc \gets{ \valO^\sendToOthers }$%
+			}{%
+				break                                                                         \tcc*{Break foreach-loop on line \ref{algo:code_mcirc_for}}%
+			}% 
+		}% 
+	}%
+	return $\MCirc$                                                                           \tcc*{Result: Return measured money in circulation with lookback window $\wndw$}%
+\end{algorithm*}%
+\else%
+\fi%
