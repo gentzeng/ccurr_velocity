@@ -15,7 +15,7 @@
 			$\Out'_{t} = \emptyset$%
 		}{continue}%
 		\ForEach{$o \in \Out'_{t}$}{%
-			$\keyOut \gets {(\addr(o),\ \val(o))}$                       \tcc*{Map key for $\Out^{\cbs}[-1]$, supposed to be unique}%
+			$\keyOut \gets {(\addr(o),\ \val(o))}$                       \tcc*{Map key for last appended map $\Out^{\cbs}[bh]$, supposed to be unique}%
 			$\Out^{\cbs}[bh][\keyOut] \gets {\indextt(o)}$  \tcc*{Add map entry, where $\keyOut$ is mapped to index of $o$ within $\Out'_{t}$}%
 			$\outSum \gets {\outSum\,+\,\val(o)}$                         \tcc*{Update $\outSum$}%
 			\If(\tcc*[f]{If we exceded all outputs representing fees}%
@@ -25,7 +25,7 @@
 				break
 			}%
 		}%
-		$\Out^{\cbs}[bh][\mathtt{"minedRemIndex"}] \gets {\indextt(o)}$ \tcc*{Add index of last regard $o$ within $\Out'_{t}$}%
+		$\Out^{\cbs}[bh][\mathtt{"minedRemIndex"}] \gets {\indextt(o)}$ \tcc*{Add index of last added output $o$ within $\Out'_{t}$}%
 		$\Out^{\cbs}[bh][\mathtt{"minedRem"}] \gets {\minedRem}$        \tcc*{Add value of first output (partly) representing mined coins}%
 		$\Out^{\cbs}[bh][\mathtt{"feeRem"}] \gets {\feeRem}$            \tcc*{Add value of last output (partly) representing collected fees}%
 	}%
