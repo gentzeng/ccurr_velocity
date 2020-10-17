@@ -1,164 +1,44 @@
+\section{Measuring money in circulation}
+\label{sec:measure}%
+
+In \cite{pernice2019cryptocurrencies} monetary units are seen as ``in circulation'' in day \(\perd\) covering \([\perd_{\Start},\perd_{\End}\) if and only if they have been used as a medium of exchange. %
+Money is referred to as circulating if it has been moved economically within the last day, month, year or generally any time period $\wndw$ covering $[\wndw_\Start , \wndw_\End]$. %
+This period can be described relatively by its length \(\wndwLength\) assuming that \(\wndw_\End = \perd_{\End}\).%
+
+\subsection{The original approach to estimate money in circulation}
+\label{sec:orig_approach}%
+To estimate the subset of money supply which circulated within $\wndw$, the authors suggested to analyze the transactions recorded window $\wndw$.  %
+Ignoring change, outputs of coinbase transactions and as well as transactions spending outputs generated before $\wndw$ are interpreted as bringing an amount into circulation that corresponds to the value of spent outputs.  %
+All inputs referring to UTXOs generated \emph{within} period $\wndw$, on the
+other hand, re-spend money which has already been counted as circulating.%
+
+\textbf{[@TODO Check against illustration.]}
+This can be illustrated with \reffig{mcirc_concept} where values are symbolized with coins. %
+Here, we would need to determine, how many monetary units have made the transaction volume $8$ (sum of outputs in C, D, E and F excluding self-churn) during period $\wndw$ possible. %
+In this example, we would need to focus on transactions A, B and D in contrast to transactions C and E which reused monetary unspent transaction outputs that have been generated within period $\wndw$. %
+
+If change in transactions is to be considered, the general approach is complicated by a technicality of UTXO-based cryptocurrencies: Transactions always spend prior transaction outputs in full. %
+
+The authors defined two general approaches: \ac{wba} and \ac{mca}.  %
+\ac{wba} considers the sum of all inputs \textit{in circulation} (as technically all has been proven to be available for transactions) while the \ac{mca} only counts the fraction economically sent to third parties.  %
+%
+They are visualized in \reffig{mcirc_concept}.  %
+The moved-coin approach considers only output $\mathsf{Out_1}$ of transaction $\mathsf{Tx_C}$ as circulating, not the change output.  %
+This approach captures the net economic value transferred to a third party.  %
+The \ac{wba} classifies the whole input of transaction $\mathsf{Tx_C}$ as circulating.  %
+
+However, as for UTXO blockchains the relation between transaction inputs and outputs are not determined, \ac{mca} might not be defined clearly. %
+If for a given transaction one input was generated within and one before $\wndw$, it remains unspecified which one corresponds to the change output.  %
+
+The authors thus utilized assignment rule between transaction inputs and outputs utilizing the terminology of cost accounting: %
+They differentiate between \ac{fifo}, where youngest inputs get assigned to outputs first, and \ac{lifo}, where it is the other way around.  %
+
+The authors introduced three definitions of money in circulation as measured for day \(\perd\), each defined by window length $\wndwLength$: %
+Money in circulation for period $\wndw$ adopting the \ac{wba} ($ \MCircWbPWl $), and both the \ac{mca} with the \ac{lifo} rule ($ \MCircMlPWl $) and the \ac{fifo} rule ($ \MCircMfPWl $).
 
 
-%Segregation of money
-
-% \section{Novel measures of velocity of money in effective circulation}
-% \label{sec:cc_money_seg}%
-
-% Based on the concept of velocity of money in effective circulation as
-% clarified last section, we now propose algorithms to calculate velocity for
-% UTXO-based cryptocurrencies. %
-
-% \subsection{Determining money in circulation}
-% \label{sec:cc_money_seg:sub:mcirc_concept}% 
-
-% Conceptually, a monetary unit has circulated in a period if and only if it
-% has been used as a medium of exchange.  Therefore, first a time window must
-% be specified with respect to which monetary units are to be classified as
-% \emph{circulating} or not.  %
-% Money is referred to as circulating if it has been moved economically within
-% the last day, month, year or generally any time period $\wndw$ covering
-% $[\wndw_\Start , \wndw_\End]$. %
-
-% To identify the fraction of the money supply which circulated within $\wndw$,
-% we step trough every transaction recorded in period $\wndw$.  %
-% Transactions spending outputs generated before $\wndw$ as well as outputs
-% from coinbase transactions (seignorage) have the interpretation of bringing
-% an amount into circulation that corresponds to the value of spent outputs.  %
-% %%% NOTE: Why would fees be excluded here?? -> DISCUSS %%%hwe
-% All inputs referring to UTXOs generated \emph{within} period $\wndw$, on the
-% other hand, re-spend money which has already been counted as circulating.%
-% \footnote{To develop an intuition, remember the example of sheep Eve being
-%   sold and re-bought by Bob in $2020$.  %
-%   This time Bitcoin was used and Alice held unspent outputs of $2$ bitcoin
-%   from transactions $5$ years ago.  %
-%   The transaction formed by Alice to buy sheep Eve, $Tx_1$, spends her
-%   five-year-old output and generates a new one in 2020 which is controlled by
-%   Bob.  %
-%   When Bob buys Eve back, he pays with the output of $1$ bitcoin from $Tx_1$
-%   in a second transaction ($Tx_2$).  %
-%   For $\wndw = \perd = 2020$, the value of $Tx_1$ (1 bitcoin) originated
-%   prior to 2020 and is thus money brought into circulation.  %
-%   $Tx_2$, however, spent an output generated in 2020---an already counted
-%   monetary unit.  %
-% %In the example, thus $\MCirc_{2019}=1 \ttext{ Bitcoin}$. 
-% } %
-% % This can be illustrated with \reffig{mcirc_concept} where values are %
-% % symbolized with coins. %
-% % Here, we would need to determine, how many monetary units have made the %
-% % transaction volume $8$ (sum of outputs in C, D, E and F excluding
-% % self-churn) during period $\wndw$ possible. %
-% % In this example, we would need to focus on transactions A, B and D in
-% % contrast to transactions C and E which reused monetary unspent transaction
-% % outputs that have been generated within period $\wndw$. %
-
-% Note that we define the time window $\wndw$ within which spent coins are
-% considered as \emph{circulating} distinct from the period $\perd$ for which
-% the velocity measure is calculated, $ [\perd_\Start, \perd_{\End}]$.  This
-% distinction can be parametrized via a maximum length $\wndwLength$ of the
-% look-back window $\wndw$, where $\wndw_\Start = \perd_\Start - \wndwLength$
-% and $\wndw_\End = \perd_\End$.  %
-
-% The approach as characterized so far, however, does not account for two
-% technical properties of UTXO-based cryptocurrencies: %
-% First, transactions always spend prior transaction outputs in full.  %
-% Second, there exists no attribution of individual outputs to the inputs of a
-% transaction; thus it remains undefined which input corresponds to which
-% output(s).  %
-
-% The first property raises the question how to deal with transactions which
-% send back change: %
-% Should the sum of all inputs be considered \textit{in circulation,} as
-% technically all was transferred---or should only the fraction sent to third
-% parties be considered?  %
-% We analyze both choices, naming the first \ac{wba} and the second
-% \ac{mca}.  %
-% They are visualized in \reffig{mcirc_concept}.  %
-% The moved-coin approach considers only output $\mathsf{Out_1}$ of transaction
-% $\mathsf{Tx_C}$ as circulating, not the change output.  %
-% This approach captures the net economic value transferred to a third
-% party.  %
-% The \ac{wba} classifies the whole input of transaction $\mathsf{Tx_C}$ as
-% circulating.  %
-% This approach captures the amount of money that has been moved technically;
-% it can also be interpreted as revealed to be available for transactions.  %
-
-% In the \ac{mca}, the sum of inputs is counted as circulating only net of
-% change outputs.  %
-% However, due to the second property of UTXO blockchains ambiguous
-% constellations can occur: If for a given transaction one input was generated
-% within and one before $\wndw$, it remains unspecified which one corresponds
-% to the change output.  %
-
-% Transaction $\mathsf{Tx_F}$ in \reffig{mcirc_concept} illustrates the
-% point.  %
-% It has two inputs: $\mathsf{Inp_1}$ originated before period $\wndw$ and
-% $\mathsf{Inp_2}$ originated within $\wndw$.  %
-% If only amounts sent to third parties matter, it remains unclear which of the
-% two inputs funded the change output.  %
-% For $\mathsf{Inp_1}$, the transaction would not increase money in
-% circulation.  %
-% In contrast, if $\mathsf{Inp_2}$ funded the change output, the transaction
-% would increase the amount in circulation by $\mathsf{Inp_1}$. %
-
-% To resolve the ambiguity, an assignment rule between transaction inputs and
-% outputs is required.  %
-% % Utilizing the terminology of cost accounting,
-% We consider both endpoints on the spectrum of the age of the input assigned
-% to the change transaction and thus differentiate between \ac{lifo}, where
-% oldest inputs get assigned to outputs first, and \ac{fifo}, where it is the
-% other way around.  %
-
-% Naturally, with the \ac{wba} this differentiation is void.  %
-% Hence, we have three definitions of money in circulation, each a function of
-% the activity window length $\wndwLength$: %
-% Money in circulation for period $\wndw$ adopting the \ac{wba}
-% ($ \MCircWbPWl $), and both the \ac{mca} with the \ac{lifo} rule
-% ($ \MCircMlPWl $) and the \ac{fifo} rule ($ \MCircMfPWl $).
-
-% \subsection{Definition of velocity measures}
-% \label{sec:cc_money_seg:sub:}%
-
-% Based on the above definitions of money in circulation, three variations of
-% velocity can be calculated in accordance with \refequ{vcirc_concept}---one
-% per money aggregate.  %
-% %
-% All measures capture the average number of peer-to-peer coin turnovers of
-% effectively circulating monetary units in period $\perd$.  They concur in
-% capturing on-chain liquidity; they differ \wrt to definitions of
-% \textit{circulating monetary units} and assignment rules linking transaction
-% inputs to outputs.  %
-% % 
-% The first measure is based on $\MCircWbP$ and simply calculated as %
-% \begin{align}%
-%   \label{equ:VCircWbEstPWl}
-%   \VCircWbEstPWl = \frac{\langle\Pp,\Tp\rangle}{\MCircWbEstPWl}.%
-% \end{align}%
-% $\VCircWbP$ is recommended if a conservative measurement of coin turnover is
-% sought or additional assumptions about how to link inputs to outputs should
-% be avoided.
-% % 
-% The second and third measures are based on $\MCircMfPWl$ and $\MCircMlPWl$,
-% respectively:  %
-% \begin{align}%
-%   \label{equ:VCircMfEstPWl}
-%   \VCircMfEstPWl = \frac{\langle\Pp,\Tp\rangle}{\MCircMfEstPWl}, \\
-%   \VCircMlEstPWl = \frac{\langle\Pp,\Tp\rangle}{\MCircMlEstPWl}.%
-%   \label{equ:VCircMlEstPWl}
-% \end{align}%
-% %
-% $\VCircMfEstP$ and $\VCircMlEstP$ are more stringent on the definition of
-% money in circulation.  %
-% Their monetary aggregates do not count ``touched'' funds, but only amounts
-% transferred to somebody other than the sender.
-% % Another advantage of the two measures is lower boundedness at 1 if \(\perd\) is set equal to \(\wndw\) which allows for
-% % an intutive understanding of the circulation of coins.%
-% % \footnote{Every transaction, by construction, can draw at most its own
-% %   transaction value into circulation. %
-% %   Transaction volume in both, numerator and denominator, is calculated free of change money.} % 
-% However, this comes at the cost of the additional assumption with respect to
-% the assignment rule between transaction inputs and outputs.  %
-
+\subsection{The new approach to estimate money in circulation}
+\label{sec:orig_approach}%
 
 
 \subsection{Algorithmic implementation}
@@ -172,6 +52,7 @@
 \item 
 \end{itemize}
 
+\subsubsection{Intuition}
 As illustrated in the conceptional description of the three velocity measures,
 determining whether an unspent output was spent in a given time window is essential for
 the chosen approach. %
@@ -187,21 +68,43 @@ Our approach allows for reusing and adjusting information of calculations for pr
 
 While the novel, inductive implementation allows effectively for larger time-windows \(\wndwLength\), we reuse the general approach for measuring money in circulation proposed in \cite{pernice2019cryptocurrencies}. %
 We do adapt it, however, by adjusting and recombining its elements. %
-Most importantly, we add a helper-construct measuring money that might be interpreted as monetary units that have been ``activated'' by the transactions of the certain day \( \perd \) that enters the time window after shifting it. %
-The above helper-construct can be seen as the centerpiece to realize the inductive framework.
-%The induction steps are summarized in \ref{algo:code_mcirc} and hold for all the three measures. %
 Roughly spoken, a single inductive step takes the measure for money in circulation \( \MSetCircAggr \) for time window \(\wndw\) and then: %
 \begin{enumerate}
 \item Shifts window \(\wndw\) so that it starts now at \(\wndw_{\Start} + 1\) and ends at \(\wndw_{\End} + 1\),
 \item adds the value of monetary units which are ``activated'' by the transactions of the time period covered by the period \(\wndw_{\End}\) to \(\wndw_{\End} + 1\) and thus \(\perd\) and %
 \item subtract monetary units that are no longer part of the new time window. %
 \end{enumerate}
-The induction steps require pre-cashing of the helper-constructs for all days for which money in circulation is to be estimated \(\perd\). %
-We will thus introduce its calculation first, followed by a detailed explanation of the induction algorithm . %
+Practically, we are calculating and precashing daily helper-constructs to later use them in an inductive aggregation process. %  
+We will thus introduce the calculation of helper-structures first and only then turn to a detailed explanation of the induction algorithm. %
+
+\subsubsection{Counting coins brought into active circulation}
+
+The above structure might be seen as generalization of the estimator for money in circulation introduced in \cite{pernice2019cryptocurrencies}: %
+Assume that money in circulation with a look-back time window of length \(\wndwLength\) is to be estimated for day \(\perd\). %
+We thus estimate how much money can be seen as available at day \(\perd\) as it has been circulating within period \(\wndw\) and thus from \(\wndw_\Start\) to \(\wndw_\End\). %
+The helper-structure is estimating the value of monetary units which are ``activated'' by transactions of day \( \perd \) given window length \(\wndwLength\). %
+It does neglect outputs which turn into ``already spent'' outputs in prior days within window \(\wndw\) though and does thus only coincide with the original estimator for the special case of \(\perd = \wndw\). %
+
+The above helper-construct can be seen as the centerpiece to realize the inductive framework. %
+Algorithm \ref{algo:code_mcirc} offers a detailed summary. %
+
+For every period $\perd$, we loop over all transactions $t\in\TxP$ and add
+their inputs to circulating money if they either reference outputs from
+coinbase transactions, denoted by $\genByCoinbase(i)$, or outputs with
+timestamps $\dateGen(i)$ before the first timestamp $\wndw_\Start$ of period
+$\wndw$.  %
+%
+%  \footnote{In \reffig{mcirc_concept}, the algorithm would go trough %
+%  transaction C (adding output $\mathsf{1}$ of transaction B, referenced by input $\mathsf{1}$ %
+%  of transaction C), would then go to transaction D (finding no input at all), %
+%  then to transaction E (skipping output $\mathsf{1}$ of transaction E but adding output $\mathsf{1}$ %
+%  of transaction D as referenced by input $\mathsf{2}$ of transaction E) and so forth. %
+% } %
+%
+%\input{Alg/alg01}
 
 
 
-% Money in circulation under the \ac{wba} is measured as in
 % \refalgo{code_mcirc_wb}.  %
 % For every period $\wndw$, we loop over all transactions $t\in\TxW$ and add
 % their inputs to circulating money if they either reference outputs from
