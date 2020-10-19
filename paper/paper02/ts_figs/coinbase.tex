@@ -1,0 +1,336 @@
+%-------------------------------------------------------------------------------
+\usetikzlibrary{calc}
+%coordinate test point. Use as follows: 	\coordinate (cen) 	 	 at (0,0) (cen) [point];
+\tikzset{
+	every point/.style = {radius={\pgflinewidth}, opacity=1, draw, solid, fill=white},
+	pt/.pic = {
+		\begin{pgfonlayer}{foreground}
+			\path[every point, #1] circle;
+		\end{pgfonlayer}
+	},
+	point/.style={insert path={pic{pt={#1}}}}, point/.default={},
+	point name/.style = {insert path={coordinate (#1)}}
+}
+%-------------------------------------------------------------------------------
+
+% basic delacations
+\pgfdeclarelayer{background}%
+\pgfdeclarelayer{foreground}%
+\pgfsetlayers{background,main,foreground}%
+
+%Coin Symbol--------------------------------------------------------------------
+\tikzset{%
+	pics/coin/.style n args={6}{%
+		code ={
+			\def \coinLineWidth {#1}%
+			\def \coinCenDist   {#2}%
+			\def \circRad       {#3}%
+			\def \circColor     {#4}%
+			\def \coinColorL    {#5}%
+			\def \coinColor     {#6}%
+			\def \signRad       {\circRad*0.20}%
+			\def \signRadProp   {0.45}
+			\def \signRadExt    {\signRad*\signRadProp}
+			\def \signRadOut    {\signRad+\signRadExt}
+			\def \signAngle     {30}
+			\def \sinSignAngle  {sin(\signAngle)}
+			\def \cosSignAngle  {cos(\signAngle)}
+			\def \signWidth     {{pow((pow(\signRadOut,2)-pow(\sinSignAngle*\signRad,2)),0.5)-(\cosSignAngle)*\signRad)}}
+			
+			\def \startIX       {{cos(\signAngle)*\signRad}}
+			\def \startIY       {{\sinSignAngle*\signRad}}
+			
+			\def \startOY       {\startIY}
+			\def \signAngleOutS {{atan((\sinSignAngle*\signRad)/pow((pow(\signRadOut,2)-pow(\sinSignAngle*\signRad,2)),0.5))}}
+			\def \signAngleOutE {{360-atan((\sinSignAngle*\signRad)/pow((pow(\signRadOut,2)-pow(\sinSignAngle*\signRad,2)),0.5))}}
+	%
+			\coordinate ()          at ( 0.0     , 0.0);%
+			\coordinate (cen)       at ( 0.0     , 0.0);%
+			\coordinate (cenB)      at ($(cen)    + ( 0.00,-\coinCenDist)$);%
+						
+			\node[
+				circle,
+				draw = \coinColorL,
+				fill = \circColor,
+				line width = \coinLineWidth,
+				minimum size = \circRad,
+				inner sep = 0pt,
+				outer sep = 0pt,
+			](NCD) at (cenB) {};
+			
+			\node[
+				circle,
+				draw = \coinColorL,
+				fill = \circColor,
+				line width = \coinLineWidth,
+				minimum size = \circRad,
+				inner sep = 0pt,
+				outer sep = 0pt,
+			](NCU) at (cen) {};
+			
+%			\draw[ - , line width = \coinLineWidth, black] (NCU.195) -- (NCD.195);
+			\draw[-, line width = \coinLineWidth, \coinColorL] (NCU.210) -- (NCD.210);
+			\draw[-, line width = \coinLineWidth,\coinColorL] (NCU.225) -- (NCD.225);
+			\draw[-, line width = \coinLineWidth, \coinColorL] (NCU.240) -- (NCD.240);
+			\draw[-, line width = \coinLineWidth, \coinColorL] (NCU.255) -- (NCD.255);
+			\draw[-, line width = \coinLineWidth, \coinColorL] (NCU.270) -- (NCD.270);
+			\draw[-, line width = \coinLineWidth, \coinColorL] (NCU.285) -- (NCD.285);
+			\draw[-, line width = \coinLineWidth, \coinColorL] (NCU.300) -- (NCD.300);
+			\draw[-, line width = \coinLineWidth, \coinColorL] (NCU.315) -- (NCD.315);
+			\draw[-, line width = \coinLineWidth, \coinColorL] (NCU.330) -- (NCD.330);
+%			\draw[ - , line width = \coinLineWidth, black] (NCU.345) -- (NCD.345);
+			
+			\draw[
+				 - ,
+				 line width = \coinLineWidth,
+				 \coinColorL,
+				 fill = \coinColor
+			]
+				(\startIX,-\startIY) arc (360-\signAngle:\signAngle:\signRad)
+				-- +(\signWidth, 0.0)
+				arc (\signAngleOutS:\signAngleOutE:\signRadOut)
+				-- (\startIX,-\startIY)
+				-- cycle
+				;
+		}%
+		
+	} ,%
+	pics/coin/.default={1.0pt}{0.1}{1cm}{bg}{black!80!white}{black!90!white}%
+}%
+%
+%\only<1->{%
+%\only<1-7>{%
+\begin{tikzpicture}[scale=1.0]
+	\def \debugPoint   {}%
+%	\def \debugPoint   {point}%
+	% font settings ############################################################
+	\def \fontset      {\scriptsize\sffamily}
+	% color definition #########################################################
+	\def \colorOut     {jwigreige!50}
+	\def \colorOutH    {jwigreige!25!black}
+	\def \colorIn      {black!10!white}
+	\def \colorCoin    {white}
+	\def \colorCoinY   {jwilightgreen!80!bg}
+	\def \colorCoinN   {jwiorange}
+	\def \colorCoinUtxoL {black!30!white}
+	\def \colorCoinUtxo  {black!40!white}
+	% arrow and line definitions ###############################################
+	\def \lineW        {1.3pt}
+	% width/height definition ##################################################
+	\def \picW         {\columnwidth*31/31}%
+	\def \picH         {\paperheight*24/31}%
+	\def \TH           {\picH*0.4}%picH*0.5*0.8
+	
+	\def \WBA          {\picW*11.50/31}
+	\def \WLA          {\picW* 7.75/31}
+	\def \WBB          {\picW* 4.00/31}
+	\def \WLB          {\picW* 0.25/31}
+	\def \WBC          {\picW* 3.50/31}
+	\def \WBD          {\picW*10.50/31}
+	\def \WLD          {\picW*14.25/31}
+	% width/height nodes/boxes###################################################
+	\def \BOH          {\picH* 0.35  }
+	\def \BOW          {\picW* 6.0/31}
+	
+	% node positioning
+	\def \BIPX         {\BOW*0.2375}
+	
+	% tikz styles################################################################
+	\tikzstyle{lineIO}       = [
+		- ,
+		line width = \lineW*0.8,
+	]
+	\tikzstyle{lineION}      = [
+		- ,
+		line width = \lineW*0.8,
+		dotted,
+	]
+	\tikzstyle{nodeOuter}    = [
+		draw,
+		rectangle,
+		rounded corners=5pt,
+		solid,
+		line width = \lineW,
+		black,
+		fill=\colorOut,
+		inner sep = 0pt,
+		outer sep = 0pt,
+		text width = \BOW,
+		minimum width = \BOW,
+		minimum height = \BOH*1.075,
+	]
+	\tikzstyle{nodeOuterH}   = [
+		draw,
+		rectangle,
+		rounded corners=5pt,
+		solid,
+		line width = \lineW,
+		black,
+		fill=\colorOutH,
+		inner sep = 0pt,
+		outer sep = 0pt,
+		text width = \BOW,
+		minimum width = \BOW,
+		minimum height = \BOH*1.075,
+	]
+	\tikzstyle{nodeInner}    = [
+		draw,
+		rectangle,
+		rounded corners=3pt,
+		solid,
+		line width = \lineW*0.9,
+		black,
+		fill = \colorIn,
+		inner sep = 0pt,
+		outer sep = 0pt,
+	]
+	\tikzstyle{nodeInnerA}   = [
+		nodeInner,
+		align = center,
+		text width = \BOW*0.9-3pt,
+		minimum width = \BOW*0.9,
+		minimum height = \BOH*0.15,
+	]
+	\tikzstyle{nodeInnerB}   = [
+		nodeInner,
+		align = left,
+		text width = \BOW*0.425-5pt,
+		minimum width = \BOW*0.425,
+	]	
+	\tikzstyle{nodeInnerBY}  = [
+		nodeInner,
+		align = left,
+		text width = \BOW*0.425-5pt,
+		minimum width = \BOW*0.425,
+		fill = jwiblue!80!bg,
+	]
+	\tikzstyle{nodeInnerBA}  = [
+		nodeInnerB,
+		minimum height = \BOH*0.15,
+	]		
+	\tikzstyle{nodeInnerBAY} = [
+		nodeInnerBY,
+		minimum height = \BOH*0.15,
+	]
+	\tikzstyle{nodeInnerBAC} = [
+		nodeInnerB,
+		minimum height = \BOH*0.15,
+		align = center,
+	]
+	\tikzstyle{nodeInnerBACY}= [
+		nodeInnerBY,
+		minimum height = \BOH*0.15,
+		align = center,
+	]
+	\tikzstyle{nodeInnerBB}  = [
+		nodeInnerB,
+		minimum height = \BOH*0.25,
+	]
+	\tikzstyle{nodeInnerBBY} = [
+		nodeInnerBY,
+		minimum height = \BOH*0.25,
+	]	
+	\tikzstyle{nodeInnerBC}  = [
+		nodeInnerB,
+		minimum height = \BOH*0.35,
+	]
+	\tikzstyle{nodeInnerBCY} = [
+		nodeInnerBY,
+		minimum height = \BOH*0.35,
+	]
+	\tikzstyle{nodeInnerBD}  = [
+		nodeInnerB,
+		minimum height = \BOH*0.55,
+	]
+	\tikzstyle{nodeInnerBDY} = [
+		nodeInnerBY,
+		minimum height = \BOH*0.55,
+	]
+	
+	% coordinates ###############################################################
+	% 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
+	% A | B | C | D | E | F | G | H | I |  J |  K |  L |  M |  N |
+	
+	\coordinate (cen)       at ($(0.0,0.0)   + ( 0.0       , 0.0         )$) (cen)   [\debugPoint];%
+	
+%	\coordinate (PLU)       at ($(cen)       + (-\picW*0.5 , \picH*0.5   )$) (PLU)   [\debugPoint];%
+%	\coordinate (PLD)       at ($(cen)       + (-\picW*0.5 ,-\picH*0.5   )$) (PLD)   [\debugPoint];%
+%	\coordinate (PRU)       at ($(cen)       + ( \picW*0.5 , \picH*0.5   )$) (PRU)   [\debugPoint];%
+%	\coordinate (PRD)       at ($(cen)       + ( \picW*0.5 ,-\picH*0.5   )$) (PRD)   [\debugPoint];%
+	
+%	\coordinate (TC)        at ($(cen)       + ( 0.0       ,-\TH         )$) (TC)    [\debugPoint];%
+%	\coordinate (TL)        at ($(TC)        + (-\picW*0.5 , 0.0         )$) (TL)    [\debugPoint];%
+%	\coordinate (TR)        at ($(TC)        + ( \picW*0.5 , 0.0         )$) (TR)    [\debugPoint];%
+%	
+%	\coordinate (BAC)       at ($(cen)       + (-\WBA      , 0.0         )$) (BAC)   [\debugPoint];%
+%	\coordinate (LAC)       at ($(cen)       + (-\WLA      , 0.0         )$) (LAC)   [\debugPoint];%
+%	\coordinate (BBC)       at ($(cen)       + (-\WBB      , 0.0         )$) (BBC)   [\debugPoint];%
+%	\coordinate (LBC)       at ($(cen)       + (-\WLB      , 0.0         )$) (LBC)   [\debugPoint];%
+%	\coordinate (LDC)       at ($(cen)       + ( \WLD      , 0.0         )$) (LDC)   [\debugPoint];%
+%	\coordinate (BCC)       at ($(cen)       + ( \WBC      , 0.0         )$) (BCC)   [\debugPoint];%
+%	\coordinate (BDC)       at ($(cen)       + ( \WBD      , 0.0         )$) (BDC)   [\debugPoint];%
+%	
+%	\coordinate (LAD)       at ($(LAC)       + ( 0.0       ,-\picH*0.5   )$) (LAD)   [\debugPoint];%
+%	\coordinate (LAU)       at ($(LAC)       + ( 0.0       , \picH*0.5   )$) (LAU)   [\debugPoint];%
+%	\coordinate (LBDA)      at ($(LAC)       + ( 0.0       ,-\picH*0.4325)$) (LBDA)  [\debugPoint];%
+%	\coordinate (LBD)       at ($(LBC)       + ( 0.0       ,-\picH*0.5   )$) (LBD)   [\debugPoint];%
+%	\coordinate (LBDA)      at ($(LBC)       + ( 0.0       ,-\picH*0.4325)$) (LBDA)  [\debugPoint];%
+%	\coordinate (LBU)       at ($(LBC)       + ( 0.0       , \picH*0.5   )$) (LBU)   [\debugPoint];%
+%	\coordinate (LCD)       at ($(LDC)       + ( 0.0       ,-\picH*0.5   )$) (LCD)   [\debugPoint];%
+%	\coordinate (LCDA)      at ($(LDC)       + ( 0.0       ,-\picH*0.4325)$) (LCDA)  [\debugPoint];%
+%	\coordinate (LCU)       at ($(LDC)       + ( 0.0       , \picH*0.5   )$) (LCU)   [\debugPoint];%
+	%coordinates, Box A Up, Tx_A
+%	\coordinate (BAUCC)     at ($(BAC)       + ( 0.0       , \picH*0.3125)$) (BAUCC) [\debugPoint];%
+%	\coordinate (BAUCL)     at ($(BAUCC)     + (-\BIPX     , 0.0         )$) (BAUCL) [\debugPoint];%
+%	\coordinate (BAUCR)     at ($(BAUCC)     + ( \BIPX     , 0.0         )$) (BAUCR) [\debugPoint];%
+%	\coordinate (BAUAC)     at ($(BAUCC)     + ( 0.0       ,-\BOH *0.4   )$) (BAUAC) [\debugPoint];%
+%	\coordinate (BAUAL)     at ($(BAUAC)     + (-\BIPX     , 0.0         )$) (BAUAL) [\debugPoint];%
+%	\coordinate (BAUAR)     at ($(BAUAC)     + ( \BIPX     , 0.0         )$) (BAUAR) [\debugPoint];%
+%	\coordinate (BAUBC)     at ($(BAUCC)     + ( 0.0       ,-\BOH *0.2   )$) (BAUBC) [\debugPoint];%
+%	\coordinate (BAUBL)     at ($(BAUBC)     + (-\BIPX     , 0.0         )$) (BAUBL) [\debugPoint];%
+%	\coordinate (BAUBR)     at ($(BAUBC)     + ( \BIPX     , 0.0         )$) (BAUBR) [\debugPoint];%
+%	\coordinate (BAUDC)     at ($(BAUCC)     + ( 0.0       , \BOH *0.2   )$) (BAUDC) [\debugPoint];%
+%	\coordinate (BAUDL)     at ($(BAUDC)     + (-\BIPX     , 0.0         )$) (BAUDL) [\debugPoint];%
+%	\coordinate (BAUDR)     at ($(BAUDC)     + ( \BIPX     , 0.0         )$) (BAUDR) [\debugPoint];%
+%	\coordinate (BAUEC)     at ($(BAUCC)     + ( 0.0       , \BOH *0.4   )$) (BAUEC) [\debugPoint];%	
+	
+	%clipping
+%	\clip ($(PLD) + ( 0.0 ,-0.5)$) rectangle ($(PRU) + ( 0.0 , 0.1)$);
+	%basic picture
+	
+	% Slide numbering helper
+	
+%	\node[vis on=<1-1>,] () at ($(cen) + ( 0.00, 0.00)$) {\fontset{}\large\textbf{1}};
+%	\node[vis on=<2-2>,] () at ($(cen) + ( 0.00, 0.00)$) {\fontset{}\large\textbf{2}};	
+%	\node[vis on=<3-3>,] () at ($(cen) + ( 0.00, 0.00)$) {\fontset{}\large\textbf{3}};
+%	\node[vis on=<4-4>,] () at ($(cen) + ( 0.00, 0.00)$) {\fontset{}\large\textbf{4}};
+%	\node[vis on=<5-5>,] () at ($(cen) + ( 0.00, 0.00)$) {\fontset{}\large\textbf{5}};
+%	\node[vis on=<6-6>,] () at ($(cen) + ( 0.00, 0.00)$) {\fontset{}\large\textbf{6}};
+%	\node[vis on=<7-7>,] () at ($(cen) + ( 0.00, 0.00)$) {\fontset{}\large\textbf{7}};
+%	\node[vis on=<8-8>,] () at ($(cen) + ( 0.00, 0.00)$) {\fontset{}\large\textbf{8}};
+							
+	%Vertical Lines============================================================%
+	
+	%Nodes=====================================================================%
+	%node A Up, Tx_A-----------------------------------------------------------%
+%	\node[vis on =<1->, nodeOuter]   (NBAU)   at (BAUCC)                      {};
+%	\node[vis on =<1->, nodeInnerA]  (NBAUEC) at (BAUEC)                      {\fontset{}$\mathsf{Tx_A}$};
+%	\node[vis on =<1->, nodeInnerBAC](NBAUDL) at (BAUDL)                      {\fontset{}\textbf{Input}};
+%	\node[vis on =<1->, nodeInnerBAC](NBAUDR) at (BAUDR)                      {\fontset{}\textbf{Output}};
+%	\node[vis on =<1->, nodeInnerBD] (NBAUBL) at (BAUBL)                      {\fontset{}$\mathsf{Inp_1}$};
+%	\node[vis on =<1->, nodeInnerBA] (NBAUCR) at (BAUCR)                      {\color{black!50}\fontset{}$\mathit{Out_1}$};
+%	\node[vis on =<1->, nodeInnerBA] (NBAUBR) at (BAUBR)                      {\fontset{}$\mathsf{Out_2}$};
+%	\node[vis on =<1->, nodeInnerBA] (NBAUAR) at (BAUAR)                      {\fontset{}$\mathit{Chng}$};
+	
+	%Arrows depending on nodes=================================================%
+%	\draw[lineIO , ->, vis on=<1-> ] (INPU)        .. controls ($(INPU)        + ( 0.00, 0.00)$) and ($(NBAUBL.west) + ( 0.00, 0.00)$) .. (NBAUBL.west); %str --> TxA
+	
+	%Coin Symbols==============================================================%
+	%TxA-----------------------------------------------------------------------%
+%	\pic[vis on=<1-> ,] () at ($(NBAUBL.east) + (-\BOH*0.125,-\BOH*0.0375)$) {coin={0.7pt}{0.05}{\BOH*0.12}{\colorCoin} {black!80!white}{black!90!white}};
+
+	
+	%Counter Node==============================================================%
+%	\pic[vis on=<2->  ] ()        at ($(BCount) + ( \BOH*0.225/2, 0.05)$) {coin={1.0pt}{0.07}{\BOH*0.225}{\colorCoinY}{black!90!white}{black!100!white}};
+\end{tikzpicture}
+%}%
