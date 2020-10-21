@@ -89,6 +89,12 @@ We thus, in addition to addressing the issue summarized in section \ref{sec:nece
 
 \subsection{Disentanglement of  transaction fees}
 \label{sec:improve_fees}%
+\begin{figure}[t]
+	\input{ts_figs/coinbase}
+	\centering
+	\caption{Overview of preprocessing of coinbase transactions. Although coinbase transactions have no inputs, we regard fees collected in a coinbase transactions's block as pseudo-inputs.}
+\end{figure}
+
 
 
 \subsection{Efficiency improvements}
@@ -203,12 +209,6 @@ $\wndw$.  %
 %%% TeX-master: "../main"
 %%% End:
 %
-
-\begin{figure}[t]
-	\input{ts_figs/coinbase}
-	\centering
-	\caption{Overview of preprocessing of coinbase transactions. Although coinbase transactions have no inputs, we regard fees collected in a coinbase transactions's block as pseudo-inputs.}
-\end{figure}
 
 % \input{Alg/alg01.tex}% We don't need that anymore. Just keep it to look it up some time.
 \input{Alg/alg04.tex}%GetMCirc
