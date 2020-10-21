@@ -2,11 +2,9 @@
 \label{sec:measure}%
 
 In \cite{pernice2019cryptocurrencies} monetary units are seen as ``in circulation'' for measurement day \(\perd\)
-% covering \([\perd_{\Start},\perd_{\End}]\)
 if they have been used as a medium of exchange. %
-Money is referred to as circulating if it has been moved economically within the last day, month, year or generally any time period $\wndw$ covering $[\wndw_\Start , \wndw_\End]$. %
-This period can be described relatively by its length \(\wndwLength = \wndw_\End-\wndw_\Start\) requiring that \(\wndw_\End = \perd_{\End}\). %
-The choice of setting \(\wndw_\End\) equal to \(\perd_{\End}\)  makes measurement-day \(\perd\) overlap with the window \(\wndw\) for which money in circulation is to be estimated (compare figure~\ref{fig:timevars}). %
+Money is referred to as circulating if it has been moved economically within the last day, month, year or generally any time period $\wndw_\perd$%
+The measure is set up in a way that measurement-day \(\perd\) constitutes the last day of window \(\wndw_\perd\) for which money in circulation is to be estimated (compare figure~\ref{fig:timevars}). %
 Monetary units brought into circulation in the last second of day \(\perd\) are to be attributed to belong to money in circulation for \(\perd\). %  
 
 \begin{figure*}[ht!]%
@@ -51,15 +49,16 @@ If for a given transaction one input was generated within and one before $\wndw$
 The authors thus utilized assignment rule between transaction inputs and outputs utilizing the terminology of cost accounting: %
 They differentiate between \ac{fifo}, where youngest inputs get assigned to outputs first, and \ac{lifo}, where it is the other way around.  %
 
-The authors introduced three definitions of money in circulation as measured for day \(\perd\), each defined by window length $\wndwLength$: %
+The authors introduced three definitions of money in circulation as measured for day \(\perd\), each defined by their respective windows \(\wndw\): %
 Money in circulation for period $\wndw$ adopting the \ac{wba} ($ \MCircWbPWl $), and both the \ac{mca} with the \ac{lifo} rule ($ \MCircMlPWl $) and the \ac{fifo} rule ($ \MCircMfPWl $).
 
 \subsection{Necessity for a more efficient implementation}
 \label{sec:necessity_effi}%
-While analyzing data for money which has been circulating within the last day as in \cite{pernice2019cryptocurrencies} is interesting, the more interesting case is probably basing money in circulation on a monthly or yearly basis. %
-The implementation suggested by the authors, however, is rather inefficient for larger look-back time windows. %
+Applying their measure to Bitcoin data, \cite{pernice2019cryptocurrencies} where analyzing data for a velocity estimate based on money which has been circulating within the last day. %
+Basing money in circulation on a monthly or yearly basis might provide interesting insights and was suggested by the authors as potential avenue for future research. %
+The implementation suggested, however, is rather inefficient for larger time windows \(\wndw\). %
 
-The algorithm proposed in \cite{pernice2019cryptocurrencies} loops over-and-over again over the same transactions: %
+The algorithm proposed in \cite{pernice2019cryptocurrencies} loops over-and-over again over the same transactions as windows \(\wndw\) overlap: %
 As illustrated in the conceptional description of the three velocity measures, determining whether an unspent output was spent in a given time window is essential for the chosen approach. %
 While this is computationally feasible for small time windows, already for look-back windows of a few days, naively looping through all transactions is problematic. %
 For daily timeseries data and multiday look-back time windows the data for computations overlaps. %
@@ -82,7 +81,8 @@ We thus propose an improved algorithmic implementation proceeding inductively. %
 
 \subsection{Inaccuracy due to mistreatment of transaction fees}
 \label{sec:inaccuracy_fees}%
-Relying only on non-recycling transaction outputs and coinbase transactions to estimate money in circulation, the approach chosen by \cite{pernice2019cryptocurrencies} misrepresents fees as always in circulation as they are captured by outputs of coinbase transactions. %
+Relying only on non-recycling transaction outputs and coinbase transactions to estimate money in circulation, the approach chosen by \cite{pernice2019cryptocurrencies} misrepresents fees as always in circulation. %
+The reasons is that fees are captured by outputs of coinbase transactions which, when spent, are always added to the circulating money supply . %
 This is a slight misrepresentation. %
 Fees of transactions that have been respent in within time window \(\wndw\) ought to be considered respent as well. %
 We thus, in addition to addressing the issue summarized in section \ref{sec:necessity_effi}, suggest a slight adaptation improving the estimates precision. %
@@ -104,14 +104,14 @@ We thus, in addition to addressing the issue summarized in section \ref{sec:nece
 Our approach allows for reusing and adjusting information of calculations for prior time-windows instead of recalculating them entirely for every day. %
 While the novel implementation allows effectively for larger time-windows \(\wndwLength\), we reuse the general approach for measuring money in circulation proposed in \cite{pernice2019cryptocurrencies}. %
 We do adapt it, however, by adjusting and recombining its elements. %
-Roughly spoken, a single inductive step takes the measure for money in circulation \( \MSetCircAggr \) for time window \(\wndw\) and then: %
+Our implementation steps through time by iteration periods \(\iterp\) which we chose to be 1 day each. % 
+Roughly spoken, a single inductive step \(\iteri\) takes the amount of money in circulation for time window \(\wndw_\iteri\) and then: %
 \begin{enumerate}
-\item Shifts window \(\wndw\) so that it starts now at \(\wndw_{\Start} + 1\) and ends at \(\wndw_{\End} + 1\),
-\item adds the value of monetary units which are ``activated'' by the transactions of the time period covered by the period \(\wndw_{\End}\) to \(\wndw_{\End} + 1\) and thus \(\iterp\) and %
-\item subtract monetary units that are no longer part of the new time window. %
+\item Shifts window \(\wndw_\iteri\) for one day (We call the new window \(\wndw_{\iteri+1}\).),
+\item adds the value of monetary units drawn into circulation by the transactions of the last day of the new window \(\wndw_{\iteri+1}\), %
+\item and lastly subtracts monetary units that are no longer part of the new time window. %
 \end{enumerate}
-Practically, we are calculating and precashing daily helper-constructs to later use them in an inductive aggregation process. %  
-We will thus introduce the calculation of helper-structures first and only then turn to a detailed explanation of the induction algorithm. %
+To understand the inductive process in detail, its useful to first express the estimation approach introduced in Section \ref{sec:orig_approach} for individual transactions, and only then turn to the steps summarized above. %
 
 \subsubsection{Counting coins brought into active circulation}
 
