@@ -212,6 +212,26 @@ $\wndw$.  %
 %%% End:
 %
 
+\begin{figure}[t]
+	\centering
+	\ifdefined\varInputFigs%
+	\input{ts_figs/coinbase}
+	\else\fi
+	\caption{Overview of preprocessing of coinbase transactions. Although coinbase transactions have no inputs, we regard fees collected in a coinbase transactions's block as pseudo-inputs.}
+\end{figure}
+
+\begin{figure}[ht!]%
+	\centering
+	\ifdefined\varInputFigs%
+	\input{ts_figs/aggr}
+	\else%
+	\fi%
+	\caption{%
+		Overview of inductive computation of $\MCirc$. %
+	}%
+	\label{fig:aggr}%
+\end{figure}%
+
 % \input{Alg/alg01.tex}% We don't need that anymore. Just keep it to look it up some time.
 \input{Alg/alg04.tex}%GetMCirc
 \input{Alg/alg03.tex}%AdjustMCirc
