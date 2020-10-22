@@ -20,6 +20,10 @@ Monetary units brought into circulation in the last second of day \(\perd\) are 
 	\label{fig:mcirc_concept}%
 \end{figure*}%
 
+% \input{Alg/alg01.tex}% We don't need that anymore. Just keep it to look it up some time.
+\input{Alg/alg04.tex}%GetMCirc
+\input{Alg/alg03.tex}%AdjustMCirc
+\input{Alg/alg05.tex}%Aggregation
 
 \subsection{Intuition and original approach}
 \label{sec:orig_approach}%
@@ -94,7 +98,7 @@ While the novel implementation allows effectively for larger time-windows \(\wnd
 We do adapt it, however, by adjusting and recombining its elements. %
 Our implementation steps through time by iteration periods \(\iterp\) which we chose to be 1 day each. %
 A single inductive step \(\iteri\) takes the amount of money in circulation for time window \(\wndw_\iteri\) and reuses most of its information to calculate an estimate for \(\wndw_{iteri+1}\). %
-Simply put, for every iteration step we thus add a new day to \(\wndw_{iteri}\) and eliminate the oldest one. %
+Simply put, for every iteration step we thus add a new day to \(\wndw_{\iteri}\) (lets call him \(d\)) and eliminate the oldest one (lets call him \(d_{sub}\)). %
 As a consequence we have to adjust the estimate for window \(\wndw_\iteri\) for the transactions in the above two days. %
 Roughly spoken, we thus:
 \begin{enumerate}
@@ -102,22 +106,24 @@ Roughly spoken, we thus:
 \item and subtract monetary units that had belonged to the day that was just eliminated %
 \end{enumerate}
 from window \(\wndw_{\iteri}\) to form the new window \(\wndw_{\iteri+1}\). %
+How do the two steps proceed exactly and why is that the same as looping over all transactions in period \(\wndw\) for which money in circulation is to be estimated?
+Figure \ref{fig:aggr} illustrates the intuition. % 
+While step 1 simply estimating, aggregating and lastly add money put to circulation for each transaction pursued in day \(d\) following the scheme in Section \ref{sec:orig_approach}, step 2 is slightly more complex. %
+Simply subtracting aggregating money put into circulation by transactions during the eliminated day \(d_{sub}\) is inaccurate. %
+While the respective transactions are to be eliminated from the information set of the new window \(\wndw_{\iteri+1}\), transactions within the window might be linked to outputs from transactions having occurred during the eliminated day. %
+Thus those transactions, now linking to outputs generated before the shifted starting date of \(\wndw_{\iteri+1}\) are not respending outputs anymore but now are to be counted as putting money into circulation. %
+\textbf{TODO: Link better to illustration when finished.}
+
 
 Why are we relying on induction instead of simply pre-calculating estimates for each day separately and then aggregating them? %
 \textbf{TODO: Add in what broke initial idea.}
 
-How do the two steps proceed exactly and why is that the same as looping over all transactions in period \(\wndw\) for which money in circulation is to be estimated?
-\textbf{TODO: Add in concept and illustration.}
 
 \subsubsection{Algorithmic implementation}
 \label{sec:novel_impl_algo}%
 
 As in the original implementation, the core of the estimation procedure is given by the decision rules determining the amount of money that is put into circulation by individual transactions. %
 
-% \input{Alg/alg01.tex}% We don't need that anymore. Just keep it to look it up some time.
-\input{Alg/alg04.tex}%GetMCirc
-\input{Alg/alg03.tex}%AdjustMCirc
-%\input{Alg/alg05.tex}%Aggregation
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %%%%% If confusion arises between "days forming iteration steps" and "days of measurement" 
