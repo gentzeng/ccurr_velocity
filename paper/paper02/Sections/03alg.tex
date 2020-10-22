@@ -111,6 +111,7 @@ How do the two steps proceed exactly and why is that the same as looping over al
 As in the original implementation, the core of the estimation procedure is given by the decision rules determining the amount of money that is put into circulation by individual transactions. %
 
 
+
 \subsubsection{Algorithmic implementation}
 \label{sec:novel_impl_algo}%
 
@@ -207,15 +208,6 @@ As in the original implementation, the core of the estimation procedure is given
 %%% mode: latex
 %%% TeX-master: "../main"
 %%% End:
-%
-
-\begin{figure}[t]
-	\centering
-	\ifdefined\varInputFigs%
-	\input{ts_figs/coinbase}
-	\else\fi
-	\caption{Overview of preprocessing of coinbase transactions. Although coinbase transactions have no inputs, we regard fees collected in a coinbase transactions's block as pseudo-inputs.}
-\end{figure}
 
 \begin{figure}[ht!]%
 	\centering
