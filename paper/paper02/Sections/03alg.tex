@@ -112,7 +112,7 @@ While step 1 simply estimating, aggregating and lastly add money put to circulat
 Simply subtracting aggregating money put into circulation by transactions during the eliminated day \(d_{sub}\) is inaccurate. %
 While the respective transactions are to be eliminated from the information set of the new window \(\wndw_{\iteri+1}\), transactions within the window might be linked to outputs from transactions having occurred during the eliminated day. %
 Thus those transactions, now linking to outputs generated before the shifted starting date of \(\wndw_{\iteri+1}\) are not respending outputs anymore but now are to be counted as putting money into circulation. %
-\textbf{TODO: Link better to illustration when finished.}
+\textbf{TODO: Link better to illustration when fig finished.}
 
 
 Why are we relying on induction instead of simply pre-calculating estimates for each day separately and then aggregating them? %
@@ -122,7 +122,11 @@ Why are we relying on induction instead of simply pre-calculating estimates for 
 \subsubsection{Algorithmic implementation}
 \label{sec:novel_impl_algo}%
 
-As in the original implementation, the core of the estimation procedure is given by the decision rules determining the amount of money that is put into circulation by individual transactions. %
+As in the original implementation, the core of the estimation procedure is given by the decision rules determining the amount of money that is put into circulation by individual transactions (compare Algorithm \ref{algo:code_mcirc}).%
+\footnote{Stressing the novel inductive implementation setup, we reduce the complexity of the calculations by illustrating only the calculations for the \ac{wba}. %
+Note, that the pseudo-code for money in circulation under the assumptions of \ac{lifo} and \ac{fifo} can be checked out in our open-source repository \url{https://github.com/wiberlin/ccurr_velocity}.
+}
+If the respective amount can be estimated by looping trough all inputs \(\Inp_{t}\) of transaction \(t\) and adding up values of inputs \(\val(i)\) referencing to outputs of coinbase transactions or are generated before the first timestamp of time window \(\wndw\) which is characterizing the estimate to be achieved (compare Section \ref{sec:orig_approach}). %
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
