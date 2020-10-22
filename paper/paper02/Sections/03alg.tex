@@ -121,14 +121,22 @@ Why are we relying on induction instead of simply pre-calculating estimates for 
 
 \subsubsection{Algorithmic implementation}
 \label{sec:novel_impl_algo}%
+\textbf{[TODO: Add here description of aggregation algo \ref{algo:code_aggr}]}
 
 As in the original implementation, the core of the estimation procedure is given by the decision rules determining the amount of money that is put into circulation by individual transactions (compare Algorithm \ref{algo:code_mcirc}).%
 \footnote{Stressing the novel inductive implementation setup, we reduce the complexity of the calculations by illustrating only the calculations for the \ac{wba}. %
 Note, that the pseudo-code for money in circulation under the assumptions of \ac{lifo} and \ac{fifo} can be checked out in our open-source repository \url{https://github.com/wiberlin/ccurr_velocity}.
 }
 If the respective amount can be estimated by looping trough all inputs \(\Inp_{t}\) of transaction \(t\) and adding up values of inputs \(\val(i)\) referencing to outputs of coinbase transactions or are generated before the first timestamp of time window \(\wndw\) which is characterizing the estimate to be achieved (compare Section \ref{sec:orig_approach}). %
+This core-functionality is referenced as function throughout the paper as function \(GetMCirc\bigl(t,\,\typett,\,\wndw,\bigr)\). %
 
+Having set the core 
 
+Let's first turn to induction step 1 as sketched in Section \ref{sec:novel_impl_intuition}. %
+Obviously, our implementation will just apply \(GetMCirc\bigl(t,\,\typett,\,\wndw,\bigr)\) to aggregate the money supply put into circulation by all transactions \(\TxD\) of day \(d\) that has been added when shifting the window in the inductive process. % 
+
+Induction step 2 is illustrated in Algorithm \ref{algo:code_outs_spent_within}. %
+\textbf{[TODO: Finish]}
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %%%%% If confusion arises between "days forming iteration steps" and "days of measurement" 
 % Assume that money in circulation with a look-back time window of length \(\wndwLength\) is to be estimated for day \(\perd\). %
