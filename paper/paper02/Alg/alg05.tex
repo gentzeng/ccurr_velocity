@@ -35,9 +35,9 @@
 
 		\tcc*{Compute basic $\MCirc$ values for each transaction of day $d$}%
 		\ForEach{$\TxD$}{%
-			$\MSetCirc_{1}[d] \gets \MSetCirc_{1}[d]\,+\,GetMCirc\bigl(t,\,\typett,\,1,\,\Out^{\cbs}\bigr)$\\%
-			$\MSetCircLB[d] \gets \MSetCircLB[d]\,+\,GetMCirc\bigl(t,\,\typett,\,\wndw,\,\Out^{\cbs}\bigr)$\\%
-			$\MSetCircLA[d] \gets \MSetCircLA[d]\,+\,AdjustMCirc\bigl(t,\,\typett,\,\wndw,\,\Out^{\cbs}\bigr)$\\%
+			$\MSetCirc_{1}[d] \gets \MSetCirc_{1}[d]\,+\,GetMCirc\bigl(t,\,1,\,\Out^{\cbs}\bigr)$\\%
+			$\MSetCircLB[d] \gets \MSetCircLB[d]\,+\,GetMCirc\bigl(t,\,\wndw,\,\Out^{\cbs}\bigr)$\\%
+			$\MSetCircLA[d] \gets \MSetCircLA[d]\,+\,AdjustMCirc\bigl(t,\,\wndw,\,\Out^{\cbs}\bigr)$\\%
 		}
 
           
