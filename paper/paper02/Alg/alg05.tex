@@ -26,28 +26,34 @@
 	$ \MSetCircLA \gets \emptyset$                                         \tcc*{Set of $\MCirc$ output adjustments with $\wndw$ day as lookahead window}%
 	$ \MSetCircAggr \gets \emptyset$                                       \tcc*{Initialize Set of $\MCircAggr$}
 	$ \Out^{\cbs} \gets GetCoinbaseFees\bigl(\bigr)$                       \tcc*{Set of maps of coinbase outputs per blockheight, that represent transaction fees}%
-	%
+	
 	\ForEach{$d \in \{0,...,\daytt_\maxtt\}$%
 	}{%
-		$\MSetCircAggr \gets {\MSetCircAggr\,\cup\,\{0\}}$                 \tcc*{Initialize $\MCircAggr$ to be computed for this day}%
 		$\MSetCirc_{1} \gets \MSetCirc_{1}\,\cup\,\{0\}$\\%
 		$\MSetCircLB \gets \MSetCircLB\,\cup\,\{0\}$\\%
 		$\MSetCircLA \gets \MSetCircLA\,\cup\,\{0\}$\\%
-		\tcc*{Preparation step 1: Compute basic $\MCirc$ values for each transaction of day $d$}%
+
+		\tcc*{Compute basic $\MCirc$ values for each transaction of day $d$}%
 		\ForEach{$\TxD$}{%
 			$\MSetCirc_{1}[d] \gets \MSetCirc_{1}[d]\,+\,GetMCirc\bigl(t,\,\typett,\,1,\,\Out^{\cbs}\bigr)$\\%
 			$\MSetCircLB[d] \gets \MSetCircLB[d]\,+\,GetMCirc\bigl(t,\,\typett,\,\wndw,\,\Out^{\cbs}\bigr)$\\%
 			$\MSetCircLA[d] \gets \MSetCircLA[d]\,+\,AdjustMCirc\bigl(t,\,\typett,\,\wndw,\,\Out^{\cbs}\bigr)$\\%
 		}
-		\tcc*{Preparation step 2: Use $\MCircAggr$ calculated for $d-1$ as base for aggregation at $d$, except for $d=0$}
+
+          
+          }
+	\ForEach{$d \in \{0,...,\daytt_\maxtt\}$%
+	}{%
+		$\MSetCircAggr \gets {\MSetCircAggr\,\cup\,\{0\}}$                 \tcc*{Initialize $\MCircAggr$ to be computed for this day}%
+		\tcc*{Use $\MCircAggr$ calculated for $d-1$ as base for aggregation at $d$, except for $d=0$}
 		\If{$d > 0$}{%
 			$\MSetCircAggr[d] \gets \MSetCircAggr[d-1]$%
 		}%
 		\tcc*{Iteration step 1: Add values of day $d$ to aggregation for $w$}%
-		\eIf{$d < w$}{%
-			$\MSetCircAggr[d] \gets \MSetCircAggr[d]\,+\,\MSetCbs[d]$        \tcc*{For $d<w$, only coinbase coins represent $\MCirc$}%
-		}{%
+		\eIf{$d \ge w$}{%
 			$\MSetCircAggr[d] \gets \MSetCircAggr[d]\,+\,\MSetCircLB[d]$     \tcc*{For $d\ge{}w$, add $\MCirc$ of day $d$ calculated for lookback window $w$}%
+		}{%
+			$\MSetCircAggr[d] \gets \MSetCircAggr[d]\,+\,\MSetCbs[d]$        \tcc*{For $d<w$, only coinbase coins represent $\MCirc$}%
 		}%
 		\tcc*{Iteration step 2: Substract/adjust values of day $d-w$}%
 		\If{$d \ge w$}{%
