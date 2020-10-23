@@ -20,8 +20,6 @@
 	%
 	
 	\KwData{$\wndw$                                                        \tcc*{Begin of lookback window $w$}}%
-	\KwData{$ \TxP$                                                        \tcc*{Set of transactions in period $\perd$}}%
-	\KwData{$ \Out^{\selfchurn}$                                           \tcc*{Set of self-churning outputs}}%
 	$ \MSetCbs \gets \emptyset$                                            \tcc*{Set of cumulated coinbase coins per day}%
 	$ \MSetCirc_{1} \gets \emptyset$                                       \tcc*{Set of $\MCirc$ calculated per day, with $1$ day as lookback window}%
 	$ \MSetCircLB \gets \emptyset$                                         \tcc*{Set of $\MCirc$ calculated per day, with $\wndw$ day as lookback window}%
@@ -35,23 +33,23 @@
 		$\MSetCirc_{1} \gets \MSetCirc_{1}\,\cup\,\{0\}$\\%
 		$\MSetCircLB \gets \MSetCircLB\,\cup\,\{0\}$\\%
 		$\MSetCircLA \gets \MSetCircLA\,\cup\,\{0\}$\\%
-		\tcc*{Step 1: Compute basic $\MCirc$ values for each transaction of day $d$}%
+		\tcc*{Preparation step 1: Compute basic $\MCirc$ values for each transaction of day $d$}%
 		\ForEach{$\TxD$}{%
-			$\MSetCirc_{1}[d] \gets \MSetCirc_{1}[d]\,+\,GetMCirc\bigl(t,\,\typett,\,1,\,\Out^{\cbs},\,\Out^{\selfchurn}\bigr)$\\%
-			$\MSetCircLB[d] \gets \MSetCircLB[d]\,+\,GetMCirc\bigl(t,\,\typett,\,\wndw,\,\Out^{\cbs},\,\Out^{\selfchurn}\bigr)$\\%
-			$\MSetCircLA[d] \gets \MSetCircLA[d]\,+\,AdjustMCirc\bigl(t,\,\typett,\,\wndw,\,\Out^{\cbs},\,\Out^{\selfchurn}\bigr)$\\%
+			$\MSetCirc_{1}[d] \gets \MSetCirc_{1}[d]\,+\,GetMCirc\bigl(t,\,\typett,\,1,\,\Out^{\cbs}\bigr)$\\%
+			$\MSetCircLB[d] \gets \MSetCircLB[d]\,+\,GetMCirc\bigl(t,\,\typett,\,\wndw,\,\Out^{\cbs}\bigr)$\\%
+			$\MSetCircLA[d] \gets \MSetCircLA[d]\,+\,AdjustMCirc\bigl(t,\,\typett,\,\wndw,\,\Out^{\cbs}\bigr)$\\%
 		}
-		\tcc*{Step 2: Use $\MCircAggr$ calculated for $d-1$ as base for aggregation at $d$, except for $d=0$}
+		\tcc*{Preparation step 2: Use $\MCircAggr$ calculated for $d-1$ as base for aggregation at $d$, except for $d=0$}
 		\If{$d > 0$}{%
 			$\MSetCircAggr[d] \gets \MSetCircAggr[d-1]$%
 		}%
-		\tcc*{Step 3: Add values of day $d$ to aggregation for $w$}%
+		\tcc*{Iteration step 1: Add values of day $d$ to aggregation for $w$}%
 		\eIf{$d < w$}{%
 			$\MSetCircAggr[d] \gets \MSetCircAggr[d]\,+\,\MSetCbs[d]$        \tcc*{For $d<w$, only coinbase coins represent $\MCirc$}%
 		}{%
 			$\MSetCircAggr[d] \gets \MSetCircAggr[d]\,+\,\MSetCircLB[d]$     \tcc*{For $d\ge{}w$, add $\MCirc$ of day $d$ calculated for lookback window $w$}%
 		}%
-		\tcc*{Step 4: Substract/adjust values of day $d-w$}%
+		\tcc*{Iteration step 2: Substract/adjust values of day $d-w$}%
 		\If{$d \ge w$}{%
 			$d_\mathtt{sub}\,=\,d\,-\,w$                                       \tcc*{Get the first day of the last aggregate}%
 			$\MSetCircAggr[d] \gets \MSetCircAggr[d]\,-\,\MSetCirc_{1}[d_\mathtt{sub}]$ \tcc*{Substract full $\MCirc$ value of day $d_\mathtt{sub}$ and ... }%
