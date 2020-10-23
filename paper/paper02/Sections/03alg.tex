@@ -121,7 +121,34 @@ Why are we relying on induction instead of simply pre-calculating estimates for 
 
 \subsubsection{Algorithmic implementation}
 \label{sec:novel_impl_algo}%
-\textbf{[TODO: Add here description of aggregation algo \ref{algo:code_aggr}]}
+\textbf{[TODO: Here the variables are still not in line with the rest of the paper and window length, index and period confusing.]}
+
+The sketched implementation of the inductive framework is given in Algorithm \ref{algo:code_aggr}. %
+The framework takes window \(\wndw\) and pre-cashed a data structure offering the set of coinbase outputs representing fees per block-height as input. %
+It then loops trough every iteration period \(d\) constituting the whole history of the blockchain. %
+In a first preparative step, pre-computes helper-structures for each day \(d\):
+\begin{itemize}
+\item \( \MSetCirc_{1}[d] \), money drawn into active circulation by the transactions of day \( d \) if a window of 1 is assumed,
+\item \( \MSetCircLB[d] \), money drawn into active circulation by the transactions of day \(d\) if a window of w is assumed,
+\item \( \MSetCircLA[d] \), an adjustment value. 
+\end{itemize}
+
+For now, we will simply treat the above three structures as black boxes and focus on the iterative framework which starts at line 17 of the pseudo-code.%
+\footnote{The calculations for the three helper-structure are summarized in the following paragraphs.} %
+
+The regular inductive steps are taken for \(d \geq w \).%
+\footnote{
+For days \(d < \wndw \), money put into circulation for a window \(\wndw\) by transactions of day \(d\) is simply the output-sum of coinbase transactions \(\MSetCbs[d]\). %
+We use this intuition to initialize the algorithm.} %
+First of all, as described in Section \ref{sec:novel_impl_intuition}, we set \(\MSetCircAggr[d]\), money in circulation over time window \(w\) as measured for iteration day \(d\), simple to its last calculated value. %
+This value is now the base for adjustments. %
+Using the pre-computed values, we can simply following the intuition layed out in \ref{sec:novel_impl_intuition}: %
+We add \(\MSetCircLB[d]\), and thus money brought into circulation on day \(d\) added to the previous window to \(\MSetCircAggr[d]\). %
+After that, we then subtract money in circulation for the day eliminated from the \(\wndw - 1\). %
+We add back \( \MSetCircLA[d] \), however, the adjustment value which is still misterious to me. %
+\textbf{[TODO: demystify]}
+
+How are \(\MSetCirc_{1}\), \( \MSetCircLA[d] \) and \( \MSetCircLB[d] \) calculated in detail? % 
 
 As in the original implementation, the core of the estimation procedure is given by the decision rules determining the amount of money that is put into circulation by individual transactions (compare Algorithm \ref{algo:code_mcirc}).%
 \footnote{Stressing the novel inductive implementation setup, we reduce the complexity of the calculations by illustrating only the calculations for the \ac{wba}. %
@@ -129,8 +156,6 @@ Note, that the pseudo-code for money in circulation under the assumptions of \ac
 }
 If the respective amount can be estimated by looping trough all inputs \(\Inp_{t}\) of transaction \(t\) and adding up values of inputs \(\val(i)\) referencing to outputs of coinbase transactions or are generated before the first timestamp of time window \(\wndw\) which is characterizing the estimate to be achieved (compare Section \ref{sec:orig_approach}). %
 This core-functionality is referenced as function throughout the paper as function \(GetMCirc\bigl(t,\,\typett,\,\wndw,\bigr)\). %
-
-Having set the core 
 
 Let's first turn to induction step 1 as sketched in Section \ref{sec:novel_impl_intuition}. %
 Obviously, our implementation will just apply \(GetMCirc\bigl(t,\,\typett,\,\wndw,\bigr)\) to aggregate the money supply put into circulation by all transactions \(\TxD\) of day \(d\) that has been added when shifting the window in the inductive process. % 
