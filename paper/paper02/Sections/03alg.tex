@@ -130,7 +130,7 @@ In a first preparative step, pre-computes helper-structures for each day \(d\):
 \begin{itemize}
 \item \( \MSetCirc_{1}[d] \), money drawn into active circulation by the transactions of day \( d \) if a window of 1 is assumed,
 \item \( \MSetCircLB[d] \), money drawn into active circulation by the transactions of day \(d\) if a window of w is assumed,
-\item \( \MSetCircLA[d] \), an adjustment value. 
+\item \( \MSetCircLA[d] \), and a corrective value based on transaction outputs from transactions during day \(d\) that can no longer be seen as ``respent-coins'' for window \(\wndw\).  
 \end{itemize}
 
 For now, we will simply treat the above three structures as black boxes and focus on the iterative framework which starts at line 17 of the pseudo-code.%
@@ -144,9 +144,13 @@ First of all, as described in Section \ref{sec:novel_impl_intuition}, we set \(\
 This value is now the base for adjustments. %
 Using the pre-computed values, we can simply following the intuition layed out in \ref{sec:novel_impl_intuition}: %
 We add \(\MSetCircLB[d]\), and thus money brought into circulation on day \(d\) added to the previous window to \(\MSetCircAggr[d]\). %
-After that, we then subtract money in circulation for the day eliminated from the \(\wndw - 1\). %
-We add back \( \MSetCircLA[d] \), however, the adjustment value which is still misterious to me. %
-\textbf{[TODO: demystify]}
+After that, we then subtract money in circulation for the day eliminated from the \(\wndw - 1\) and thus \(\MSetCirc_{1}[d_{sub}]\). %
+Without further adjustment, however, we would ignore that by shifting the window boundaries certain transaction outputs cannot be seen any longer as ``respent-coins'' as the spent output no longer lies ``inside'' the respectiv time window. %
+We thus add \( \MSetCircLA[d_{sub}] \) which, roughly spoken, aggregates money brought into circulation by transactions sspending outputs of transactions during day \(d\) if the new window boundaries are applied. %
+
+Why does this work?
+
+\textbf{TODO: Plot with explanation}
 
 How are \(\MSetCirc_{1}\), \( \MSetCircLA[d] \) and \( \MSetCircLB[d] \) calculated in detail? % 
 
@@ -157,12 +161,18 @@ Note, that the pseudo-code for money in circulation under the assumptions of \ac
 If the respective amount can be estimated by looping trough all inputs \(\Inp_{t}\) of transaction \(t\) and adding up values of inputs \(\val(i)\) referencing to outputs of coinbase transactions or are generated before the first timestamp of time window \(\wndw\) which is characterizing the estimate to be achieved (compare Section \ref{sec:orig_approach}). %
 This core-functionality is referenced as function throughout the paper as function \(GetMCirc\bigl(t,\,\typett,\,\wndw,\bigr)\). %
 
-Let's first turn to induction step 1 as sketched in Section \ref{sec:novel_impl_intuition}. %
+Let's first turn to the computation of \(\MSetCircLA[d]\) and \(\MSetCirc_{1}[d]\) respectivly. %
 Obviously, our implementation will just apply \(GetMCirc\bigl(t,\,\typett,\,\wndw,\bigr)\) to aggregate the money supply put into circulation by all transactions \(\TxD\) of day \(d\) that has been added when shifting the window in the inductive process. % 
 
-Induction step 2 is illustrated in Algorithm \ref{algo:code_outs_spent_within}. %
+The computation of adjustment value \(\MSetCircLB[d]\) is more complex. %
+As given in line 14 of Algorithm \ref{algo:code_aggr}, we apply a function \(\MCircAdj(t,w)\) to all transactions in day \(d\). %
+The inner workings of \(\MCircAdj(t,w)\) are illustrated in Algorithm \ref{algo:code_outs_spent_within}: % 
+For every transaction \(t\), \(\MCircAdj(t,w)\) loops through all outputs and establishes whether it reaches out of the new window \(\wndw\) formed by adding day \(d\) and eliminating day \(d_{sub}\). %
+For the output's ``spending-transacting'' we thus want to aggregate outputs that represent money put into circulation with respect to the new window \(\wndw + 1\). %
+In Algorithm \ref{algo:code_outs_spent_within}, this is illustrated in line 7, where \(\MCircAdj\) is built up reusing \(GetMCirc\) but this time applied to \(t_{\spendingtt}\) and \(\wndw + 1\). %
+If an output triggers 
 
-\textbf{[TODO: Finish]}
+
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %%%%% If confusion arises between "days forming iteration steps" and "days of measurement" 
 % Assume that money in circulation with a look-back time window of length \(\wndwLength\) is to be estimated for day \(\perd\). %

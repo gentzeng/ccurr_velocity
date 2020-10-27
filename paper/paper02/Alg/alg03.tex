@@ -11,10 +11,10 @@
 	\ForEach{$o \in \Out_{t}$}{%
 		\lIf{$\isNotSpent(o)$}{continue}%
 		$t_{\spendingtt} \gets {\spendingTx(o)}$                                   \tcc*{Get the transaction that spent $o$}%
-		\lIf(                                                                      \tcc*[f]{If $t_\spendingtt$ entered an correction-value.}%
+		\lIf(                                                                      \tcc*[f]{If $t_\spendingtt$ entered an correction-value:}%
 		){$\indextt(t_{\spendingtt})\,\in\,\TxChecked$%
 		}{continue}%
-		$\TxIndexAdjustment \gets {\TxIndexAdjustment\,\cup\,\{\indextt(t_{\spendingtt})\}}$       \tcc*[f]{Mark $t_\spendingtt$ as already adjusted by some output of $t$}\\%
+		$\TxIndexAdjustment \gets {\TxIndexAdjustment\,\cup\,\{\indextt(t_{\spendingtt})\}}$       \tcc*[f]{Mark $t_\spendingtt$ as already added to some adjustment value \(\MCircAdj\)}\\%
 %		\ForEach(                                                                  \tcc*[f]{Check if $t_\spendingtt$ was already adjusted previously by some other transaction of $\TxD$}%
 %		){$i \in \Inp_{t_{\spendingtt}}$%
 %		}{%
@@ -25,9 +25,9 @@
 %		}
 %		$\MCircOld \gets{ GetMCirc\bigl(t,\,\typett,\,\wndw,\,\Out^{\cbs},\,\Out^{\selfchurn}\bigr)}$\\%
 %		$\MCircNew \gets{ GetMCirc\bigl(t,\,\typett,\,\wndw+1,\,\Out^{\cbs},\,\Out^{\selfchurn}\bigr)}$\\%
-		$\MCircOld \gets{ GetMCirc\bigl(t,\,\typett,\,\wndw\bigr)}$\\%
-		$\MCircNew \gets{ GetMCirc\bigl(t,\,\typett,\,\wndw+1\bigr)}$\\%
-		$\MCircAdj \gets {\MCircAdj\,+\,\bigl(\MCircNew\,-\,\MCircOld\bigr)}$      \tcc*{Update $\MCircAdj$}%
+%		$\MCircOld \gets{ GetMCirc\bigl(t,\,\typett,\,\wndw\bigr)}$\\%
+%		$\MCircNew \gets{ GetMCirc\bigl(t,\,\typett,\,\wndw+1\bigr)}$\\%
+		$\MCircAdj \gets {\MCircAdj\,+\,GetMCirc\bigl(t_{\spendingtt},\,\wndw+1\bigr)}$      \tcc*{Update $\MCircAdj$}%
 	}%
 %
 	return $\MCircAdj,~\TxIndexAdjustment$                                                             \tcc*{Result: The corrective value to be applied to  $\MCirc$ for a certain day and time window.}%
