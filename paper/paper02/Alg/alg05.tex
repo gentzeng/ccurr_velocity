@@ -19,7 +19,7 @@
 	%  }\label{algo:code_mcirc_mc}%
 	%
 	
-	\KwData{$\wndw$                                                        \tcc*{Begin of lookback window $w$}}%
+	\KwData{$\wndw$                                                        \tcc*{Lookback window $\wndw$}}%
 	$ \MSetCbs \gets \emptyset$                                            \tcc*{Set of cumulated coinbase coins per day}%
 	$ \MSetCirc_{1} \gets \emptyset$                                       \tcc*{Set of $\MCirc$ calculated per day, with $1$ day as lookback window}%
 	$ \MSetCircLB \gets \emptyset$                                         \tcc*{Set of $\MCirc$ calculated per day, with $\wndw$ day as lookback window}%
@@ -35,8 +35,8 @@
 
 		\tcc*{Compute basic $\MCirc$ values for each transaction of day $d$}%
 		\ForEach{$\TxD$}{%
-			$\MSetCirc_{1}[d] \gets \MSetCirc_{1}[d]\,+\,GetMCirc\bigl(t,\,1,\,\Out^{\cbs}\bigr)$\\%
-			$\MSetCircLB[d] \gets \MSetCircLB[d]\,+\,GetMCirc\bigl(t,\,\wndw,\,\Out^{\cbs}\bigr)$\\%
+			$\MSetCirc_{1}[d] \gets \MSetCirc_{1}[d]\,+\,GetMCirc\bigl(t,\,1\bigr)$\\%
+			$\MSetCircLB[d] \gets \MSetCircLB[d]\,+\,GetMCirc\bigl(t,\,\wndw\bigr)$\\%
 			$\MSetCircLA[d] \gets \MSetCircLA[d]\,+\,AdjustMCirc\bigl(t,\,\wndw\bigr)$\\%
 		}
 
