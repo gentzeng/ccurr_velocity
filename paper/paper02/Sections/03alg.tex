@@ -186,17 +186,27 @@ In Algorithm \ref{algo:code_outs_spent_within}, this is illustrated by adding va
 % Algorithm \ref{algo:code_mcirc} offers a detailed summary. %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{figure}[ht!]%
-	\centering
-	\ifdefined\varInputFigs%
-	\input{ts_figs/aggr}
-	\else%
-	\fi%
-	\caption{%
-		Overview of inductive computation of $\MCirc$. %
-	}%
-	\label{fig:aggr}%
-\end{figure}%
+% \begin{figure}[ht!]%
+% 	\centering
+% 	\ifdefined\varInputFigs%
+% 	\input{ts_figs/aggr}
+% 	\else%
+% 	\fi%
+% 	\caption{%
+% 		Overview of inductive computation of $\MCirc$. %
+% 	}%
+% 	\label{fig:aggr}%
+% \end{figure}%
+
+\begin{center}
+%    \ifdefined\varInputFigs%
+    \includegraphics[width=1\linewidth]{fig/iterations_general}%
+%    \else%
+%    \fi%
+  \captionof{figure}{General iteration procedure.}
+  \label{fig:aggr}
+\end{center}
+
 
 
 %%% Local Variables:
