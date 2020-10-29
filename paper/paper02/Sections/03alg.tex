@@ -98,7 +98,7 @@ While the novel implementation allows effectively for larger time-windows \(\wnd
 We do adapt it, however, by adjusting and recombining its elements. %
 Our implementation steps through time by iteration periods \(\iterp\) which we chose to be 1 day each. %
 A single inductive step \(\iteri\) takes the amount of money in circulation for time window \(\wndw_\iteri\) and reuses most of its information to calculate an estimate for \(\wndw_{iteri+1}\). %
-Simply put, for every iteration step we thus add a new day to \(\wndw_{\iteri}\) (lets call him \(d\)) and eliminate the oldest one (lets call him \(d_{sub}\)). %
+Simply put, for every iteration step we thus add a new day to \(\wndw_{\iteri}\) (lets call him \(\iterhead\)) and eliminate the oldest one (lets call him \(\itertail\)). %
 As a consequence we have to adjust the estimate for window \(\wndw_\iteri\) for the transactions in the above two days. %
 Roughly spoken, we thus:
 \begin{enumerate}
