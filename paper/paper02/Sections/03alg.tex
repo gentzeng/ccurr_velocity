@@ -1,10 +1,11 @@
 \section{Measuring money in circulation}
 \label{sec:measure}%
 
-In \cite{pernice2019cryptocurrencies} monetary units are seen as ``in circulation'' for measurement day \(\perd\)
-if they have been used as a medium of exchange. %
-Money is referred to as circulating if it has been moved economically within the last day, month, year or generally any time period $\wndw_\perd$%
-The measure is set up in a way that measurement-day \(\perd\) constitutes the last day of window \(\wndw_\perd\) for which money in circulation is to be estimated (compare figure~\ref{fig:timevars}). %
+In \cite{pernice2019cryptocurrencies} %
+% monetary units are seen as ``in circulation'' for measurement day \(\perd\) if they have been used as medium of exchange. %
+money is referred to as ``circulating'' if it has been moved economically within the last day, month, year or generally any time period $\wndw$.%
+The measure is set up in a way that measurement-day \(\perd\) constitutes the last day of window \(\wndw\) for which money in circulation is to be estimated. %
+%The length of time window is denominated \(\wndwLength\).
 Monetary units brought into circulation in the last second of day \(\perd\) are to be attributed to belong to money in circulation for \(\perd\). %  
 
 \begin{figure*}[ht!]%
@@ -27,55 +28,52 @@ Monetary units brought into circulation in the last second of day \(\perd\) are 
 
 \subsection{Intuition and original approach}
 \label{sec:orig_approach}%
-To estimate the subset of money supply which circulated within $\wndw$, the authors suggested to analyze the transactions recorded window $\wndw$.  %
-Ignoring change, outputs of coinbase transactions and as well as transactions spending outputs generated before $\wndw$ are interpreted as bringing an amount into circulation that corresponds to the value of spent outputs.  %
-All inputs referring to UTXOs generated \emph{within} period $\wndw$, on the
-other hand, re-spend money which has already been counted as circulating.%
+To estimate the subset of money supply which can be referred to as circulating, the authors suggested to analyze the transactions having occurred within $\wndw$. %
+Generally, outputs spent \emph{within} but generated \emph{before} \(\wndw\) are interpreted as putting money into circulation. %
+The same holds for freshly mined coins - the outputs of coinbase transactions. % 
+The amount of money put into circulation within \(\wndw\) corresponds to the aggregated value of such outputs. %
+On the other hand, transactions using the outputs of transactions having occurred in period $\wndw$ as well, are interpreted simply as re-spending money which has already been counted as circulating.%
 %
-\textbf{[@TODO Check against illustration.]}
 This can be illustrated with \reffig{mcirc_concept} where values are symbolized with coins. %
-Here, we would need to determine, how many monetary units have made the transaction volume $8$ (sum of outputs in C, D, E and F excluding self-churn) during period $\wndw$ possible. %
+Here, we would need to determine, how many monetary units have made the transaction volume of $8$ (sum of outputs in C, D, E and F excluding self-churn) during period $\wndw$ possible. %
 In this example, we would need to focus on transactions A, B and D in contrast to transactions C and E which reused monetary unspent transaction outputs that have been generated within period $\wndw$. %
 
 If change in transactions is to be considered, the general approach is complicated by a technicality of UTXO-based cryptocurrencies: Transactions always spend prior transaction outputs in full. %
-
 The authors defined two general approaches: \ac{wba} and \ac{mca}.  %
 \ac{wba} considers the sum of all inputs \textit{in circulation} (as technically all has been proven to be available for transactions) while the \ac{mca} only counts the fraction economically sent to third parties.  %
 %
-They are visualized in \reffig{mcirc_concept}.  %
+This is visualized in \reffig{mcirc_concept}.  %
 The moved-coin approach considers only output $\mathsf{Out_1}$ of transaction $\mathsf{Tx_C}$ as circulating, not the change output.  %
 This approach captures the net economic value transferred to a third party.  %
 The \ac{wba} classifies the whole input of transaction $\mathsf{Tx_C}$ as circulating.  %
 
-However, as for UTXO blockchains the relation between transaction inputs and outputs are not determined, \ac{mca} might not be defined clearly. %
+However, as for UTXO-based blockchains the relation between transaction inputs and outputs is undetermined, \ac{mca} might not be defined clearly. %
 If for a given transaction one input was generated within and one before $\wndw$, it remains unspecified which one corresponds to the change output.  %
-
 The authors thus utilized assignment rule between transaction inputs and outputs utilizing the terminology of cost accounting: %
 They differentiate between \ac{fifo}, where youngest inputs get assigned to outputs first, and \ac{lifo}, where it is the other way around.  %
 
-The authors introduced three definitions of money in circulation as measured for day \(\perd\), each defined by their respective windows \(\wndw\): %
-Money in circulation for period $\wndw$ adopting the \ac{wba} ($ \MCircWbPWl $), and both the \ac{mca} with the \ac{lifo} rule ($ \MCircMlPWl $) and the \ac{fifo} rule ($ \MCircMfPWl $).
+Summarizing, the authors introduced three definitions of money in circulation as measured for day \(\perd\), each defined by their respective window \(\wndw\): %
+Money in circulation for period $\wndw$ adopting the \ac{wba} ($ \MCircWbWl $), and both the \ac{mca} with the \ac{lifo} rule ($ \MCircMlWl $) and the \ac{fifo} rule ($ \MCircMfWl $).
 
 \subsection{Necessity for a more efficient implementation}
 \label{sec:necessity_effi}%
-Applying their measure to Bitcoin data, \cite{pernice2019cryptocurrencies} where analyzing data for a velocity estimate based on money which has been circulating within the last day. %
+Applying their measure to Bitcoin data, in \cite{pernice2019cryptocurrencies} data for a velocity estimate based on money which has been circulating within the last day has been analyzed. %
 Basing money in circulation on a monthly or yearly basis might provide interesting insights and was suggested by the authors as potential avenue for future research. %
 The implementation suggested, however, is rather inefficient for larger time windows \(\wndw\). %
-
-The algorithm proposed in \cite{pernice2019cryptocurrencies} loops over-and-over again over the same transactions as windows \(\wndw\) overlap: %
-As illustrated in the conceptional description of the three velocity measures, determining whether an unspent output was spent in a given time window is essential for the chosen approach. %
-While this is computationally feasible for small time windows, already for look-back windows of a few days, naively looping through all transactions is problematic. %
-For daily timeseries data and multiday look-back time windows the data for computations overlaps. %
+The algorithm proposed in \cite{pernice2019cryptocurrencies} loops over-and-over again over the same transactions as windows \(\wndw\) overlap. %
+% As illustrated in the conceptional description of the three velocity measures, determining whether an unspent output was spent in a given time window is essential for the chosen approach. %
+While this is computationally feasible for small time windows, already for overlapping windows of a few days, naively looping through all transactions has proven problematic. %
 The published code on \url{https://github.com/wiberlin/ccurr_velocity} for a look-back time window of a week takes XYZ hours to terminate even if restricted on the first 3 years of the Bitcoin blockchain and run using all XY cores of a server with XY GB ram. 
 \textbf{[TODO George: Here comes some O-Notation magic!]}
 We thus propose an improved algorithmic implementation proceeding inductively. %
 
 \subsection{Inaccuracy due to mistreatment of transaction fees}
 \label{sec:inaccuracy_fees}%
-Relying only on non-recycling transaction outputs and coinbase transactions to estimate money in circulation, the approach chosen by \cite{pernice2019cryptocurrencies} misrepresents fees as always in circulation. %
-The reasons is that fees are captured by outputs of coinbase transactions which, when spent, are always added to the circulating money supply . %
+Relying only on non-recycling transaction outputs and coinbase transactions to estimate money in circulation, the approach chosen by \cite{pernice2019cryptocurrencies} misrepresents fees. %
+All fees are treated as money in circulation. %
+The reasons is that fees are captured by outputs of coinbase transactions which, when spent, are always added to the circulating money supply. %
 This is a slight misrepresentation. %
-Fees of transactions that have been respent in within time window \(\wndw\) ought to be considered respent as well. %
+Fees of transactions that have been respent within time window \(\wndw\) ought to be considered ``respent coins'' as well. %
 We thus, in addition to addressing the issue summarized in section \ref{sec:necessity_effi}, suggest a slight adaptation improving the estimates precision. %
 
 \subsection{Disentanglement of  transaction fees}
@@ -93,94 +91,89 @@ We thus, in addition to addressing the issue summarized in section \ref{sec:nece
 
 \subsubsection{Intuition}
 \label{sec:novel_impl_intuition}%
-Our approach allows for reusing and adjusting information of calculations for prior time-windows instead of recalculating them entirely for every day. %
+Our approach allows for reusing calculations. %
 While the novel implementation allows effectively for larger time-windows \(\wndwLength\), we reuse the general approach for measuring money in circulation proposed in \cite{pernice2019cryptocurrencies}. %
 We do adapt it, however, by adjusting and recombining its elements. %
-Our implementation steps through time by iteration periods \(\iterp\) which we chose to be 1 day each. %
-A single inductive step \(\iteri\) takes the amount of money in circulation for time window \(\wndw_\iteri\) and reuses most of its information to calculate an estimate for \(\wndw_{iteri+1}\) (compare Figure \ref{fig:aggr}). %
+Our implementation steps through time by iteration periods which we chose to be 1 day each. %
+A single inductive step \(\iteri\) takes the amount of money in circulation for time window \(\wndw_\iteri\) and reuses it to calculate the estimate for \(\wndw_{\iteri+1}\) (compare Figure \ref{fig:aggr}). %
 Simply put, for every iteration step we thus add a new day to the window of the last day \(\wndw_{\iteri-1}\) (lets call this day \(\iterhead_{\iteri}\)) and eliminate the oldest one (lets call him \(\itertail_{\iteri}\)). %
 As a consequence we have to adjust the estimate for window \(\wndw_\iteri\) for the transactions in the above two days. %
 Roughly spoken, we thus:
 \begin{enumerate}
-\item add the value of monetary units put into circulation by the transactions of the day \(\iterhead_{\iteri}\) that was just added, %
-\item and subtract monetary units that had belonged to the day \(\itertail_{\iteri}\)) that was just eliminated from window \(\wndw_{\iteri}\) to form the new window \(\wndw_{\iteri+1}\). %
-\item However, there are also certain adjustments that need to be made for transactions that cannot be counted as ``respending coins'' any longer due to the shift of the window. %
+\item add the value of monetary units put into circulation by the transactions of the day \(\iterhead_{\iteri}\), %
+\item subtract monetary units that had belonged to the day \(\itertail_{\iteri}\)), %
+\item adjust for transactions that cannot be counted as ``respending coins'' any longer due to the shift from \(\wndw_{\iteri}\) to \(\wndw_{\iteri + 1}\). %
 \end{enumerate}
-How do the three steps proceed exactly and why is that the same as looping over all transactions in period \(\wndw\) for which \(\MCirc\) is to be estimated?
+How do the three steps proceed exactly and why is that the same as looping over all transactions in period \(\wndw\) for which \(\MCirc\) is to be estimated? %
 Figure \ref{fig:aggr} illustrates the basic intuition. %
-
-If money-in-circulation for window \(\wndw_{\iteri}\) is to be estimated, we use the previous estimate for window \(\wndw_{\iteri-1}\) as basis. %
+If money in circulation for window \(\wndw_{\iteri}\) is to be estimated, we use the previous estimate for window \(\wndw_{\iteri-1}\) as basis. %
 Step 1, then, is simply estimating, aggregating and lastly adding money put to circulation for each transaction pursued in day \(\iterhead_{\iteri}\) following the basic ideas from Section \ref{sec:orig_approach}. %
-In Figure \ref{fig:aggr}, for example, transaction chain \(\mathsf{TX-Chain A}\) features a single transaction during day \(\iterhead_{\iteri}\) which uses an input generated long ago. The respective transaction output would thus be added to \(\MCirc\).
+In Figure \ref{fig:aggr}, for example, transaction chain \(\mathsf{A}\) features a single transaction during day \(\iterhead_{\iteri}\) which uses an input generated long ago. The respective transaction output would thus be added to \(\MCirc\).
 Step 2 subtracts money supply that stems from transactions of the eliminated day \(\itertail_{\iteri}\). %
-In Figure \ref{fig:aggr}, transaction chain \(\mathsf{TX-Chain B}\) has a single transaction which occurred during within the window in the previous iteration step, but now drops out with the elimination of \(\iterhead_{\iteri}\). %
+In Figure \ref{fig:aggr}, transaction chain \(\mathsf{B}\) has a single transaction which occurred during within the window in the previous iteration step, but now drops out with the elimination of \(\iterhead_{\iteri}\). %
 The respective outputs do not represent coins put into circulation for period \(\wndw_{iteri}\) any more and thus need to be subtracted. %
-Step 3, adjusts for transactions occurring on days within window \(\wndw_\iteri\) which might be linked to outputs from transactions having occurred during the eliminated day. %
+Step 3 adjusts for transactions occurring on days within window \(\wndw_\iteri\) which might be linked to outputs from transactions having occurred during the eliminated day. %
 These transactions cannot be seen as re-spending coins anymore but now are to be counted as putting money into circulation. %
-This can be exemplified by \(\mathsf{TX-Chain C}\) in Figure \ref{fig:aggr}. %
+This can be exemplified by \(\mathsf{C}\) in Figure \ref{fig:aggr}. %
 The second transaction for calculating \(\MCirc\) for \(\wndw_{\iteri-1}\) would be counted as re-spending money put into circulation by the first transaction. %
 With shifting \(\wndw_{\iteri-1}\) to \(\wndw_{\iteri}\) its the second transaction, however, that puts unspent transaction outputs from outside the window into circulation. %
-Having subtracted money put into circulation by the first transaction of \(\mathsf{TX-Chain C}\) in step 2, we need to adjust our estimation of \(\MCirc\) by adding the value of the outputs used by the second transaction of \(\mathsf{TX-Chain C}\). % 
+Having subtracted money put into circulation by the first transaction of \(\mathsf{C}\) in step 2, we need to adjust our estimation of \(\MCirc\) by adding the value of the outputs used by the second transaction of \(\mathsf{C}\). %
 
-Why is this procedure leading to the correct result? %
-\textbf{TODO: Add in what broke initial idea.}
-
-
-Why are we relying on induction instead of simply pre-calculating estimates for each day separately and then aggregating them? %
-\textbf{TODO: Add in what broke initial idea.}
+% Why are we relying on induction instead of simply pre-calculating estimates for each day separately and then aggregating them? %
+% \textbf{TODO: Add in what broke initial idea.}
 
 
 \subsubsection{Algorithmic implementation}
 \label{sec:novel_impl_algo}%
-\textbf{[TODO: Here the variables are still not in line with the rest of the paper and window length, index and period confusing.]}
+The exact implementation of the inductive framework sketched in Section \ref{sec:novel_impl_intuition} is given in Algorithm \ref{algo:code_aggr}. %
+We step trough the transaction history day-by-day, shifting the window \(\wndw_{\iteri}\) with every iteration step \(\iteri\) to achieve estimates for measurement day \(\perd_{\iteri}\). %
+To facilitate notation, we refer to windows and iteration periods dropping the index \(\iteri\) in Algorithms \ref{algo:code_mcirc_cond}, \ref{algo:code_mcirc} and \ref{algo:code_mcirc_for}. %
 
-The sketched implementation of the inductive framework is given in Algorithm \ref{algo:code_aggr}. %
-The framework takes window \(\wndw\) and pre-cashed a data structure offering the set of coinbase outputs representing fees per block-height as input. %
-It then loops trough every iteration period \(d\) constituting the whole history of the blockchain. %
-In a first preparative step, pre-computes helper-structures for each day \(d\):
-\begin{itemize}
-\item \( \MSetCirc_{1}[d] \), money drawn into active circulation by the transactions of day \( d \) if a window of 1 is assumed,
-\item \( \MSetCircLB[d] \), money drawn into active circulation by the transactions of day \(d\) if a window of w is assumed,
-\item \( \MSetCircLA[d] \), and a corrective value based on transaction outputs from transactions during day \(d\) that can no longer be seen as ``respent-coins'' for window \(\wndw\).  
-\end{itemize}
+In a first preparative step, we pre-compute three helper-structures for each day \(\perd\), corresponding to the three implementation-steps presented in Section \ref{sec:novel_impl_intuition}:
+\begin{enumerate}
+\item \( \MSetCircLB[\perd] \), money drawn into active circulation by the transactions of day \(\perd\) if a window of w is assumed,
+\item \( \MSetCirc_{1}[\perd] \), money drawn into active circulation by the transactions of day \( \perd \) if a window of 1 is assumed,
+\item \( \MSetCircLA[\perd] \), and a corrective value based on transaction outputs from transactions during day \(\perd\) that can no longer be seen as ``respent-coins'' for window \(\wndw\).  
+\end{enumerate}
 
-For now, we will simply treat the above three structures as black boxes and focus on the iterative framework which starts at line 17 of the pseudo-code.%
-\footnote{The calculations for the three helper-structure are summarized in the following paragraphs.} %
+Note, that helper-structures are not necessarily all applied to the calculation of \(\MCirc_{\wndw}[p]\) but might be applied in a shifted fashion. %
 
-The regular inductive steps are taken for \(d \geq w \).%
-\footnote{
-For days \(d < \wndw \), money put into circulation for a window \(\wndw\) by transactions of day \(d\) is simply the output-sum of coinbase transactions \(\MSetCbs[d]\). %
-We use this intuition to initialize the algorithm.} %
-First of all, as described in Section \ref{sec:novel_impl_intuition}, we set \(\MSetCircAggr[d]\), money in circulation over time window \(w\) as measured for iteration day \(d\), simple to its last calculated value. %
-This value is now the base for adjustments. %
-Using the pre-computed values, we can simply following the intuition layed out in \ref{sec:novel_impl_intuition}: %
-We add \(\MSetCircLB[d]\), and thus money brought into circulation on day \(d\) added to the previous window to \(\MSetCircAggr[d]\). %
-After that, we then subtract money in circulation for the day eliminated from the \(\wndw - 1\) and thus \(\MSetCirc_{1}[d_{sub}]\). %
-Without further adjustment, however, we would ignore that by shifting the window boundaries certain transaction outputs cannot be seen any longer as ``respent-coins'' as the spent output no longer lies ``inside'' the respectiv time window. %
-We thus add \( \MSetCircLA[d_{sub}] \) which, roughly spoken, aggregates money brought into circulation by transactions sspending outputs of transactions during day \(d\) if the new window boundaries are applied. %
-
-Why does this work?
-
-\textbf{TODO: Plot with explanation}
-
-How are \(\MSetCirc_{1}\), \( \MSetCircLA[d] \) and \( \MSetCircLB[d] \) calculated in detail? % 
-
-As in the original implementation, the core of the estimation procedure is given by the decision rules determining the amount of money that is put into circulation by individual transactions (compare Algorithm \ref{algo:code_mcirc}).%
+How are \(\MSetCirc_{1}\), \( \MSetCircLA[d] \) and \( \MSetCircLB[d] \) calculated in detail? %
+As in the original implementation, the core of the estimation procedure is given by the decision rules determining the amount of money that is put into circulation by individual transactions. %
+The procedure is summarized in \(Algorithm \ref{algo:code_mcirc}\). %
 \footnote{Stressing the novel inductive implementation setup, we reduce the complexity of the calculations by illustrating only the calculations for the \ac{wba}. %
 Note, that the pseudo-code for money in circulation under the assumptions of \ac{lifo} and \ac{fifo} can be checked out in our open-source repository \url{https://github.com/wiberlin/ccurr_velocity}.
 }
-If the respective amount can be estimated by looping trough all inputs \(\Inp_{t}\) of transaction \(t\) and adding up values of inputs \(\val(i)\) referencing to outputs of coinbase transactions or are generated before the first timestamp of time window \(\wndw\) which is characterizing the estimate to be achieved (compare Section \ref{sec:orig_approach}). %
+Money in circulation can be estimated by looping trough all inputs \(\Inp_{t}\) of transaction \(t\). %
+All inputs are searched for such that are referencing to outputs of coinbase transactions or to outputs generated in transactions generated before the first timestamp of time window \(\wndw\). (compare Section \ref{sec:orig_approach}). %
+The values of such inputs \(\val(i)\) are then aggregated to form \(\MCirc\). %
 This core-functionality is referenced as function throughout the paper as function \(GetMCirc\bigl(t,\,\typett,\,\wndw,\bigr)\). %
-
 Let's first turn to the computation of \(\MSetCircLA[d]\) and \(\MSetCirc_{1}[d]\) respectively. %
-Obviously, our implementation will just apply \(GetMCirc\bigl(t,\,\typett,\,\wndw,\bigr)\) to aggregate the money supply put into circulation by all transactions \(\TxD\) of day \(d\) that has been added when shifting the window in the inductive process. % 
-
+Obviously, our implementation will just apply \(GetMCirc\bigl(t,\,\typett,\,\wndw,\bigr)\) to aggregate the money supply put into circulation by all transactions \(\TxD\) of day \(d\) that has been added when shifting the window in the inductive process. %
 The computation of adjustment value \(\MSetCircLB[d]\) is slightly more complex. %
 As given in line 14 of Algorithm \ref{algo:code_aggr}, we apply a function \(\MCircAdj(t,w)\) to all transactions in day \(d\). %
 The inner workings of \(\MCircAdj(t,w)\) are illustrated in Algorithm \ref{algo:code_outs_spent_within}: % 
 For every transaction \(t\), \(\MCircAdj(t,w)\) loops through all outputs and establishes whether the respective output has served as input of a transaction within window \(\wndw\). %
 For the output's ``spending-transacting'' we thus want to aggregate the values of outputs that represent money put into circulation with respect to the new window \(\wndw + 1\). %
-In Algorithm \ref{algo:code_outs_spent_within}, this is illustrated by adding value of output 
+In Algorithm \ref{algo:code_outs_spent_within}, this is illustrated by adding value of output XYZ
+
+
+% \textbf{[TODO: Change the denomination of the ``non-aggregated'' measures. They are confusion. This can be noticed here.]}
+% For now, we will simply treat the above three structures as black boxes and focus on the iterative framework which starts at line 17 of Algorithm \ref{algo:code_aggr}.%
+% \footnote{The calculations for the three helper-structure are summarized in the following paragraphs.} %
+
+Inductive steps are taken for \(\perd \geq \wndw \).%
+\footnote{
+For days \(\perd < \wndw \), money put into circulation for a window \(\wndw\) by transactions of day \(\perd\) is simply the output-sum of coinbase transactions \(\MSetCbs[\perd]\). %
+We use this intuition to initialize the algorithm.} %
+First of all, money in circulation \(\MSetCircAggr[\perd]\) over window \(w\) is set to its last calculated value. %
+This value is now the base for adjustments. %
+Using the pre-computed values, we can simply follow the intuition laid out in \ref{sec:novel_impl_intuition}: %
+We add \(\MSetCircLB[\perd]\), and thus money brought into circulation on day \(\iterhead\) to the still outdated \(\MSetCircAggr[\perd]\). %
+After that, we adapt \(\MSetCircAggr[\perd]\) further by subtracting money in circulation for the day eliminated from the \(\wndw - 1\) and thus \(\MSetCirc_{1}[\itertail]\). %
+Without further adjustment, however, we would ignore that by shifting the window boundaries certain transaction outputs cannot be seen any longer as ``respent-coins'' as the spent output no longer lies ``inside'' the respectiv time window. %
+We thus add \( \MSetCircLA[\itertail] \) which, roughly spoken, aggregates money brought into circulation by transactions spending outputs of transactions during day \(d\) if the new window boundaries are applied. %
+
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
