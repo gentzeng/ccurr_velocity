@@ -154,13 +154,13 @@ For inputs of case (1) values \(\val(i)\) are aggregated to form \(\MCirc\). %
 For case (2) values are only added, if they represent mining rewards instead of representing transaction fees (compare Section \ref{sec:improve_fees}). %
 Looping over all inputs of transaction \(t\), the above summations form an estimate on how much money has been put into circulation. % 
 
-This core-functionality is referenced as function throughout the paper as function \(GetMCirc\bigl(t,\,\typett,\,\wndw,\bigr)\). %
+This core-functionality is referenced as function throughout the paper as function \(GetMCirc\bigl(t,\,\wndw,\bigr)\). %
 Let's first turn to the computation of \(\MSetCircLA[d]\) and \(\MSetCirc_{1}[d]\) respectively. %
-Obviously, our implementation will just apply \(GetMCirc\bigl(t,\,\typett,\,\wndw,\bigr)\) to aggregate the money supply put into circulation by all transactions \(\TxD\) of day \(d\) that has been added when shifting the window in the inductive process. %
+Obviously, our implementation will just apply \(GetMCirc\bigl(t,\,\wndw,\bigr)\) to aggregate the money supply put into circulation by all transactions \(\TxD\) of day \(d\) that has been added when shifting the window in the inductive process. %
 The computation of adjustment value \(\MSetCircLA[d]\) is slightly more complex. %
 As given in line 14 of Algorithm \ref{algo:code_aggr}, we apply a function \(AdjustMCirc\bigl(t, d,\,\wndwLength\bigr)\) to all transactions in day \(d\). %
 The inner workings of \(AdjustMCirc\bigl(t, d,\,\wndwLength\bigr)\) are illustrated in Algorithm \ref{algo:code_outs_spent_within}: %
-Note, that in contrast to \(GetMCirc\bigl(t,\,\typett,\,\wndw,\bigr)\) where \(\wndw\) can be seen as look-back window, function \(AdjustMCirc\bigl(t, d,\,\wndwLength\bigr)\) does look ahead in time. %
+Note, that in contrast to \(GetMCirc\bigl(t,\,\wndw,\bigr)\) where \(\wndw\) can be seen as look-back window, function \(AdjustMCirc\bigl(t, d,\,\wndwLength\bigr)\) does look ahead in time. %
 
 To dertermine the corrective value based on transaction outputs from transactions during day \(\perd\) that can no longer be seen as ``respent-coins'' for window \(\wndw\), the look-ahead window \(\wndw^{\mathtt{ahead}}\) is created. %
 It is formed using the bounds of the iteration period \(\perd\) and window length \(\wndwLength\). %
