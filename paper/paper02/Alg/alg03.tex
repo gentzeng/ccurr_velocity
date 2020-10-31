@@ -3,10 +3,11 @@
 \begin{algorithm*}[!h]%
 	\DontPrintSemicolon
 	\caption{$AdjustMCirc$: Adjustment value for $\MCirc$ for transaction $t$.}\label{algo:code_outs_spent_within}%
-	$\MCircAdj \gets {0}$                                                          \tcc*{The adjustment value to be applied to $\MCirc$ after shifting $\wndw$}%
+	$\MCircAdj \gets {0}$                                                          \tcc*{The adjustment value to be applied to $\MCirc$ after shifting $ \wndw $}%
+	$\wndw^{\mathtt{ahead}} \gets [d_{\mathtt{end}},d_{\mathtt{end}}+\wndwLength] $                                                                                                                    \tcc*{The look-ahead window for adjustments}%
 	\ForEach{$o \in \Out_{t}$}{%
           \lIf{$\isNotSpent(o)$}{continue}%
-          \lIf{$\mathtt{date}(\spendingTx(o)) \in \wndw $}{
+          \lIf{$\mathtt{date}(\spendingTx(o)) \in \wndw^{\mathtt{ahead}} $}{
             $\MCircAdj \gets {\MCircAdj\,+\,\val(o)}$      \tcc*{Update $\MCircAdj$}%
             }%
 	}%

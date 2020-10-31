@@ -21,7 +21,8 @@ Monetary units brought into circulation in the last second of day \(\perd\) are 
 	\label{fig:mcirc_concept}%
 \end{figure*}%
 
-% \input{Alg/alg01.tex}% We don't need that anymore. Just keep it to look it up some time.
+\input{Alg/alg01.tex}% We don't need that anymore. Just keep it to look it up some time.
+\input{Alg/alg02.tex}% We don't need that anymore. Just keep it to look it up some time.
 \input{Alg/alg04.tex}%GetMCirc
 \input{Alg/alg03.tex}%AdjustMCirc
 \input{Alg/alg05.tex}%Aggregation
@@ -53,7 +54,7 @@ The authors thus utilized assignment rule between transaction inputs and outputs
 They differentiate between \ac{fifo}, where youngest inputs get assigned to outputs first, and \ac{lifo}, where it is the other way around.  %
 
 Summarizing, the authors introduced three definitions of money in circulation as measured for day \(\perd\), each defined by their respective window \(\wndw\): %
-Money in circulation for period $\wndw$ adopting the \ac{wba} ($ \MCircWbWl $), and both the \ac{mca} with the \ac{lifo} rule ($ \MCircMlWl $) and the \ac{fifo} rule ($ \MCircMfWl $).
+Money in circulation for period $\wndw$ adopting the \ac{wba} ($ \MCircWbW $), and both the \ac{mca} with the \ac{lifo} rule ($ \MCircMlW $) and the \ac{fifo} rule ($ \MCircMfW $).
 
 \subsection{Necessity for a more efficient implementation}
 \label{sec:necessity_effi}%
@@ -135,27 +136,39 @@ In a first preparative step, we pre-compute three helper-structures for each day
 \item \( \MSetCirc_{1}[\perd] \), money drawn into active circulation by the transactions of day \( \perd \) if a window of 1 is assumed,
 \item \( \MSetCircLA[\perd] \), and a corrective value based on transaction outputs from transactions during day \(\perd\) that can no longer be seen as ``respent-coins'' for window \(\wndw\).  
 \end{enumerate}
+For inductively calculating money in circulation for measurement period \(\perd\), the helper structures might be applied in shiftend fashion. %
+If compared to Figure \ref{fig:aggr}, \( \MSetCircLB \) will be applied to a period inductivly added to the window \(\iterhead\). %
+\( \MSetCirc_{1}\), however, is used for subtracting money supply from the elimination period \(\itertail\). %
+Lastly, \( \MSetCircLA \) looks at transactions in the elimiated \(\itertail\) and checks, whether those have been used within the part of the new-formed window \(\wndw\) that lies in between \(\iterhead\) and \(\iterhead\). %
 
-Note, that helper-structures are not necessarily all applied to the calculation of \(\MCirc_{\wndw}[p]\) but might be applied in a shifted fashion. %
 
 How are \(\MSetCirc_{1}\), \( \MSetCircLA[d] \) and \( \MSetCircLB[d] \) calculated in detail? %
 As in the original implementation, the core of the estimation procedure is given by the decision rules determining the amount of money that is put into circulation by individual transactions. %
-The procedure is summarized in \(Algorithm \ref{algo:code_mcirc}\). %
+The procedure is summarized in Algorithm \ref{algo:code_mcirc}.%
 \footnote{Stressing the novel inductive implementation setup, we reduce the complexity of the calculations by illustrating only the calculations for the \ac{wba}. %
 Note, that the pseudo-code for money in circulation under the assumptions of \ac{lifo} and \ac{fifo} can be checked out in our open-source repository \url{https://github.com/wiberlin/ccurr_velocity}.
-}
+} %
 Money in circulation can be estimated by looping trough all inputs \(\Inp_{t}\) of transaction \(t\). %
-All inputs are searched for such that are referencing to outputs of coinbase transactions or to outputs generated in transactions generated before the first timestamp of time window \(\wndw\). (compare Section \ref{sec:orig_approach}). %
-The values of such inputs \(\val(i)\) are then aggregated to form \(\MCirc\). %
+All inputs are searched for such that are referencing to either (1) outputs of coinbase transactions or to (2) outputs generated in transactions generated before the first timestamp of time window \(\wndw\) (compare Section \ref{sec:orig_approach}). %
+For inputs of case (1) values \(\val(i)\) are aggregated to form \(\MCirc\). %
+For case (2) values are only added, if they represent mining rewards instead of representing transaction fees (compare Section \ref{sec:improve_fees}). %
+Looping over all inputs of transaction \(t\), the above summations form an estimate on how much money has been put into circulation. % 
+
 This core-functionality is referenced as function throughout the paper as function \(GetMCirc\bigl(t,\,\typett,\,\wndw,\bigr)\). %
 Let's first turn to the computation of \(\MSetCircLA[d]\) and \(\MSetCirc_{1}[d]\) respectively. %
 Obviously, our implementation will just apply \(GetMCirc\bigl(t,\,\typett,\,\wndw,\bigr)\) to aggregate the money supply put into circulation by all transactions \(\TxD\) of day \(d\) that has been added when shifting the window in the inductive process. %
-The computation of adjustment value \(\MSetCircLB[d]\) is slightly more complex. %
-As given in line 14 of Algorithm \ref{algo:code_aggr}, we apply a function \(\MCircAdj(t,w)\) to all transactions in day \(d\). %
-The inner workings of \(\MCircAdj(t,w)\) are illustrated in Algorithm \ref{algo:code_outs_spent_within}: % 
-For every transaction \(t\), \(\MCircAdj(t,w)\) loops through all outputs and establishes whether the respective output has served as input of a transaction within window \(\wndw\). %
+The computation of adjustment value \(\MSetCircLA[d]\) is slightly more complex. %
+As given in line 14 of Algorithm \ref{algo:code_aggr}, we apply a function \(AdjustMCirc\bigl(t, d,\,\wndwLength\bigr)\) to all transactions in day \(d\). %
+The inner workings of \(AdjustMCirc\bigl(t, d,\,\wndwLength\bigr)\) are illustrated in Algorithm \ref{algo:code_outs_spent_within}: %
+Note, that in contrast to \(GetMCirc\bigl(t,\,\typett,\,\wndw,\bigr)\) where \(\wndw\) can be seen as look-back window, function \(AdjustMCirc\bigl(t, d,\,\wndwLength\bigr)\) does look ahead in time. %
+
+To dertermine the corrective value based on transaction outputs from transactions during day \(\perd\) that can no longer be seen as ``respent-coins'' for window \(\wndw\), the look-ahead window \(\wndw^{\mathtt{ahead}}\) is created. %
+It is formed using the bounds of the iteration period \(\perd\) and window length \(\wndwLength\). %
+
+To aggregate the value of the transaction's outputs that have been spent by during window \(\wndw^{\mathtt{ahead}}\), Algorithm \ref{algo:code_aggr} loops through all outputs \(\Out_{t}\) of transaction \(t\). % 
+For every output the \(\mathtt{date}(\spendingTx(o)\) establishes the date of the transaction spending the output. %
+If this date is part of window \(\wndw\), the output's values are aggregated forming \(\MCircAdj\). %
 For the output's ``spending-transacting'' we thus want to aggregate the values of outputs that represent money put into circulation with respect to the new window \(\wndw + 1\). %
-In Algorithm \ref{algo:code_outs_spent_within}, this is illustrated by adding value of output XYZ
 
 
 % \textbf{[TODO: Change the denomination of the ``non-aggregated'' measures. They are confusion. This can be noticed here.]}
