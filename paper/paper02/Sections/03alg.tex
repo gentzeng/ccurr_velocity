@@ -56,6 +56,29 @@ They differentiate between \ac{fifo}, where youngest inputs get assigned to outp
 Summarizing, the authors introduced three definitions of money in circulation as measured for day \(\perd\), each defined by their respective window \(\wndw\): %
 Money in circulation for period $\wndw$ adopting the \ac{wba} ($ \MCircWbW $), and both the \ac{mca} with the \ac{lifo} rule ($ \MCircMlW $) and the \ac{fifo} rule ($ \MCircMfW $).
 
+
+\subsection{Accuracy improvements}
+\label{sec:inaccuracy_fees}%
+Transactions using prior transaction fees as inputs are slightly misrepresentated in \cite{pernice2019cryptocurrencies}. %
+
+There are two points where fees appeaer - in the difference between inputs and outputs of a transaction - and in the coinbase transaction that gathers fees for the miner. %
+In \cite{pernice2019cryptocurrencies}, fees are counted as circulation money when occurring in transaction using UTXOs having been created before window \(\wndw\) or outputs from coinbase transactions as inputs. %
+Doing so, the authors regard implicitly transactions reusing fees as input as putting money into circulation.  
+The reasons is that fees are captured by outputs of coinbase transactions which, when spent, are always added to the circulating money supply. %
+This is a slight misrepresentation. %
+Fees of transactions that have been respent within time window \(\wndw\) ought to be considered ``respent coins'' as well. %
+We thus suggest a slight adaptation improving the estimates precision which is summarized in Figure \ref{fig:improve_fees}. %
+While coinbase transaction have no inputs, we regard fees as pseudo inputs of coinbase transactions. %
+When transactions are using the unspent transaction output of coinbase transactions as input, we assume that fees are spent first. %
+If fees are detected as re-spent within window \(\wndw\), our algorithm recognizes that no new money is put into circulation. % 
+
+\begin{figure}[t]
+  \label{fig:improve_fees}%
+	\input{ts_figs/coinbase}
+	\centering
+	\caption{Overview of preprocessing of coinbase transactions. Although coinbase transactions have no inputs, we regard fees collected in a coinbase transactions's block as pseudo-inputs.}
+\end{figure}
+
 \subsection{Necessity for a more efficient implementation}
 \label{sec:necessity_effi}%
 Applying their measure to Bitcoin data, in \cite{pernice2019cryptocurrencies} data for a velocity estimate based on money which has been circulating within the last day has been analyzed. %
@@ -67,24 +90,6 @@ While this is computationally feasible for small time windows, already for overl
 The published code on \url{https://github.com/wiberlin/ccurr_velocity} for a look-back time window of a week takes XYZ hours to terminate even if restricted on the first 3 years of the Bitcoin blockchain and run using all XY cores of a server with XY GB ram. 
 \textbf{[TODO George: Here comes some O-Notation magic!]}
 We thus propose an improved algorithmic implementation proceeding inductively. %
-
-\subsection{Inaccuracy due to mistreatment of transaction fees}
-\label{sec:inaccuracy_fees}%
-Relying only on non-recycling transaction outputs and coinbase transactions to estimate money in circulation, the approach chosen by \cite{pernice2019cryptocurrencies} misrepresents fees. %
-All fees are treated as money in circulation. %
-The reasons is that fees are captured by outputs of coinbase transactions which, when spent, are always added to the circulating money supply. %
-This is a slight misrepresentation. %
-Fees of transactions that have been respent within time window \(\wndw\) ought to be considered ``respent coins'' as well. %
-We thus, in addition to addressing the issue summarized in section \ref{sec:necessity_effi}, suggest a slight adaptation improving the estimates precision. %
-
-\subsection{Disentanglement of  transaction fees}
-\label{sec:improve_fees}%
-\begin{figure}[t]
-	\input{ts_figs/coinbase}
-	\centering
-	\caption{Overview of preprocessing of coinbase transactions. Although coinbase transactions have no inputs, we regard fees collected in a coinbase transactions's block as pseudo-inputs.}
-\end{figure}
-
 
 
 \subsection{Efficiency improvements}
