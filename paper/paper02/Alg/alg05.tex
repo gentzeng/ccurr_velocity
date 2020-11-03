@@ -13,7 +13,7 @@
 %\todo{Do we mean non-recycling or not circulating?}%
 \begin{algorithm*}[!h]%
 	\DontPrintSemicolon
-	\caption{Aggregating $\protect\MCirc$ for arbitrary $\typett$ for given window $\wndw$ from genesis day to $\daytt_\maxtt$.%
+	\caption{Aggregating $\protect\MCirc$ for arbitrary $\typett$ for given window length $\wndwLength$ from genesis day to $\daytt_\maxtt$.%
 	}\label{algo:code_aggr}%
 	%  \caption{Moved-coin-approach: Measurement $\protect\MCircM$ for $\mathtt{type}$ (\acs*{fifo}, \acs*{lifo}) within period $\perd$, window $\wndw$.%
 	%  }\label{algo:code_mcirc_mc}%
@@ -25,19 +25,23 @@
 	$ \MSetCircLB \gets \emptyset$                                         \tcc*{Set of $\MCirc$ calculated per day, with $\wndw$ day as lookback window}%
 	$ \MSetCircLA \gets \emptyset$                                         \tcc*{Set of $\MCirc$ output adjustments with $\wndw$ day as lookahead window}%
 	$ \MSetCircAggr \gets \emptyset$                                       \tcc*{Initialize Set of $\MCircAggr$}
-	$ \Out^{\cbs} \gets GetCoinbaseFees\bigl(\bigr)$                       \tcc*{Set of maps of coinbase outputs per blockheight, that represent transaction fees}%
+	$ \Out^{\cbs} \gets GetCoinbaseFees\bigl(\bigr)$                        \tcc*{Set of maps of coinbase outputs per blockheight, that represent transaction fees}%
 	
 	\ForEach{$d \in \{0,...,\daytt_\maxtt\}$%
 	}{%
+          	$\\wndw^{\mathtt{lookback=1}} \gets [d_{\mathtt{end}}-1,d_{\mathtt{end}}]$       \tcc*{TODO COMMENT}%
+          	$\wndw^{\mathtt{lookback=\wndwLength}} \gets [d_{\mathtt{end}}-\wndwLength,d_{\mathtt{end}}]$       \tcc*{TODO COMMENT}%
+                $\wndw^{\mathtt{ahead}}   \gets  [d_{\mathtt{end}},d_{\mathtt{end}}+\wndwLength] $      \tcc*{The look-ahead window for adjustments}%
+                %
 		$\MSetCirc_{1} \gets \MSetCirc_{1}\,\cup\,\{0\}$\\%
 		$\MSetCircLB \gets \MSetCircLB\,\cup\,\{0\}$\\%
 		$\MSetCircLA \gets \MSetCircLA\,\cup\,\{0\}$\\%
-
+                % 
 		\tcc*{Compute basic $\MCirc$ values for each transaction of day $d$}%
 		\ForEach{$\TxD$}{%
-			$\MSetCirc_{1}[d] \gets \MSetCirc_{1}[d]\,+\,GetMCirc\bigl(t,\,1\bigr)$\\%
-			$\MSetCircLB[d] \gets \MSetCircLB[d]\,+\,GetMCirc\bigl(t,\,\wndw\bigr)$\\%
-			$\MSetCircLA[d] \gets \MSetCircLA[d]\,+\,AdjustMCirc\bigl(t, d,\,\wndwLength\bigr)$\\%
+			$\MSetCirc_{1}[d] \gets \MSetCirc_{1}[d]\,+\,GetMCirc\bigl(t,\,\wndw^{\mathtt{lookback=1}}\bigr)$\\%
+			$\MSetCircLB[d] \gets \MSetCircLB[d]\,+\,GetMCirc\bigl(t,\,\wndw^{\mathtt{lookback=\wndwLength}}\bigr)$\\%
+			$\MSetCircLA[d] \gets \MSetCircLA[d]\,+\,AdjustMCirc\bigl(t,\,\wndw^{\mathtt{ahead=\wndwLength}} \bigr)$\\%
 		}
 
           
@@ -58,7 +62,7 @@
 		\tcc*{Iteration step 2: Substract/adjust values of day $\iterhead-w$}%
 		\If{$\iterhead \ge w$}{%
 			$\itertail\,=\,\iterhead\,\notin\,w$                                       \tcc*{Get the first day of the last aggregate}%
-			$\MSetCircAggr[\iterhead] \gets \MSetCircAggr[\iterhead]\,-\,\MSetCirc_{1}[\itertail]$ \tcc*{Substract full $\MCirc$ value of day $d_itertail$ and ... }%
+			$\MSetCircAggr[\iterhead] \gets \MSetCircAggr[\iterhead]\,-\,\MSetCirc_{1}[\itertail]$ \tcc*{Substract full $\MCirc$ value of day $\itertail$ and ... }%
 			$\MSetCircAggr[\iterhead] \gets \MSetCircAggr[\iterhead]\,+\,\MSetCircLA[\itertail]$   \tcc*{... re-add adjusted values}%
 		}%
 	}%
