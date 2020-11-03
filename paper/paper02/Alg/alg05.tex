@@ -34,11 +34,10 @@
 		$\MSetCirc_{1} \gets \MSetCirc_{1}\,\cup\,\{0\}$\\%
 		$\MSetCircLB \gets \MSetCircLB\,\cup\,\{0\}$\\%
 		$\MSetCircLA \gets \MSetCircLA\,\cup\,\{0\}$\\%
-                \texttt{\\} %Emptyline
-                $\wndw^{\mathtt{lookback}=1} \gets [d_{\mathtt{end}}-1,d_{\mathtt{end}}]$       \tcc*{TODO COMMENT}%
-          	$\wndw^{\mathtt{lookback}=\wndwLength} \gets [d_{\mathtt{end}}-\wndwLength,d_{\mathtt{end}}]$       \tcc*{TODO COMMENT}%
-                $\wndw^{\mathtt{ahead}}   \gets  [d_{\mathtt{end}},d_{\mathtt{end}}+\wndwLength] $      \tcc*{The look-ahead window for adjustments}%
-
+        	\tcc*{Windows for addition  of iteration-head, subtraction of iteration-tail \\ and adjustments (compare Figure \ref{fig:aggr}).}%
+	        $\wndw^{\mathtt{lookback}=1} \gets d$\\%
+          	$\wndw^{\mathtt{lookback}=\wndwLength} \gets [d_{\mathtt{end}}-\wndwLength,d_{\mathtt{end}}]$\\%
+                $\wndw^{\mathtt{ahead}}   \gets  [d_{\mathtt{end}},d_{\mathtt{end}}+\wndwLength] $\\%
                 % 
 		\tcc*{Compute basic $\MCirc$ values for each transaction of day $d$}%
 		\ForEach{$\TxD$}{%
