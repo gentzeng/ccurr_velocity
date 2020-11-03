@@ -30,20 +30,15 @@
 	\ForEach{$d \in \{0,...,\daytt_\maxtt\}$%
 	}{%
 
-                
 		$\MSetCirc_{1} \gets \MSetCirc_{1}\,\cup\,\{0\}$\\%
 		$\MSetCircLB \gets \MSetCircLB\,\cup\,\{0\}$\\%
 		$\MSetCircLA \gets \MSetCircLA\,\cup\,\{0\}$\\%
-        	\tcc*{Windows for addition  of iteration-head, subtraction of iteration-tail \\ and adjustments (compare Figure \ref{fig:aggr}).}%
-	        $\wndw^{\mathtt{lookback}=1} \gets d$\\%
-          	$\wndw^{\mathtt{lookback}=\wndwLength} \gets [d_{\mathtt{end}}-\wndwLength,d_{\mathtt{end}}]$\\%
-                $\wndw^{\mathtt{ahead}}   \gets  [d_{\mathtt{end}},d_{\mathtt{end}}+\wndwLength] $\\%
                 % 
-		\tcc*{Compute basic $\MCirc$ values for each transaction of day $d$}%
+		\tcc*{Compute basic components for the inductive steps (compare Section \ref{sec:novel_impl_intuition}.}%
 		\ForEach{$\TxD$}{%
-			$\MSetCirc_{1}[d] \gets \MSetCirc_{1}[d]\,+\,GetMCirc\bigl(t,\,\wndw^{\mathtt{lookback=1}}\bigr)$\\%
-			$\MSetCircLB[d] \gets \MSetCircLB[d]\,+\,GetMCirc\bigl(t,\,\wndw^{\mathtt{lookback=\wndwLength}}\bigr)$\\%
-			$\MSetCircLA[d] \gets \MSetCircLA[d]\,+\,AdjustMCirc\bigl(t,\,\wndw^{\mathtt{ahead=\wndwLength}} \bigr)$\\%
+			$\MSetCircLB[d] \gets \MSetCircLB[d]\,+\,GetMCirc\bigl(t,\,\wndw = [d_{\mathtt{end}}-\wndwLength,d_{\mathtt{end}}] \bigr)$  \tcc*{Windows for addition  of iteration-head.}% 
+			$\MSetCirc_{1}[d] \gets \MSetCirc_{1}[d]\,+\,GetMCirc\bigl(t,\,\wndw = d \bigr)$ \tcc*{Windows for subtraction of iteration-tail.}%
+			$\MSetCircLA[d] \gets \MSetCircLA[d]\,+\,AdjustMCirc\bigl(t,\, \wndw = [d_{\mathtt{end}},d_{\mathtt{end}}+\wndwLength] \bigr)$ \tcc*{Windows for adjustments.}%
 		}
 
           
