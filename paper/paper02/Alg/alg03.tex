@@ -6,8 +6,8 @@
 	$\MCircAdj \gets {0}$                                                          \tcc*{The adjustment value to be applied to $\MCirc$ after shifting $ \wndw $}%
 	\ForEach{$o \in \Out_{t}$}{%
           \lIf{$\isNotSpent(o)$}{continue}%
-          \lIf{$\mathtt{date}(\spendingTx(o)) \in \wndw^{\mathtt{ahead}=\wndwLength} $}{
-            $\MCircAdj \gets {\MCircAdj\,+\,\val(o)}$      \tcc*{Update $\MCircAdj$}%
+          \lIf{$\mathtt{date}(\spendingTx(o)) \in \wndw $}{\tcc*{Aggregate output values based on the \textbf{look-ahead} window \(\wndw\).}%
+            $\MCircAdj \gets {\MCircAdj\,+\,\val(o)}$      
             }%
 	}%
 %
