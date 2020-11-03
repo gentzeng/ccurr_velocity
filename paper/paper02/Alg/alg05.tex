@@ -42,24 +42,24 @@
 
           
           }
-	\ForEach{$d \in \{0,...,\daytt_\maxtt\}$%
+	\ForEach{$\iterhead \in \{0,...,\daytt_\maxtt\}$%
 	}{%
 		$\MSetCircAggr \gets {\MSetCircAggr\,\cup\,\{0\}}$                 \tcc*{Initialize $\MCircAggr$ to be computed for this day}%
-		\tcc*{Use $\MCircAggr$ calculated for $d-1$ as base for aggregation at $d$, except for $d=0$}
-		\If{$d > 0$}{%
-			$\MSetCircAggr[d] \gets \MSetCircAggr[d-1]$%
+		\tcc*{Use $\MCircAggr$ calculated for $\iterhead-1$ as base for aggregation at $\iterhead$, except for $\iterhead=0$}
+		\If{$\iterhead > 0$}{%
+			$\MSetCircAggr[\iterhead] \gets \MSetCircAggr[\iterhead-1]$%
 		}%
-		\tcc*{Iteration step 1: Add values of day $d$ to aggregation for $w$}%
-		\eIf{$d \ge w$}{%
-			$\MSetCircAggr[d] \gets \MSetCircAggr[d]\,+\,\MSetCircLB[d]$     \tcc*{For $d\ge{}w$, add $\MCirc$ of day $d$ calculated for lookback window $w$}%
+		\tcc*{Iteration step 1: Add values of day $\iterhead$ to aggregation for $w$}%
+		\eIf{$\iterhead \ge w$}{%
+			$\MSetCircAggr[\iterhead] \gets \MSetCircAggr[\iterhead]\,+\,\MSetCircLB[\iterhead]$     \tcc*{For $\iterhead\ge{}w$, add $\MCirc$ of day $\iterhead$ calculated for lookback window $w$}%
 		}{%
-			$\MSetCircAggr[d] \gets \MSetCircAggr[d]\,+\,\MSetCbs[d]$        \tcc*{For $d<w$, only coinbase coins represent $\MCirc$}%
+			$\MSetCircAggr[\iterhead] \gets \MSetCircAggr[\iterhead]\,+\,\MSetCbs[\iterhead]$        \tcc*{For $\iterhead<w$, only coinbase coins represent $\MCirc$}%
 		}%
-		\tcc*{Iteration step 2: Substract/adjust values of day $d-w$}%
-		\If{$d \ge w$}{%
-			$d_\mathtt{sub}\,=\,d\,-\,w$                                       \tcc*{Get the first day of the last aggregate}%
-			$\MSetCircAggr[d] \gets \MSetCircAggr[d]\,-\,\MSetCirc_{1}[d_\mathtt{sub}]$ \tcc*{Substract full $\MCirc$ value of day $d_\mathtt{sub}$ and ... }%
-			$\MSetCircAggr[d] \gets \MSetCircAggr[d]\,+\,\MSetCircLA[d_\mathtt{sub}]$   \tcc*{... re-add adjusted values}%
+		\tcc*{Iteration step 2: Substract/adjust values of day $\iterhead-w$}%
+		\If{$\iterhead \ge w$}{%
+			$\itertail\,=\,\iterhead\,\notin\,w$                                       \tcc*{Get the first day of the last aggregate}%
+			$\MSetCircAggr[\iterhead] \gets \MSetCircAggr[\iterhead]\,-\,\MSetCirc_{1}[\itertail]$ \tcc*{Substract full $\MCirc$ value of day $d_itertail$ and ... }%
+			$\MSetCircAggr[\iterhead] \gets \MSetCircAggr[\iterhead]\,+\,\MSetCircLA[\itertail]$   \tcc*{... re-add adjusted values}%
 		}%
 	}%
 	return $\MSetCircAggr$                                                 \tcc*{Result: Return daily aggregated $\MCirc$ for window $w$}%
