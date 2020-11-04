@@ -1,12 +1,12 @@
 \section{Measuring money in circulation}
 \label{sec:measure}%
 
-In \cite{pernice2019cryptocurrencies} %
 % monetary units are seen as ``in circulation'' for measurement day \(\perd\) if they have been used as medium of exchange. %
-money is referred to as ``circulating'' if it has been moved economically within the last day, month, year or generally any time period $\wndw$.%
-The measure is set up in a way that measurement-day \(\perd\) constitutes the last day of window \(\wndw\) for which money in circulation is to be estimated. %
-%The length of time window is denominated \(\wndwLength\).
-Monetary units brought into circulation in the last second of day \(\perd\) are to be attributed to belong to money in circulation for \(\perd\). %  
+Money might be referred to as ``circulating'' if it has been moved economically within the last day, month, year or generally any time period $\wndw$ as measured at day \(\perd\) (compare \citep{pernice2019cryptocurrencies}). %
+Measurement-day constitutes the last day of window \(\wndw\) for which money in circulation is to be estimated.%
+% The length of time window is denominated \(\wndwLength\).
+\footnote{Monetary units brought into circulation in the last second of day \(\perd\) are to be attributed to belong to money in circulation for \(\perd\). }%  
+\textbf{TODO Add text and figure in nomenclature.}
 
 \begin{figure*}[ht!]%
 	\centering
@@ -29,39 +29,48 @@ Monetary units brought into circulation in the last second of day \(\perd\) are 
 
 \subsection{Intuition and original approach}
 \label{sec:orig_approach}%
-To estimate the subset of money supply which can be referred to as circulating, the authors suggested to analyze the transactions having occurred within $\wndw$. %
-Generally, outputs spent \emph{within} but generated \emph{before} \(\wndw\) are interpreted as putting money into circulation. %
-The same holds for freshly mined coins - the outputs of coinbase transactions. % 
+
+How to arrive from the UTXO-based transaction chain design at the notion of money supply and circulating units? % 
+
+An approach introduced in \cite{pernice2019cryptocurrencies} suggests to use transactions-volumes having occurred in $\wndw$. %
+Simplified to an outline, the transaction volume recorded in \(\wndw\) can be interpreted as the number of units that have been moved---and thus circulated---within period \(\wndw\) if volume generated from respending already used monetary units is deducted. %
+Thus, on a more technical level, for all transactions having occurred within \(\wndw\) the authors check the age of the spent UTXOs. %    
+Transactions using the outputs of recently formed transaction (UTXOs generated in the same period \(\wndw\) as in the one they are spent) are interpreted simply as re-spending monetary units. %
+On the other hand, generally, transaction outputs spent \emph{within} but generated \emph{before} \(\wndw\) are interpreted as putting money into circulation.%
+\footnote{Exceptions are discussed later in this Section.}. %
+Also outputs of transactions using freshly mined coins---the outputs of coinbase transactions are interpreted as putting money into circulation; independently of the mined moneys creation date. %
+
 The amount of money put into circulation within \(\wndw\) corresponds to the aggregated value of such outputs. %
-On the other hand, transactions using the outputs of transactions having occurred in period $\wndw$ as well, are interpreted simply as re-spending money which has already been counted as circulating.%
 %
-This can be illustrated with \reffig{mcirc_concept} where values are symbolized with coins. %
-Here, we would need to determine, how many monetary units have made the transaction volume of $8$ (sum of outputs in C, D, E and F excluding self-churn) during period $\wndw$ possible. %
-In this example, we would need to focus on transactions A, B and D in contrast to transactions C and E which reused monetary unspent transaction outputs that have been generated within period $\wndw$. %
+The basic intuition is exemplified in \reffig{mcirc_concept} where values are symbolized with coins. %
+How many monetary units have been used to make the transaction volume of $6$ (sum of outputs in C, E and F excluding self-churn) during period $\wndw$ possible? %
+In this example, the outputs of transactions A, B have been generated before \(\wndw\) and thus have been put into circulation. %
+The output of transaction D has been generated within \(\wndw\), but as D is coinbase transaction, the output counts as well. %
+Certain outputs of transactions C and E have served as inputs for following transactions as well. %
+As such, however, have been generated within \(\wndw\) they are just re-using already spinning monetary units. %
 
 If change in transactions is to be considered, the general approach is complicated by a technicality of UTXO-based cryptocurrencies: Transactions always spend prior transaction outputs in full. %
 The authors defined two general approaches: \ac{wba} and \ac{mca}.  %
 \ac{wba} considers the sum of all inputs \textit{in circulation} (as technically all has been proven to be available for transactions) while the \ac{mca} only counts the fraction economically sent to third parties.  %
 %
-This is visualized in \reffig{mcirc_concept}.  %
-The moved-coin approach considers only output $\mathsf{Out_1}$ of transaction $\mathsf{Tx_C}$ as circulating, not the change output.  %
+In \reffig{mcirc_concept}, the \ac{mca} considers only output $\mathsf{Out_2}$ of transaction $\mathsf{Tx_E}$ as potentially circulating, not the unspent nor the change output.  %
 This approach captures the net economic value transferred to a third party.  %
 The \ac{wba} classifies the whole input of transaction $\mathsf{Tx_C}$ as circulating.  %
 
-However, as for UTXO-based blockchains the relation between transaction inputs and outputs is undetermined, \ac{mca} might not be defined clearly. %
-If for a given transaction one input was generated within and one before $\wndw$, it remains unspecified which one corresponds to the change output.  %
+Transaction $\mathsf{Tx_E}$ unvails another issue, though: Should $\mathsf{Out_2}$ really be classified as circulating? %
+Has it been originated using $\mathsf{Out_1}$ of $\mathsf{Tx_D}$ or $\mathsf{Out_1}$ of $\mathsf{Tx_C}$? 
+For UTXO-based blockchains the relation between transaction inputs and outputs is undetermined. %
+\ac{mca} might not be defined clearly. %
+% If for a given transaction one input was generated within and one before $\wndw$, it remains unspecified which one corresponds to the change output.  %
 The authors thus utilized assignment rule between transaction inputs and outputs utilizing the terminology of cost accounting: %
 They differentiate between \ac{fifo}, where youngest inputs get assigned to outputs first, and \ac{lifo}, where it is the other way around.  %
-
-Summarizing, the authors introduced three definitions of money in circulation as measured for day \(\perd\), each defined by their respective window \(\wndw\): %
-Money in circulation for period $\wndw$ adopting the \ac{wba} ($ \MCircWbW $), and both the \ac{mca} with the \ac{lifo} rule ($ \MCircMlW $) and the \ac{fifo} rule ($ \MCircMfW $).
 
 
 \subsection{Accuracy improvements}
 \label{sec:inaccuracy_fees}%
-Transactions using prior transaction fees as inputs are slightly misrepresentated in \cite{pernice2019cryptocurrencies}. %
+Transactions using prior transaction fees as inputs are slightly misrepresented in \cite{pernice2019cryptocurrencies}. %
 
-There are two points where fees appeaer - in the difference between inputs and outputs of a transaction - and in the coinbase transaction that gathers fees for the miner. %
+Fees are technically manifest themselves twice - in the difference between inputs and outputs of a transaction - and in the coinbase transaction that gathers fees for the miner. %
 In \cite{pernice2019cryptocurrencies}, fees are counted as circulation money when occurring in transaction using UTXOs having been created before window \(\wndw\) or outputs from coinbase transactions as inputs. %
 Doing so, the authors regard implicitly transactions reusing fees as input as putting money into circulation.  
 The reasons is that fees are captured by outputs of coinbase transactions which, when spent, are always added to the circulating money supply. %
