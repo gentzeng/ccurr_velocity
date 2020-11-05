@@ -68,12 +68,19 @@ They differentiate between \ac{fifo}, where youngest inputs get assigned to outp
 
 \subsection{Accuracy improvements}
 \label{sec:inaccuracy_fees}%
-Transactions using prior transaction fees as inputs are slightly misrepresented in \cite{pernice2019cryptocurrencies}. %
+The described intuition effectively allows to conceptionalize money in circulation for UTXO-based cryptocurrencies. %
+However, the original implementation, slightly misrepresents transactions using prior transaction fees as inputs. %
 
-Fees are technically manifest themselves twice - in the difference between inputs and outputs of a transaction - and in the coinbase transaction that gathers fees for the miner. %
-In \cite{pernice2019cryptocurrencies}, fees are counted as circulation money when occurring in transaction using UTXOs having been created before window \(\wndw\) or outputs from coinbase transactions as inputs. %
-Doing so, the authors regard implicitly transactions reusing fees as input as putting money into circulation.  
-The reasons is that fees are captured by outputs of coinbase transactions which, when spent, are always added to the circulating money supply. %
+As described in Section \ref{sec:orig_approach}, transactions spending outputs of coinbase transactions are putting money into circulation. %
+Fees, however, are put to the disposition of the miners in coinbase transactions as well. % 
+For transactions using fees as input, the authors thus implicitly always record money as put into circulation. % 
+
+% 
+% 
+% Fees technically manifest themselves twice - in the difference between inputs and outputs of a transaction - and in the coinbase transaction that gathers fees for the miner. %
+% Aggregating output values, rather than input values, the original implementation ignores fees in the first case, but captures them in the second. %
+%
+
 This is a slight misrepresentation. %
 Fees of transactions that have been respent within time window \(\wndw\) ought to be considered ``respent coins'' as well. %
 We thus suggest a slight adaptation improving the estimates precision which is summarized in Figure \ref{fig:improve_fees}. %
@@ -88,8 +95,8 @@ If fees are detected as re-spent within window \(\wndw\), our algorithm recogniz
 	\caption{Overview of preprocessing of coinbase transactions. Although coinbase transactions have no inputs, we regard fees collected in a coinbase transactions's block as pseudo-inputs.}
 \end{figure}
 
-\subsection{Necessity for a more efficient implementation}
-\label{sec:necessity_effi}%
+\subsection{Computational efficiency}
+\label{sec:effi}%
 Applying their measure to Bitcoin data, in \cite{pernice2019cryptocurrencies} data for a velocity estimate based on money which has been circulating within the last day has been analyzed. %
 Basing money in circulation on a monthly or yearly basis might provide interesting insights and was suggested by the authors as potential avenue for future research. %
 The implementation suggested, however, is rather inefficient for larger time windows \(\wndw\). %
@@ -99,10 +106,6 @@ While this is computationally feasible for small time windows, already for overl
 The published code on \url{https://github.com/wiberlin/ccurr_velocity} for a look-back time window of a week takes XYZ hours to terminate even if restricted on the first 3 years of the Bitcoin blockchain and run using all XY cores of a server with XY GB ram. 
 \textbf{[TODO George: Here comes some O-Notation magic!]}
 We thus propose an improved algorithmic implementation proceeding inductively. %
-
-
-\subsection{Efficiency improvements}
-\label{sec:novel_impl}%
 
 \subsubsection{Intuition}
 \label{sec:novel_impl_intuition}%
