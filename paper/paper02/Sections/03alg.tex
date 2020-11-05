@@ -83,9 +83,12 @@ For transactions using fees as input, the authors thus implicitly always record 
 
 This is a slight misrepresentation. %
 Fees of transactions that have been respent within time window \(\wndw\) ought to be considered ``respent coins'' as well. %
-We thus suggest a slight adaptation improving the estimates precision which is summarized in Figure \ref{fig:improve_fees}. %
+We thus suggest a slight adaptation improving the estimates precision which is summarized in Figure \reffig{improve_fees}. %
 While coinbase transaction have no inputs, we regard fees as pseudo inputs of coinbase transactions. %
 When transactions are using the unspent transaction output of coinbase transactions as input, we assume that fees are spent first. %
+For the estimation of money in circulation using the \ac{wba} this just means that coinbase outputs spent during \(\wndw\) are not putting their entire value into circulation - but just the part that represents mined coins. %
+For the \ac{mca}, however, the difference is more subtle. %
+If money supply is estimated using the \ac{fifo} approach, for example, a transaction with a large fraction of change money might just be using transaction fees, while the change is regarded as using freshly mined coins. % 
 If fees are detected as re-spent within window \(\wndw\), our algorithm recognizes that no new money is put into circulation. % 
 
 \begin{figure}[t]
@@ -113,7 +116,7 @@ Our approach allows for reusing calculations. %
 While the novel implementation allows effectively for larger time-windows \(\wndwLength\), we reuse the general approach for measuring money in circulation proposed in \cite{pernice2019cryptocurrencies}. %
 We do adapt it, however, by adjusting and recombining its elements. %
 Our implementation steps through time by iteration periods which we chose to be 1 day each. %
-A single inductive step \(\iteri\) takes the amount of money in circulation for time window \(\wndw_\iteri\) and reuses it to calculate the estimate for \(\wndw_{\iteri+1}\) (compare Figure \ref{fig:aggr}). %
+A single inductive step \(\iteri\) takes the amount of money in circulation for time window \(\wndw_\iteri\) and reuses it to calculate the estimate for \(\wndw_{\iteri+1}\) (compare Figure \reffig{aggr}). %
 Simply put, for every iteration step we thus add a new day to the window of the last day \(\wndw_{\iteri-1}\) (lets call this day \(\iterhead_{\iteri}\)) and eliminate the oldest one (lets call him \(\itertail_{\iteri}\)). %
 As a consequence we have to adjust the estimate for window \(\wndw_\iteri\) for the transactions in the above two days. %
 Roughly spoken, we thus:
@@ -123,16 +126,16 @@ Roughly spoken, we thus:
 \item adjust for transactions that cannot be counted as ``respending coins'' any longer due to the shift from \(\wndw_{\iteri}\) to \(\wndw_{\iteri + 1}\). %
 \end{enumerate}
 How do the three steps proceed exactly and why is that the same as looping over all transactions in period \(\wndw\) for which \(\MCirc\) is to be estimated? %
-Figure \ref{fig:aggr} illustrates the basic intuition. %
+Figure \reffig{aggr} illustrates the basic intuition. %
 If money in circulation for window \(\wndw_{\iteri}\) is to be estimated, we use the previous estimate for window \(\wndw_{\iteri-1}\) as basis. %
 Step 1, then, is simply estimating, aggregating and lastly adding money put to circulation for each transaction pursued in day \(\iterhead_{\iteri}\) following the basic ideas from Section \ref{sec:orig_approach}. %
-In Figure \ref{fig:aggr}, for example, transaction chain \(\mathsf{A}\) features a single transaction during day \(\iterhead_{\iteri}\) which uses an input generated long ago. The respective transaction output would thus be added to \(\MCirc\).
+In Figure \reffig{aggr}, for example, transaction chain \(\mathsf{A}\) features a single transaction during day \(\iterhead_{\iteri}\) which uses an input generated long ago. The respective transaction output would thus be added to \(\MCirc\).
 Step 2 subtracts money supply that stems from transactions of the eliminated day \(\itertail_{\iteri}\). %
-In Figure \ref{fig:aggr}, transaction chain \(\mathsf{B}\) has a single transaction which occurred during within the window in the previous iteration step, but now drops out with the elimination of \(\iterhead_{\iteri}\). %
+In Figure \reffig{aggr}, transaction chain \(\mathsf{B}\) has a single transaction which occurred during within the window in the previous iteration step, but now drops out with the elimination of \(\iterhead_{\iteri}\). %
 The respective outputs do not represent coins put into circulation for period \(\wndw_{iteri}\) any more and thus need to be subtracted. %
 Step 3 adjusts for transactions occurring on days within window \(\wndw_\iteri\) which might be linked to outputs from transactions having occurred during the eliminated day. %
 These transactions cannot be seen as re-spending coins anymore but now are to be counted as putting money into circulation. %
-This can be exemplified by \(\mathsf{C}\) in Figure \ref{fig:aggr}. %
+This can be exemplified by \(\mathsf{C}\) in Figure \reffig{aggr}. %
 The second transaction for calculating \(\MCirc\) for \(\wndw_{\iteri-1}\) would be counted as re-spending money put into circulation by the first transaction. %
 With shifting \(\wndw_{\iteri-1}\) to \(\wndw_{\iteri}\) its the second transaction, however, that puts unspent transaction outputs from outside the window into circulation. %
 Having subtracted money put into circulation by the first transaction of \(\mathsf{C}\) in step 2, we need to adjust our estimation of \(\MCirc\) by adding the value of the outputs used by the second transaction of \(\mathsf{C}\). %
@@ -158,7 +161,7 @@ In a first preparative step, we pre-compute three helper-structures for each day
 \item \( \MSetCircLA[\perd] \), and a corrective value based on transaction outputs from transactions during day \(\perd\) that can no longer be seen as ``respent-coins'' for window \(\wndw\).  
 \end{enumerate}
 For inductively calculating money in circulation for measurement period \(\perd\), the helper structures might be applied in shiftend fashion. %
-If compared to Figure \ref{fig:aggr}, \( \MSetCircLB \) will be applied to a period inductivly added to the window \(\iterhead\). %
+If compared to Figure \reffig{aggr}, \( \MSetCircLB \) will be applied to a period inductivly added to the window \(\iterhead\). %
 \( \MSetCirc_{1}\), however, is used for subtracting money supply from the elimination period \(\itertail\). %
 Lastly, \( \MSetCircLA \) looks at transactions in the elimiated \(\itertail\) and checks, whether those have been used within the part of the new-formed window \(\wndw\) that lies in between \(\iterhead\) and \(\iterhead\). %
 
@@ -205,7 +208,7 @@ This value is now the base for adjustments. %
 Using the pre-computed values, we can simply follow the intuition laid out in \ref{sec:novel_impl_intuition}: %
 We add \(\MSetCircLB[\perd]\), and thus money brought into circulation on day \(\iterhead\) to the still outdated \(\MSetCircAggr[\perd]\). %
 After that, we adapt \(\MSetCircAggr[\perd]\) further by subtracting money in circulation for the day eliminated from the \(\wndw - 1\) and thus \(\MSetCirc_{1}[\itertail]\). %
-Without further adjustment, however, we would ignore that by shifting the window boundaries certain transaction outputs cannot be seen any longer as ``respent-coins'' as the spent output no longer lies ``inside'' the respectiv time window. %
+Without further adjustment, however, we would ignore that by shifting the window boundaries certain transaction outputs cannot be seen any longer as ``respent-coins'' as the spent output no longer lies ``inside'' the respective time window. %
 We thus add \( \MSetCircLA[\itertail] \) which, roughly spoken, aggregates money brought into circulation by transactions spending outputs of transactions during day \(d\) if the new window boundaries are applied. %
 
 
@@ -215,7 +218,7 @@ We thus add \( \MSetCircLA[\itertail] \) which, roughly spoken, aggregates money
 % Assume that money in circulation with a look-back time window of length \(\wndwLength\) is to be estimated for day \(\perd\). %
 % The helper-structure estimates how much money is been brought into active circulation during the period \([\iterp_{\Start},\iterp_{\End}]\): Before the events at day \(\iterp\), the respective money supply has remained untouched for \(\wndwLength\) days. With its transaction at day \(\iterp\), however, it can now be seen as circulating within period  \([\wndw_\Start\) to \(\wndw_\End]\). %
 % While the helper-structure is estimating the value of monetary units which are ``activated'' by transactions of day \( \iterp \), it does neglect outputs which turn into ``already spent'' outputs in prior days within window \(\wndw\). %
-% For example, in figure \ref{fig:mcirc_concept}, if we estimated the money supply for the period of iteration step \(\iterp\) we would count only money in circulation of 3 missing that transaction TX-C ``outside'' of period \(i\) activated a money supply of 2 with INP-1. %
+% For example, in figure \reffig{mcirc_concept}, if we estimated the money supply for the period of iteration step \(\iterp\) we would count only money in circulation of 3 missing that transaction TX-C ``outside'' of period \(i\) activated a money supply of 2 with INP-1. %
 % As a consequence it only coincides with the original estimator for the special case of \(\iterp % \wndw\). %
 
 % While the original estimator requires the information of each transaction in time-window \(\wndw\), the helper-construct looks only at the transactions of iteration-step \(\iterp\) and checks their inputs age against \(\wndw_\Start\). % 
