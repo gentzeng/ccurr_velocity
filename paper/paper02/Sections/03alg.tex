@@ -115,9 +115,9 @@ We thus propose an improved algorithmic implementation proceeding inductively. %
 
 \subsubsection{Intuition}
 \label{sec:novel_impl_intuition}%
-Our approach allows for reusing calculations. %
-While the novel implementation allows effectively for larger time-windows \(\wndwLength\), we reuse the general approach for measuring money in circulation proposed in \cite{pernice2019cryptocurrencies}. %
-We do adapt it, however, by adjusting and recombining its elements. %
+Our approach allows for reusing calculations instead of repeating them when look-back windows overlap. %
+We use the general concept for measuring money in circulation proposed in \cite{pernice2019cryptocurrencies}. %
+We completely overhaul its design, though, by recombining its elements to lastly achieve an inductive implementation. %
 Our implementation steps through time by iteration periods which we chose to be 1 day each. %
 A single inductive step \(\iteri\) takes the amount of money in circulation for time window \(\wndw_\iteri\) and reuses it to calculate the estimate for \(\wndw_{\iteri+1}\) (compare Figure \reffig{aggr}). %
 Simply put, for every iteration step we thus add a new day to the window of the last day \(\wndw_{\iteri-1}\) (lets call this day \(\iterhead_{\iteri}\)) and eliminate the oldest one (lets call him \(\itertail_{\iteri}\)). %
@@ -140,7 +140,7 @@ Step 3 adjusts for transactions occurring on days within window \(\wndw_\iteri\)
 These transactions cannot be seen as re-spending coins anymore but now are to be counted as putting money into circulation. %
 This can be exemplified by \(\mathsf{C}\) in Figure \reffig{aggr}. %
 The second transaction for calculating \(\MCirc\) for \(\wndw_{\iteri-1}\) would be counted as re-spending money put into circulation by the first transaction. %
-With shifting \(\wndw_{\iteri-1}\) to \(\wndw_{\iteri}\) its the second transaction, however, that puts unspent transaction outputs from outside the window into circulation. %
+With shifting \(\wndw_{\iteri-1}\) to \(\wndw_{\iteri}\) it is the second transaction, however, that puts unspent transaction outputs from outside the window into circulation. %
 Having subtracted money put into circulation by the first transaction of \(\mathsf{C}\) in step 2, we need to adjust our estimation of \(\MCirc\) by adding the value of the outputs used by the second transaction of \(\mathsf{C}\). %
 
 % Why are we relying on induction instead of simply pre-calculating estimates for each day separately and then aggregating them? %
@@ -176,7 +176,7 @@ As in the original implementation, the core of the estimation procedure is given
 The implementation of this core-functionality is referenced as function throughout the paper as function \(GetMCirc\bigl(t,\,\wndw,\bigr)\). %
 For computing \(\MSetCircLA[d]\) and \(\MSetCirc_{1}[d]\) respectively, we just apply \(GetMCirc\bigl(t,\,\wndw,\bigr)\) to all transactions having occurred during day \(d\). %
 Obviously, the time window to identify respent coins depends on each \(d\) respectively. %
-While for a lookback window of 1 (\(\MSetCirc_{1}[d]\)), the window \(\wndw\) equals the period covered by \(d\), for \(\MSetCircLA[d]\) the window to apply is \([d_{\mathtt{end}}-\wndwLength,d_{\mathtt{end}}]\) (compare Section \ref{sec:orig_approach}). %
+While for a look-back window of 1 (\(\MSetCirc_{1}[d]\)), the window \(\wndw\) equals the period covered by \(d\), for \(\MSetCircLA[d]\) the window to apply is \([d_{\mathtt{end}}-\wndwLength,d_{\mathtt{end}}]\) (compare Section \ref{sec:orig_approach}). %
 
 The inner workings of \(GetMCirc\bigl(t,\,\wndw,\bigr)\)---the core procedure to identify money supply put into circulation by a certain transaction \(t\)---is summarized in Algorithm \ref{algo:code_mcirc}.%
 Money in circulation can be estimated by looping trough all inputs \(\Inp_{t}\) of transaction \(t\). %
