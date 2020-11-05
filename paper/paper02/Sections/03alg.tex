@@ -203,17 +203,18 @@ As given in line 14 of Algorithm \ref{algo:code_aggr}, we apply a function \(Adj
 The inner workings of \(AdjustMCirc\bigl(t,\,\wndw\bigr)\) are illustrated in Algorithm \ref{algo:code_outs_spent_within}: %
 Note, that in contrast to \(GetMCirc\) where \(\wndw\) can be seen as look-back window, function \(AdjustMCirc\) does look ahead in time. %
 To determine the corrective value based on transaction outputs from transactions during day \(\perd\) that can no longer be seen as ``respent-coins'', a look-ahead window is created. %
-It is formed using the bounds of the iteration period \(\perd\) and window length \(\wndwLength\) as the period \([d_{\mathtt{end}},d_{\mathtt{end}}+\wndwLength-1]\). %
+It is formed using the bounds of the iteration period \(\perd\) and window length \(\wndwLength\) as the period \([d_{\mathtt{end}},d_{\mathtt{end}}+\wndwLength-1]\).%
+\footnote{
 Figure \reffig{aggr} can be used to illustrate the choice of the period. %
 Function \(AdjustMCirc\) is applied to the iteration-tail \(\iterITail\). %
 It ought to check whether outputs within the iteration-tail have been spent within the new-formed window \(\wndw_{\iteri}\) but excluding the iteration-head \(\iterIHead\). %
 Money brought into circulation by the transactions during day \(\iterIHead\) have been estimated already with the updated window borders and would otherwise be counted double. %
 This above described period is equivalent to \([d_{\mathtt{end}},d_{\mathtt{end}}+(\wndwLength-1)]\). %
-
-To aggregate the value of the transaction's outputs that have been spent by during window, Algorithm \ref{algo:code_aggr} loops through all outputs \(\Out_{t}\) of transaction \(t\). % 
+} %
+To aggregate the value of the transaction's outputs that have been spent during the look-ahead window, Algorithm \ref{algo:code_aggr} loops through all outputs \(\Out_{t}\) of transaction \(t\). % 
 For every output the \(\mathtt{date}(\spendingTx(o)\) establishes the date of the transaction spending the output. %
 If this date is part of the look-ahead window, the output's values are aggregated forming \(\MCircAdj\). %
-For the output's ``spending-transacting'' we thus want to aggregate the values of outputs that represent money put into circulation with respect to the new window \(\wndw + 1\). %
+%For the output's ``spending-transacting'' we thus want to aggregate the values of outputs that represent money put into circulation with respect to the new window \(\wndw + 1\). %
 
 
 % \textbf{[TODO: Change the denomination of the ``non-aggregated'' measures. They are confusion. This can be noticed here.]}
