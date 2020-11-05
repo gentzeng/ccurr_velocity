@@ -119,22 +119,23 @@ Our approach allows for reusing calculations instead of repeating them when look
 We use the general concept for measuring money in circulation proposed in \cite{pernice2019cryptocurrencies}. %
 We completely overhaul its design, though, by recombining its elements to lastly achieve an inductive implementation. %
 Our implementation steps through time by iteration periods which we chose to be 1 day each. %
-A single inductive step \(\iteri\) takes the amount of money in circulation for time window \(\wndw_\iteri\) and reuses it to calculate the estimate for \(\wndw_{\iteri+1}\) (compare Figure \reffig{aggr}). %
-Simply put, for every iteration step we thus add a new day to the window of the last day \(\wndw_{\iteri-1}\) (lets call this day \(\iterhead_{\iteri}\)) and eliminate the oldest one (lets call him \(\itertail_{\iteri}\)). %
+
+A single inductive step \(\iteri\) takes the amount of money circulating with respect to time window \(\wndw_\iteri\) and reuses it to calculate the estimate for \(\wndw_{\iteri+1}\) (compare Figure \reffig{aggr}). %
+Simply put, for every iteration step we thus add a new day to the window of the last day \(\wndw_{\iteri-1}\) (lets call this day \(\iterIHead\)) and eliminate the oldest one (lets call him \(iterITail\)). %
 As a consequence we have to adjust the estimate for window \(\wndw_\iteri\) for the transactions in the above two days. %
 Roughly spoken, we thus:
 \begin{enumerate}
-\item add the value of monetary units put into circulation by the transactions of the day \(\iterhead_{\iteri}\), %
-\item subtract monetary units that had belonged to the day \(\itertail_{\iteri}\)), %
+\item add the value of monetary units put into circulation by the transactions of the day \(\iterIHead\), %
+\item subtract monetary units that had belonged to the day \(iterITail\)), %
 \item adjust for transactions that cannot be counted as ``respending coins'' any longer due to the shift from \(\wndw_{\iteri}\) to \(\wndw_{\iteri + 1}\). %
 \end{enumerate}
 How do the three steps proceed exactly and why is that the same as looping over all transactions in period \(\wndw\) for which \(\MCirc\) is to be estimated? %
 Figure \reffig{aggr} illustrates the basic intuition. %
 If money in circulation for window \(\wndw_{\iteri}\) is to be estimated, we use the previous estimate for window \(\wndw_{\iteri-1}\) as basis. %
-Step 1, then, is simply estimating, aggregating and lastly adding money put to circulation for each transaction pursued in day \(\iterhead_{\iteri}\) following the basic ideas from Section \ref{sec:orig_approach}. %
-In Figure \reffig{aggr}, for example, transaction chain \(\mathsf{A}\) features a single transaction during day \(\iterhead_{\iteri}\) which uses an input generated long ago. The respective transaction output would thus be added to \(\MCirc\).
-Step 2 subtracts money supply that stems from transactions of the eliminated day \(\itertail_{\iteri}\). %
-In Figure \reffig{aggr}, transaction chain \(\mathsf{B}\) has a single transaction which occurred during within the window in the previous iteration step, but now drops out with the elimination of \(\iterhead_{\iteri}\). %
+Step 1, then, is simply estimating, aggregating and lastly adding money put to circulation for each transaction pursued in day \(\iterIHead\) following the basic ideas from Section \ref{sec:orig_approach}. %
+In Figure \reffig{aggr}, for example, transaction chain \(\mathsf{A}\) features a single transaction during day \(\iterIHead\) which uses an input generated long ago. The respective transaction output would thus be added to \(\MCirc\).
+Step 2 subtracts money supply that stems from transactions of the eliminated day \(iterITail\). %
+In Figure \reffig{aggr}, transaction chain \(\mathsf{B}\) has a single transaction which occurred during within the window in the previous iteration step, but now drops out with the elimination of \(\iterIHead\). %
 The respective outputs do not represent coins put into circulation for period \(\wndw_{iteri}\) any more and thus need to be subtracted. %
 Step 3 adjusts for transactions occurring on days within window \(\wndw_\iteri\) which might be linked to outputs from transactions having occurred during the eliminated day. %
 These transactions cannot be seen as re-spending coins anymore but now are to be counted as putting money into circulation. %
