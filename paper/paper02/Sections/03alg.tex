@@ -5,7 +5,7 @@
 Money might be referred to as ``circulating'' if it has been moved economically within the last day, month, year or generally any time period $\wndw$ as measured at day \(\perd\) (compare \citep{pernice2019cryptocurrencies}). %
 Measurement-day constitutes the last day of window \(\wndw\) for which money in circulation is to be estimated.%
 % The length of time window is denominated \(\wndwLength\).
-\footnote{Monetary units brought into circulation in the last second of day \(\perd\) are to be attributed to belong to money in circulation for \(\perd\). }%  
+\footnote{Monetary units brought into circulation in the last second of day \(\perd\) are to be seen as money in circulation for \(\perd\). }%  
 \textbf{TODO Add text and figure in nomenclature.}
 
 \begin{figure*}[ht!]%
@@ -185,12 +185,13 @@ How are \(\MSetCirc_{1}\), \( \MSetCircLA[d] \) and \( \MSetCircLB[d] \) calcula
 Let's turn our focus first to \(\MSetCircLA[d]\) and \(\MSetCirc_{1}[d]\) respectively. %
 
 As in the original implementation, the core of the estimation procedure is given by the decision rules determining the amount of money that is put into circulation by an individual transaction \(t\). %
-The implementation of this core-functionality is referenced as function throughout the paper as function \(GetMCirc\bigl(t,\,\wndw,\bigr)\). %
-For computing \(\MSetCircLA[d]\) and \(\MSetCirc_{1}[d]\) respectively, we just apply \(GetMCirc\bigl(t,\,\wndw,\bigr)\) to all transactions having occurred during day \(d\). %
+The implementation of this core-functionality is referenced as function \(GetMCirc\bigl(t,\,\wndw \bigr)\) throughout the paper. %
+For computing \(\MSetCircLB[d]\) and \(\MSetCirc_{1}[d]\) respectively, we just apply \(GetMCirc\bigl(t,\,\wndw \bigr)\) to all transactions having occurred during day \(d\). %
 Obviously, the time window to identify respent coins depends on each \(d\) respectively. %
-While for a look-back window of 1 (\(\MSetCirc_{1}[d]\)), the window \(\wndw\) equals the period covered by \(d\), for \(\MSetCircLA[d]\) the window to apply is \([d_{\mathtt{end}}-\wndwLength,d_{\mathtt{end}}]\) (compare Section \ref{sec:orig_approach}). %
+While for a look-back window of 1 the window \(\wndw\) equals the period covered by \(d\), for \(\MSetCircLA[d]\) the window to apply is \([d_{\mathtt{end}}-\wndwLength,d_{\mathtt{end}}]\) (compare Section \ref{sec:orig_approach}). %
+Monetary units brought into circulation in between in the last second of day \(\perd\) and \(\wndwLength\) days beforehand are to be counted as money in circulation for \(\perd\). % 
 
-The inner workings of \(GetMCirc\bigl(t,\,\wndw,\bigr)\)---the core procedure to identify money supply put into circulation by a certain transaction \(t\)---is summarized in Algorithm \ref{algo:code_mcirc}.%
+The inner workings of \(GetMCirc\bigl(t,\,\wndw \bigr)\)---the core procedure to identify money supply put into circulation by a certain transaction \(t\)---is summarized in Algorithm \ref{algo:code_mcirc}.%
 Money in circulation can be estimated by looping trough all inputs \(\Inp_{t}\) of transaction \(t\). %
 All inputs are searched for such that are referencing either to (1) outputs of coinbase transactions or to (2) outputs generated in transactions generated before the first timestamp of time window \(\wndw\) (compare Section \ref{sec:orig_approach}). %
 For inputs of case (1) values \(\val(i)\) are aggregated to form \(\MCirc\). %
@@ -199,14 +200,19 @@ Looping over all inputs of transaction \(t\), the above summations form an estim
 
 The computation of adjustment value \(\MSetCircLA[d]\) is slightly more complex. %
 As given in line 14 of Algorithm \ref{algo:code_aggr}, we apply a function \(AdjustMCirc\bigl(t, d,\,\wndwLength\bigr)\) to all transactions in day \(d\). %
-The inner workings of \(AdjustMCirc\bigl(t, d,\,\wndwLength\bigr)\) are illustrated in Algorithm \ref{algo:code_outs_spent_within}: %
-Note, that in contrast to \(GetMCirc\bigl(t,\,\wndw,\bigr)\) where \(\wndw\) can be seen as look-back window, function \(AdjustMCirc\bigl(t, \,d,\bigr)\) does look ahead in time. %
+The inner workings of \(AdjustMCirc\bigl(t,\,\wndw\bigr)\) are illustrated in Algorithm \ref{algo:code_outs_spent_within}: %
+Note, that in contrast to \(GetMCirc\) where \(\wndw\) can be seen as look-back window, function \(AdjustMCirc\) does look ahead in time. %
 To determine the corrective value based on transaction outputs from transactions during day \(\perd\) that can no longer be seen as ``respent-coins'', a look-ahead window is created. %
-It is formed using the bounds of the iteration period \(\perd\) and window length \(\wndwLength\) as the period \([d_{\mathtt{end}},d_{\mathtt{end}}+\wndwLength]\). %
+It is formed using the bounds of the iteration period \(\perd\) and window length \(\wndwLength\) as the period \([d_{\mathtt{end}},d_{\mathtt{end}}+\wndwLength-1]\). %
+Figure \reffig{aggr} can be used to illustrate the choice of the period. %
+Function \(AdjustMCirc\) is applied to the iteration-tail \(\iterITail\). %
+It ought to check whether outputs within the iteration-tail have been spent within the new-formed window \(\wndw_{\iteri}\) but excluding the iteration-head \(\iterIHead\). %
+Money brought into circulation by the transactions during day \(\iterIHead\) have been estimated already with the updated window borders and would otherwise be counted double. %
+This above described period is equivalent to \([d_{\mathtt{end}},d_{\mathtt{end}}+(\wndwLength-1)]\). %
 
 To aggregate the value of the transaction's outputs that have been spent by during window, Algorithm \ref{algo:code_aggr} loops through all outputs \(\Out_{t}\) of transaction \(t\). % 
 For every output the \(\mathtt{date}(\spendingTx(o)\) establishes the date of the transaction spending the output. %
-If this date is part of window \(\wndw\), the output's values are aggregated forming \(\MCircAdj\). %
+If this date is part of the look-ahead window, the output's values are aggregated forming \(\MCircAdj\). %
 For the output's ``spending-transacting'' we thus want to aggregate the values of outputs that represent money put into circulation with respect to the new window \(\wndw + 1\). %
 
 

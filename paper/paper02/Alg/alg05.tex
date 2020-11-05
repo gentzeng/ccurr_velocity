@@ -38,7 +38,7 @@
 		\ForEach{$\TxD$}{%
 			$\MSetCircLB[d] \gets \MSetCircLB[d]\,+\,GetMCirc\bigl(t,\,\wndw = [d_{\mathtt{end}}-\wndwLength,d_{\mathtt{end}}] \bigr)$  \tcc*{Windows for addition  of iteration-head.}% 
 			$\MSetCirc_{1}[d] \gets \MSetCirc_{1}[d]\,+\,GetMCirc\bigl(t,\,\wndw = d \bigr)$ \tcc*{Windows for subtraction of iteration-tail.}%
-			$\MSetCircLA[d] \gets \MSetCircLA[d]\,+\,AdjustMCirc\bigl(t,\, \wndw = [d_{\mathtt{end}},d_{\mathtt{end}}+\wndwLength] \bigr)$ \tcc*{Windows for adjustments.}%
+			$\MSetCircLA[d] \gets \MSetCircLA[d]\,+\,AdjustMCirc\bigl(t,\, \wndw = [d_{\mathtt{end}},d_{\mathtt{end}}+(\wndwLength+1)] \bigr)$ \tcc*{Windows for adjustments.}%
 		}
 
           
