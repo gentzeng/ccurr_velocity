@@ -100,15 +100,18 @@ If fees are detected as re-spent within window \(\wndw\), our algorithm recogniz
 
 \subsection{Computational efficiency}
 \label{sec:effi}%
-Applying their measure to Bitcoin data, in \cite{pernice2019cryptocurrencies} data for a velocity estimate based on money which has been circulating within the last day has been analyzed. %
-Basing money in circulation on a monthly or yearly basis might provide interesting insights and was suggested by the authors as potential avenue for future research. %
-The implementation suggested, however, is rather inefficient for larger time windows \(\wndw\). %
-The algorithm proposed in \cite{pernice2019cryptocurrencies} loops over-and-over again over the same transactions as windows \(\wndw\) overlap. %
+Simply following the intuition summarized in \ref{sec:orig_approach} is rather inefficient for larger time windows \(\wndw\). %
+The algorithm proposed for implementation in \cite{pernice2019cryptocurrencies} loops over-and-over again over the same transactions as windows \(\wndw\) overlap. %
 % As illustrated in the conceptional description of the three velocity measures, determining whether an unspent output was spent in a given time window is essential for the chosen approach. %
-While this is computationally feasible for small time windows, already for overlapping windows of a few days, naively looping through all transactions has proven problematic. %
-The published code on \url{https://github.com/wiberlin/ccurr_velocity} for a look-back time window of a week takes XYZ hours to terminate even if restricted on the first 3 years of the Bitcoin blockchain and run using all XY cores of a server with XY GB ram. 
-\textbf{[TODO George: Here comes some O-Notation magic!]}
+While this is computationally feasible for small time windows, already for overlapping windows of a few days, naively looping through all transactions has proven problematic.%
+\footnote{The published code on \url{https://github.com/wiberlin/ccurr_velocity} for a look-back time window of a week takes XYZ hours to terminate even if restricted on the first 3 years of the Bitcoin blockchain and run using all XY cores of a server with XY GB ram.} %
+Basing money in circulation on a monthly or yearly basis, however, might provide interesting insights and was suggested by the authors as potential avenue for future research. %
+More importantly, a search for the optimal specification of a measure for velocity of money based on circulating money was brought into discussion. %
+Such optimization would require a large quantity of window lengths for money in circulation to be measured before pairing them with cryptocurrency prices. % 
+The original implementation would hardly allow for such a project. % 
+
 We thus propose an improved algorithmic implementation proceeding inductively. %
+\textbf{[TODO George: Here comes some O-Notation magic!]}
 
 \subsubsection{Intuition}
 \label{sec:novel_impl_intuition}%
