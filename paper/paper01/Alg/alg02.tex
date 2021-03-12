@@ -13,18 +13,18 @@
 %\todo{Do we mean non-recycling or not circulating?}%
 \begin{algorithm*}[!h]%
 	\DontPrintSemicolon
-  \caption{Moved-coin-approach: Measurement $\protect\MCircM$ for $\mathtt{type}$ (\acs*{fifo}, \acs*{lifo}) within period $\perd$, window $\wndw$.%
+  \caption{Moved-coin-approach: Measurement $\protect\MCircM$ for $\mathtt{type}$ (\acs*{fifo}, \acs*{lifo}) for period $\perd$, look-back window $\wndw$.%
   }\label{algo:code_mcirc_mc}%
 %
 	\KwData{$\wndw_\Start$ \tcc*{Beginn of look-back window $w$}}%
-	\KwData{$ \TxP$                                                                     \tcc*{Set of transactions in period $\perd$}}%
+	\KwData{$ \TxW$                                                                     \tcc*{Set of transactions in period $\wndw$}}%
 	\KwData{$ \Out^{\selfchurn}$                                                        \tcc*{Set of self-churning outputs}}%
-%	\KwResult{$\MCircM$                                                                 \tcc*{Money supply to be estimated in period $\perd$ with window $\wndw$}}%
+%	\KwResult{$\MCircM$                                                                 \tcc*{Money supply to be estimated in period $\wndw$ with window $\wndw$}}%
 %
-	$\MCircM \gets {0}$																	\tcc*{Money supply to be estimated in period $\perd$ with window $\wndw$}%
+	$\MCircM \gets {0}$																	\tcc*{Money supply to be estimated for period $\perd$ with window $\wndw$}%
 %
-	\ForEach {$ t \in \TxP $%
-%		                                                            \tcc*{Loop through each transaction $t$ in period $\perd$}%
+	\ForEach {$ t \in \TxW $%
+%		                                                            \tcc*{Loop through each transaction $t$ in period $\wndw$}%
 	                                                            }%
 	{%
 		$\MCircM(t) \gets {0}$                                                          \tcc*{Set summand of $\MCircM(t)$ for every transaction $t$}%
@@ -59,7 +59,7 @@
 		}%
 	   	$ \MCircM \gets{\MCircM + \MCircM(t)} $\label{algo:code_mcirc_mc_break}%
 	}%
-	return $\MCircM$                                                                    \tcc*{Result: Return estimated money in circulation in period $\perd$ with window $\wndw$ for \ac*{mca}}%
+	return $\MCircM$                                                                    \tcc*{Result: Return money in circulation within window $\wndw$ as estimated for period $\perd$ for \ac*{mca}}%
 \end{algorithm*}%
 \else%
 \fi%

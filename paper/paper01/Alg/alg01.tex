@@ -2,14 +2,14 @@
 \renewcommand{\arraystretch}{1.5}%
 \begin{algorithm*}[!h]%
 	\DontPrintSemicolon
-	\caption{Whole-bill-approach: Measurement of $\protect\MCircWb$ within period $\perd$ with look-back window $\wndw$.}\label{algo:code_mcirc_wb}%
+	\caption{Whole-bill-approach: Measurement of $\protect\MCircWb$ for period $\perd$ with look-back window $\wndw$.}\label{algo:code_mcirc_wb}%
 	\KwData{$\wndw_\Start$                                    	    \tcc*{Beginn of look-back window $w$}}%
-	\KwData{$\TxP$                                              	\tcc*{Set of transactions in period $\perd$}}%
-%	\KwResult{$\MCircWb$                                           \tcc*{Money supply to be estimated within period $\perd$}}%
+	\KwData{$\TxW$                                              	\tcc*{Set of transactions in period $\wndw$}}%
+%	\KwResult{$\MCircWb$                                           \tcc*{Money supply to be estimated within period $\wndw$}}%
 %
-	$ \MCircWb \gets {0} $											\tcc*{Money supply to be estimated within period $\perd$}%
+	$ \MCircWb \gets {0} $											\tcc*{Money supply to be estimated within period $\wndw$}%
 %
-	\ForEach {$ t \in \TxP $                                      	\tcc*[]{Loop through transactions $t$ of period $\perd$}}%
+	\ForEach {$ t \in \TxW $                                      	\tcc*[]{Loop through transactions $t$ of period $\wndw$}}%
 	{%
 		\ForEach {$ i \in \InpT $                                 	\tcc*[]{Loop through inputs $i$ of transaction $t$}}%
 		{%
@@ -20,7 +20,7 @@
 			}%
 		}%
 	}%
-	return $\MCircWb$                                             	\tcc*{Result: Return estimated money in circulation within period $\perd$ for \ac*{wba}}%
+	return $\MCircWb$                                             	\tcc*{Result: Return money in circulation within $\wndw$ as estimated for period \(\perd\) for \ac*{wba}}%
 \end{algorithm*}%
 \else%
 \fi%
